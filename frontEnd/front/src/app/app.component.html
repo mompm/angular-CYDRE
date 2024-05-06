@@ -1,0 +1,30 @@
+<div class="test-element" (mousemove)="log($event)">
+  <app-selecteurLangue></app-selecteurLangue>
+  <app-navbar></app-navbar>
+  <app-header></app-header>
+  <router-outlet>
+  </router-outlet>
+  <app-footer></app-footer>
+</div>
+
+<!-- for testing purposes -->
+<button data-bs-toggle="modal" data-bs-target="#exampleModal">End test</button>
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-selecteurLangue"></div>
+        <div class="modal-navbar"></div>
+        <div class="modal-header"></div>
+        <div class="modal-body">
+          <div *ngFor="let item of this.listPositions">
+            {{item}}
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="p-button" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+

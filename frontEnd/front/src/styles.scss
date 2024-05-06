@@ -1,0 +1,47 @@
+@import "primeng/resources/themes/lara-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeflex/themes/primeone-light.css";
+@import "primeflex/themes/primeone-dark.css";
+@import "src/assets/styles/font-color.scss";
+body {
+    font-family: var(--font-family);
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+html, body {
+  min-height: 100%;
+}
+body {
+  overflow-x: hidden;
+}
+
+.p-button.p-button-icon-tiny{
+    font-size: 0.875rem;
+    padding: 0.1rem 0.1rem;
+    width: 1rem;
+    margin-right: 0.4rem;
+}
+
+/* temp workaround for the history */
+.tree {
+    width: 100% o !important;
+    position: relative !important;
+}
+
+.current-node {
+    background-color: rgb(233, 233, 233) !important;
+}
+
+strong{
+    font-color: $font-green;
+}
+
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

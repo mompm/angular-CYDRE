@@ -1,0 +1,53 @@
+<mat-stepper [linear]="true" #stepper>
+  <mat-step label="Choose your xml">
+    <mat-form-field>
+      <mat-label>Please choose an xml</mat-label>
+      <mat-select [(value)]="selected">
+        <mat-option>None</mat-option>
+        <mat-option value="option1">Cydre_inputs</mat-option>
+        <mat-option value="option2">Paradis_inputs</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <div>
+      <button mat-button matStepperNext>Lancer l'application</button>
+    </div>
+  </mat-step>
+  <mat-step label="Modify the xml file">
+
+    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+      <!-- This is the tree node template for leaf nodes -->
+      <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+        <!-- use a disabled button to provide padding for tree leaf -->
+        <button mat-icon-button disabled></button>
+        {{node.name}}
+        <div *ngIf="getTypeForName(TREE_DATA[0], node.name)" class="d-flex">
+          <div class="form-group mx-sm-3 mb-2">
+            <input class="form-control" placeholder="val">
+          </div>
+        </div>
+        <div *ngIf="!getTypeForName(TREE_DATA[0], node.name)">
+          <mat-slider class="mx-sm-5 mb-1" min="0" max="100000" step="1000" discrete [displayWith]="formatLabel">
+            <input matSliderThumb>
+          </mat-slider>
+        </div>
+
+
+      </mat-tree-node>
+      <!-- This is the tree node template for expandable nodes -->
+      <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
+        <button mat-icon-button matTreeNodeToggle
+                [attr.aria-label]="'Toggle ' + node.name">
+          <mat-icon class="mat-icon-rtl-mirror">
+            {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+          </mat-icon>
+        </button>
+        {{node.name}} {{node.type}}
+      </mat-tree-node>
+    </mat-tree>
+
+    <div>
+      <button mat-button matStepperPrevious>Back</button>
+    </div>
+  </mat-step>
+</mat-stepper>

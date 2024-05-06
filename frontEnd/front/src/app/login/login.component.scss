@@ -1,0 +1,64 @@
+@import "src/assets/styles/font-color.scss";
+.p-float-label{
+    border-color: $font-green;
+}
+
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.login-title {
+    text-align: center;
+}
+$verdigris: #35B8BEff;
+$verdigris-2: #35A2A7ff;
+$dark-cyan: #348C90ff;
+$myrtle-green: #347679ff;
+$dark-slate-gray: #345F61ff;
+$dark-slate-gray-2: #33494Aff;
+$jet: #333333ff;
+.gradient-custom-2 {
+  //background: linear-gradient(to bottom right, $font-green, $verdigris-2, $dark-cyan, $myrtle-green,$dark-slate-gray, $dark-slate-gray-2, $jet);
+  background: url("../../assets/img/background.png");
+}
+
+@media (min-width: 768px) {
+  .gradient-form {
+  }
+}
+@media (min-width: 769px) {
+  .gradient-custom-2 {
+    border-top-right-radius: .3rem;
+    border-bottom-right-radius: .3rem;
+  }
+}
+.form-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+//button {
+//  background-color: $font-green;
+//  border-color: $font-green;
+//  color: 35B8BEFF;
+//  width: 100px;
+//  border-radius: 5px;
+//}
+.p-button{
+    background-color: $font-green;
+    border-color: $font-green;
+    color: $font-white;
+}
+
+.p-button:hover{
+    background-color: $font-white;
+    border-color: $font-green;
+    color: $font-bold-green;
+}

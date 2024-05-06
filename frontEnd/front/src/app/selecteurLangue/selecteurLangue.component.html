@@ -1,0 +1,10 @@
+<div class="container-fluid p-0">
+    <div class="banner-language row" style="margin-right: 0;">
+        <div class="col-9 text-right fs-md-1 fs-sm-1" translate>bannerIntro</div>
+        <div class="col-1 text-right pr-3">
+          <select class="select-language" [(ngModel)]="selectLang" name="selectLang" (change)="setTransLanguage()">
+              <option *ngFor="let lang of transLang" value="{{lang}}" selected="selectLang">{{ lang }}</option>
+          </select>
+        </div>
+      </div>
+</div>

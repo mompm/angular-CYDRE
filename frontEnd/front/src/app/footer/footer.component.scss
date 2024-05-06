@@ -1,0 +1,12 @@
+@import "src/assets/styles/font-color";
+.container-fluid{
+  padding : 0;
+  margin: 0;
+}
+
+.banner{
+  color: $font-white;
+  text-align: center;
+  background-color: $font-green;
+
+}

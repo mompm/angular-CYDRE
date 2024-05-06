@@ -1,0 +1,17 @@
+@import "src/assets/styles/font-color.scss";
+.banner-language{
+    color: $font-white;
+    text-align: center;
+    background-color: $font-black;
+}
+
+
+.select-language{
+    background-color: $font-white;
+    border: solid 1px $font-black;
+    border-color: $font-white;
+    color: $font-black;
+    width: 70px;
+    border-radius: 5px;
+    text-align: center;
+}

@@ -1,0 +1,33 @@
+<div class="title">Hydro</div>
+
+
+<!-- routerlink intercept the click event to change the route without having to reload the entire app -->
+<a routerLink="/menu">Back to menu</a>
+
+    <br><br>
+
+<button (click)="parseIntoJson()">load data</button> <!-- button to let the variable parameters being filled to avoid a null object because of promise which is asynchronous -->
+
+
+    <br><br>
+    
+
+<button (click)="runCydre()">RUN!</button>
+
+
+<app-header></app-header>
+
+<app-body [parameters] = "[parameters]"></app-body>
+
+
+<!-- 
+<div class="main">
+    <div class="float-table">
+       
+    </div>
+
+    <div class="float-history">
+        <io-tree-history style="height: 80%" [svgIconSize]="60" >
+        </io-tree-history>
+    </div>
+</div> -->

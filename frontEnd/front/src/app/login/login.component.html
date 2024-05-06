@@ -1,0 +1,70 @@
+<!--<div class="login-container">-->
+<!--    <h2 class="login-title" translate>loginNoun</h2>-->
+<!--    <form class="form-container">-->
+<!--        <div class="form-group">-->
+<!--            <span class="p-float-label">-->
+<!--                <input pInputText id="username" name="username" [(ngModel)]="username" required />-->
+<!--                <label htmlFor="username" translate>username</label>-->
+<!--            </span>-->
+<!--        </div>-->
+<!--        <div class="form-group">-->
+<!--            <span class="p-float-label">-->
+<!--                <input pInputText id="password" name="password" [(ngModel)]="password" required />-->
+<!--                <label htmlFor="password" translate>password</label>-->
+<!--            </span>-->
+<!--        </div>-->
+<!--        <button type="submit" pButton class="p-button-primary" (click)="onSubmit()" translate>submit</button>-->
+<!--    </form>-->
+<!--</div>-->
+
+<div class="gradient-form" style="background-color: #eee;">
+  <div class="container py-5" style="margin-bottom: 0">
+    <div class="row d-flex justify-content-center align-items-center">
+      <div class="col-xl-10">
+        <div class="card rounded-3 text-black">
+          <div class="row g-0">
+            <div class="col-lg-6">
+              <div class="card-body p-md-5 mx-md-4">
+
+                <div class="text-center">
+                  <img src="../../assets/img/logo1.png"
+                       style="width: 185px;" alt="logo">
+                  <h4 class="mt-1 mb-5 pb-1">Welcome to CYDRE Project</h4>
+                </div>
+
+                <form>
+                  <div class="form-outline mb-4">
+
+                    <label class="form-label" for="form2Example11" translate>username</label>
+                    <input id="form2Example11" class="form-control"
+                           [placeholder]="'inputUsername' | translate" />
+                  </div>
+
+                  <div class="form-outline mb-4">
+                    <label class="form-label" for="form2Example22" translate>password</label>
+
+                    <input type="password" id="form2Example22" class="form-control"
+                           [placeholder]="'inputPassword' | translate"/>
+                  </div>
+
+                  <div class="text-center pt-1 mb-5 pb-1 ">
+<!--                    <button class="btn btn-primary btn-block fa-lg gradient-custom-2 mb-3" type="button" (click)="onSubmit()">Log in</button>-->
+<!--                    <button class="button fa-lg mb-3" type="button" (click)="onSubmit()">Log in</button>-->
+                    <button type="submit" class="p-button" (click)="onSubmit()" translate>submit</button>
+
+                  </div>
+                </form>
+
+              </div>
+            </div>
+            <div class="col-lg-6 gradient-custom-2 d-flex align-items-center">
+              <div class="col-12 text-center text-white mx-auto">
+                <p class="h1" [innerHTML]="'loginTitle' | translate"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

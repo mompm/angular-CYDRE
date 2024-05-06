@@ -1,0 +1,10 @@
+<div class="title">Results</div>
+
+
+<a routerLink="/menu">Back to menu</a>
+
+
+<div *ngIf="result">
+    <pre>{{ result | json }}</pre>
+  </div>
+  <div *ngIf="!result">Loading...</div>

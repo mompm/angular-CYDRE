@@ -1,0 +1,80 @@
+@import "src/assets/styles/font-color.scss";
+
+.navbar-underline-onglet {
+    display: inline-block;
+    position: relative;
+    color: $font-white;
+  }
+
+
+
+.navbar-underline-onglet::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  transform: scaleX(0);
+  height: 2px;
+  bottom: 0;
+  left: 0;
+  background-color: $font-white;
+  transform-origin: bottom right;
+  transition: transform 0.25s ease-out;
+}
+
+.navbar-underline-onglet:hover::after {
+  transform: scaleX(1);
+  transform-origin: bottom left;
+}
+
+//ne pas changer ce nom il s'agit du style de l'élèment <li><a> dans le html
+li a{
+  margin-right: 20px;
+}
+
+//ne pas changer ce nom il s'agit du style de l'élèment <a> dans le html
+a{
+  text-decoration: none;
+  color: $font-white;
+  font-weight: 500;
+  font-size: 1.25rem;
+  text-align: center;
+
+}
+a:hover{
+  color: $font-white;
+}
+
+//ne pas change ce nom il s'agit du style de l'élèment <img> dans le html
+img{
+  margin-right: 1%;
+
+}
+
+.menu-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.menu-button ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+}
+
+.menu-button li {
+  margin: 0 10px; /* Adjust the margin as needed */
+}
+
+.menu-button a {
+  text-decoration: none;
+  color: black; /* Change the color as needed */
+}
+.logo{
+  display: flex;
+}
+
+.cydre-logo{
+  margin-left: 5em;
+}

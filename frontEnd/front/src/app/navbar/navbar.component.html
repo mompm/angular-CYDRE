@@ -1,0 +1,23 @@
+<div class="container-fluid p-0">
+    <nav class="navbar sticky-top navbar-expand-lg" style="background: #333">
+      <div class="container-fluid">
+        <div class="navbar-brand col-6">
+          <a href="/home"><img src="../../assets/img/logo1.png"></a>
+        </div>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapseNavbar" aria-controls="collapseNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+  
+        <div class="collapse navbar-collapse col-6 text-right " id="collapseNavbar">
+          <ul class="navbar-nav mr-auto nav-nav">
+            <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li>
+            <li *ngIf="!this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite"  routerLinkActive="active" translate (click)="login()">fiche de site</a></li>
+            <li *ngIf="!this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/login"  routerLinkActive="active" translate (click)="login()">login</a></li>
+            <li *ngIf="this.authService.isLoggedIn" ><a class="navbar-underline-onglet menu-item" routerLink="/modeling" routerLinkActive="active" translate (click)="data()">data</a></li>
+            <li *ngIf="this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/settings" routerLinkActive="active" translate (click)="settings()">settings</a></li>
+            <li *ngIf="this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/login"  routerLinkActive="active" translate (click)="logout()">logout</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+</div>  

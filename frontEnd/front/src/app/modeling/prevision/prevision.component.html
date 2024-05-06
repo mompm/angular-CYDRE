@@ -1,0 +1,11 @@
+<div class="container-fluid d-flex justify-content-center">
+  <div *ngIf="!show">
+    <button class="p-button" (click)="show = !show">Prediction</button>
+  </div>
+
+  <br>
+  <div *ngIf="show">
+    <mat-spinner color="primary"></mat-spinner>
+  </div>
+</div>
+
