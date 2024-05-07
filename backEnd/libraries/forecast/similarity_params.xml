@@ -1,0 +1,67 @@
+<ParametersGroup name="Time">
+	<Parameter name="time_step">
+		<description>Variable time step (can be daily 'D', weekly 'W' or monthly 'M').</description>
+		<type>string</type>
+		<possible_values>D; W; M</possible_values>
+		<value/>
+		<default_value>D</default_value>
+	</Parameter>
+	<Parameter name="similarity_period_calculation">
+		<description>Similarity period calculation between two timeseries.</description>
+		<type>string</type>
+		<possible_values>period; ndays</possible_values>
+		<value/>
+		<default_value>ndays</default_value>
+	</Parameter>
+	<Parameter name="ndays_before_forecast">
+		<description>Number of days before the forescast day (or current date).</description>
+		<type>int</type>
+		<possible_values>period; ndays</possible_values>
+		<value/>
+		<default_value>60</default_value>
+	</Parameter>
+</ParametersGroup>
+<ParametersGroup name="Calculation">
+	<Parameter name="metric">
+		<description>method for quantifying correlation between two time series</description>
+		<type>string</type>
+		<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+		<value/>
+		<default_value>pearson</default_value>
+	</Parameter>
+	<Parameter name="scale">
+		<description>conversion scale used in similarity calculation</description>
+		<type>string</type>
+		<possible_values>normal, log</possible_values>
+		<value/>
+		<default_value>normal</default_value>
+	</Parameter>
+	<Parameter name="selection_method">
+		<description>selection_method for extracting top scenarios from the correlation matrix</description>
+		<type>string</type>
+		<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+		<value/>
+		<default_value>minimal_threshold</default_value>
+	</Parameter>
+	<Parameter name="minimal_threshold">
+		<description>minimum threshold for extracting top scenarios from the correlation matrix</description>
+		<type>double</type>
+		<possible_values/>
+		<value/>
+		<default_value>0.6</default_value>
+	</Parameter>
+	<Parameter name="maximal_percentage">
+		<description>maximal_percentage for extracting top scenarios from the correlation matrix</description>
+		<type>double</type>
+		<possible_values/>
+		<value/>
+		<default_value>0.7</default_value>
+	</Parameter>
+	<Parameter name="n_scenarios">
+		<description>Number of top scenarios from the correlation matrix</description>
+		<type>double</type>
+		<possible_values/>
+		<value/>
+		<default_value>15</default_value>
+	</Parameter>
+</ParametersGroup>

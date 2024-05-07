@@ -1,0 +1,56 @@
+<ParametersGroup name='UserConfig'>
+	<Parameter name="user_watershed_id">
+		<description>ID of the watershed for which we wish to predict the seasonal streamflow.</description>
+		<type>string</type>
+		<possible_values/>
+		<value/>
+		<default_value>J0626610</default_value>
+	</Parameter>
+	<Parameter name="user_horizon">
+		<description>Forecast horizon in days.</description>
+		<type>int</type>
+		<possible_values/>
+		<value/>
+		<default_value>90</default_value>
+	</Parameter>
+</ParametersGroup>
+<ParametersGroup name='General'>
+	<Parameter name="datasets">
+		<description>Name of the regional database file encompassing hydrological, climatic, and geological data from various watersheds.
+		</description>
+		<type>string</type>
+		<possible_values/>
+		<value/>
+		<default_value>regional_object</default_value>
+	</Parameter>
+	<Parameter name="version">
+		<description>Application version: can be an execution version (application) for a user or a test version (test) for a developer.
+		</description>
+		<type>string</type>
+		<possible_values>application; test; plot</possible_values>
+		<value/>
+		<default_value>test</default_value>
+	</Parameter>
+	<Parameter name="date">
+		<description>Application date at which we would calculate streamflow projections.
+		</description>
+		<type>string</type>
+		<possible_values></possible_values>
+		<value/>
+		<default_value>2019-07-22</default_value>
+	</Parameter>
+</ParametersGroup>
+<ParametersGroup name="Similarity">
+	<ParametersGroup name='specific_discharge'>
+		&similarity_scheme;
+	</ParametersGroup>
+	<ParametersGroup name='recharge'>
+		&similarity_scheme;
+	</ParametersGroup>
+	<ParametersGroup name='runoff'>
+		&similarity_scheme;
+	</ParametersGroup>
+	<ParametersGroup name='water_table_depth'>
+		&similarity_scheme;
+	</ParametersGroup>
+</ParametersGroup>

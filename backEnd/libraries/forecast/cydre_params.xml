@@ -1,0 +1,329 @@
+<ParametersGroup name="UserConfig">
+	<Parameter name="user_watershed_id">
+		<description>ID of the watershed for which we wish to predict the seasonal streamflow.</description>
+		<type>string</type>
+		<possible_values/>
+		<value>J0014010</value>
+		<default_value>J0626610</default_value>
+	</Parameter>
+	<Parameter name="user_horizon">
+		<description>Forecast horizon in days.</description>
+		<type>int</type>
+		<possible_values/>
+		<value>90</value>
+		<default_value>90</default_value>
+	</Parameter>
+</ParametersGroup>
+<ParametersGroup name="General">
+	<Parameter name="datasets">
+		<description>Name of the regional database file encompassing hydrological, climatic, and geological data from various watersheds.
+		</description>
+		<type>string</type>
+		<possible_values/>
+		<value>data.pkl</value>
+		<default_value>regional_object</default_value>
+	</Parameter>
+	<Parameter name="version">
+		<description>Application version: can be an execution version (application) for a user or a test version (test) for a developer.
+		</description>
+		<type>string</type>
+		<possible_values>application; test; plot</possible_values>
+		<value>test</value>
+		<default_value>test</default_value>
+	</Parameter>
+	<Parameter name="date">
+		<description>Application date at which we would calculate streamflow projections.
+		</description>
+		<type>string</type>
+		<possible_values/>
+		<value>2022-03-01</value>
+		<default_value>1990-02-26</default_value>
+	</Parameter>
+</ParametersGroup>
+<ParametersGroup name="Similarity">
+	<ParametersGroup name='spatial'>
+		<Parameter name='n_clusters'>
+			<description>Number of clusters for the watershed classification using KMEANS.</description>
+			<type>int</type>
+			<possible_values/>
+			<value>7</value>
+			<default_value>7</default_value>
+		</Parameter>
+	</ParametersGroup>	
+	<ParametersGroup name="specific_discharge">
+		<ParametersGroup name="Time">
+			<Parameter name="time_step">
+				<description>Variable time step (can be daily 'D', weekly 'W' or monthly 'M').</description>
+				<type>string</type>
+				<possible_values>D; W; M</possible_values>
+				<value>D</value>
+				<default_value>D</default_value>
+			</Parameter>
+			<Parameter name="similarity_period_calculation">
+				<description>Similarity period calculation between two timeseries.</description>
+				<type>string</type>
+				<possible_values>period; ndays</possible_values>
+				<value>ndays</value>
+				<default_value>ndays</default_value>
+			</Parameter>
+			<Parameter name="ndays_before_forecast">
+				<description>Number of days before the forescast day (or current date).</description>
+				<type>int</type>
+				<possible_values>period; ndays</possible_values>
+				<value>60</value>
+				<default_value>60</default_value>
+			</Parameter>
+		</ParametersGroup>
+		<ParametersGroup name="Calculation">
+			<Parameter name="metric">
+				<description>method for quantifying correlation between two time series</description>
+				<type>string</type>
+				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<value>dtw</value>
+				<default_value>pearson</default_value>
+			</Parameter>
+			<Parameter name="scale">
+				<description>conversion scale used in similarity calculation</description>
+				<type>string</type>
+				<possible_values>normal, log</possible_values>
+				<value>normal</value>
+				<default_value>normal</default_value>
+			</Parameter>
+			<Parameter name="selection_method">
+				<description>selection method for extracting top scenarios from the correlation matrix</description>
+				<type>string</type>
+				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<value>minimal_threshold</value>
+				<default_value>minimal_threshold</default_value>
+			</Parameter>
+			<Parameter name="minimal_threshold">
+				<description>minimum threshold for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.6</value>
+				<default_value>0.6</default_value>
+			</Parameter>
+			<Parameter name="maximal_percentage">
+				<description>maximal_percentage for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.7</value>
+				<default_value>0.7</default_value>
+			</Parameter>
+			<Parameter name="n_scenarios">
+				<description>Number of top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>15</value>
+				<default_value>15</default_value>
+			</Parameter>
+		</ParametersGroup>
+	</ParametersGroup>
+	<ParametersGroup name="recharge">
+		<ParametersGroup name="Time">
+			<Parameter name="time_step">
+				<description>Variable time step (can be daily 'D', weekly 'W' or monthly 'M').</description>
+				<type>string</type>
+				<possible_values>D; W; M</possible_values>
+				<value>D</value>
+				<default_value>D</default_value>
+			</Parameter>
+			<Parameter name="similarity_period_calculation">
+				<description>Similarity period calculation between two timeseries.</description>
+				<type>string</type>
+				<possible_values>period; ndays</possible_values>
+				<value>ndays</value>
+				<default_value>ndays</default_value>
+			</Parameter>
+			<Parameter name="ndays_before_forecast">
+				<description>Number of days before the forescast day (or current date).</description>
+				<type>int</type>
+				<possible_values>period; ndays</possible_values>
+				<value>60</value>
+				<default_value>60</default_value>
+			</Parameter>
+		</ParametersGroup>
+		<ParametersGroup name="Calculation">
+			<Parameter name="metric">
+				<description>method for quantifying correlation between two time series</description>
+				<type>string</type>
+				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<value>dtw</value>
+				<default_value>pearson</default_value>
+			</Parameter>
+			<Parameter name="scale">
+				<description>conversion scale used in similarity calculation</description>
+				<type>string</type>
+				<possible_values>normal, log</possible_values>
+				<value>normal</value>
+				<default_value>normal</default_value>
+			</Parameter>
+			<Parameter name="selection_method">
+				<description>selection_method for extracting top scenarios from the correlation matrix</description>
+				<type>string</type>
+				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<value>minimal_threshold</value>
+				<default_value>minimal_threshold</default_value>
+			</Parameter>
+			<Parameter name="minimal_threshold">
+				<description>minimum threshold for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.6</value>
+				<default_value>0.6</default_value>
+			</Parameter>
+			<Parameter name="maximal_percentage">
+				<description>maximal_percentage for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.7</value>
+				<default_value>0.7</default_value>
+			</Parameter>
+			<Parameter name="n_scenarios">
+				<description>Number of top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>15</value>
+				<default_value>15</default_value>
+			</Parameter>
+		</ParametersGroup>
+	</ParametersGroup>
+	<ParametersGroup name="runoff">
+		<ParametersGroup name="Time">
+			<Parameter name="time_step">
+				<description>Variable time step (can be daily 'D', weekly 'W' or monthly 'M').</description>
+				<type>string</type>
+				<possible_values>D; W; M</possible_values>
+				<value>D</value>
+				<default_value>D</default_value>
+			</Parameter>
+			<Parameter name="similarity_period_calculation">
+				<description>Similarity period calculation between two timeseries.</description>
+				<type>string</type>
+				<possible_values>period; ndays</possible_values>
+				<value>ndays</value>
+				<default_value>ndays</default_value>
+			</Parameter>
+			<Parameter name="ndays_before_forecast">
+				<description>Number of days before the forescast day (or current date).</description>
+				<type>int</type>
+				<possible_values>period; ndays</possible_values>
+				<value>60</value>
+				<default_value>60</default_value>
+			</Parameter>
+		</ParametersGroup>
+		<ParametersGroup name="Calculation">
+			<Parameter name="metric">
+				<description>method for quantifying correlation between two time series</description>
+				<type>string</type>
+				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<value>pearson</value>
+				<default_value>pearson</default_value>
+			</Parameter>
+			<Parameter name="scale">
+				<description>conversion scale used in similarity calculation</description>
+				<type>string</type>
+				<possible_values>normal, log</possible_values>
+				<value>normal</value>
+				<default_value>normal</default_value>
+			</Parameter>
+			<Parameter name="selection_method">
+				<description>selection_method for extracting top scenarios from the correlation matrix</description>
+				<type>string</type>
+				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<value>minimal_threshold</value>
+				<default_value>minimal_threshold</default_value>
+			</Parameter>
+			<Parameter name="minimal_threshold">
+				<description>minimum threshold for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.6</value>
+				<default_value>0.6</default_value>
+			</Parameter>
+			<Parameter name="maximal_percentage">
+				<description>maximal_percentage for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.7</value>
+				<default_value>0.7</default_value>
+			</Parameter>
+			<Parameter name="n_scenarios">
+				<description>Number of top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>15</value>
+				<default_value>15</default_value>
+			</Parameter>
+		</ParametersGroup>
+	</ParametersGroup>
+	<ParametersGroup name="water_table_depth">
+		<ParametersGroup name="Time">
+			<Parameter name="time_step">
+				<description>Variable time step (can be daily 'D', weekly 'W' or monthly 'M').</description>
+				<type>string</type>
+				<possible_values>D; W; M</possible_values>
+				<value>D</value>
+				<default_value>D</default_value>
+			</Parameter>
+			<Parameter name="similarity_period_calculation">
+				<description>Similarity period calculation between two timeseries.</description>
+				<type>string</type>
+				<possible_values>period; ndays</possible_values>
+				<value>ndays</value>
+				<default_value>ndays</default_value>
+			</Parameter>
+			<Parameter name="ndays_before_forecast">
+				<description>Number of days before the forescast day (or current date).</description>
+				<type>int</type>
+				<possible_values>period; ndays</possible_values>
+				<value>60</value>
+				<default_value>60</default_value>
+			</Parameter>
+		</ParametersGroup>
+		<ParametersGroup name="Calculation">
+			<Parameter name="metric">
+				<description>method for quantifying correlation between two time series</description>
+				<type>string</type>
+				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<value>dtw</value>
+				<default_value>pearson</default_value>
+			</Parameter>
+			<Parameter name="scale">
+				<description>conversion scale used in similarity calculation</description>
+				<type>string</type>
+				<possible_values>normal, log</possible_values>
+				<value>normal</value>
+				<default_value>normal</default_value>
+			</Parameter>
+			<Parameter name="selection_method">
+				<description>selection_method for extracting top scenarios from the correlation matrix</description>
+				<type>string</type>
+				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<value>minimal_threshold</value>
+				<default_value>minimal_threshold</default_value>
+			</Parameter>
+			<Parameter name="minimal_threshold">
+				<description>minimum threshold for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.6</value>
+				<default_value>0.6</default_value>
+			</Parameter>
+			<Parameter name="maximal_percentage">
+				<description>maximal_percentage for extracting top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>0.7</value>
+				<default_value>0.7</default_value>
+			</Parameter>
+			<Parameter name="n_scenarios">
+				<description>Number of top scenarios from the correlation matrix</description>
+				<type>double</type>
+				<possible_values/>
+				<value>15</value>
+				<default_value>15</default_value>
+			</Parameter>
+		</ParametersGroup>
+	</ParametersGroup>
+</ParametersGroup>
