@@ -3,9 +3,9 @@ import { DataService } from 'src/app/service/data.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as L from 'leaflet';
 import CorrespondancesBSSData from 'src/app/model/CorrespondanceBSSData';
-import DFFData from 'src/app/model/DFFData';
-import PiezoCoordData from 'src/app/model/PiezoCoordData';
-import gdfData from 'src/app/model/gdfData';
+import GDFPiezometryData  from 'src/app/model/GDFPiezometryData ';
+import GDFWatershedsData from 'src/app/model/GDFWatershedsData';
+import GDFStationData from 'src/app/model/GDFStationData';
 
 
 @Component({
@@ -18,9 +18,9 @@ import gdfData from 'src/app/model/gdfData';
     private RegionalMapLeaflet!: L.Map;
     MapExecutee = false; 
     CorrespondanceBSSs: CorrespondancesBSSData[] = [];
-    gdfData: gdfData[]  = [];
-    DFFDatas : DFFData[] = [];
-    PiezoCoordData: PiezoCoordData[] = [];
+    GDFWatershedsDatas: GDFWatershedsData[]  = [];
+    GDFPiezometryDatas : GDFPiezometryData [] = [];
+    GDFStationDatas: GDFStationData[]  =[];
 
 
 
@@ -52,9 +52,9 @@ import gdfData from 'src/app/model/gdfData';
 
     ngOnInit() {
       this.initCorrespondanceBSS();
-      this.initgdfData();
-      this.initDFF();
-      this.initPiezoCoord();
+      this.initGDFWatersheds();
+      this.initGDFPiezometry();
+      this.initGDFStations();
       
     }
 
@@ -70,7 +70,7 @@ import gdfData from 'src/app/model/gdfData';
        // fonction vérifiant en permanence si les conditions sont ok 
        ngDoCheck() {      
         // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
-        if (this.DFFDatas.length > 0 && this.PiezoCoordData.length > 0 && this.gdfData.length >0 && !this.MapExecutee) {
+        if (this.GDFStationDatas.length > 0 && this.GDFPiezometryDatas.length > 0 && this.GDFWatershedsDatas.length >0 && !this.MapExecutee) {
           //this.RegionalMap_Plotly(this.stationSelectionChange);
           this.RegionalMap_Leaflet(this.stationSelectionChange);
           //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
@@ -78,16 +78,18 @@ import gdfData from 'src/app/model/gdfData';
         }
       }
 
-
-    //récupère les données DFF (station mais avec les noms récuperer de Ades ) 
-    //contenus:index(number), name(string), area(number), x_wgs84(number), y_wgs84 (number)
-    //format coordonées dans  x_wgs84 et y_wgs84 : wgs84
-    //location du fichier origine : backend/outpouts/data.pkl (attention les données sont transformormé dans le backend)
-    initDFF(){
-      this.dataService.getMesurementDFF().then(data => {
-        this.DFFDatas = data;
+    //récupère les données des gdf des stations
+    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+    //contenus dans geometry: coordinates et type  
+    //location du fichier origine :backend/data/stations.csv
+    initGDFStations() {
+      this.dataService.getMesurementGDFStation().then(data => {
+        this.GDFStationDatas = data;  
+        console.log(this.GDFStationDatas);
       });
     }
+
 
 
 
@@ -99,24 +101,26 @@ import gdfData from 'src/app/model/gdfData';
         this.CorrespondanceBSSs = correspondance;
       });
     }
-    //récupère les données des gdf (GeoDataFrame des stations)
-    //contenus: index(string), name(string), geometry_area(number), hydro_area(number),K1 (any), geometry(any)
+
+        //récupère les données des gdf des stations
+    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
     //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
     //contenus dans geometry: coordinates et type  
-    //location du fichier origine :backend/outpouts/data.pkl puis transformé en geodataframe avec la fonction create_watershed_geodataframe en backend
-    initgdfData() {
-      this.dataService.getDatagdf().then(data => {
-        this.gdfData = data;  
+    //location du fichier origine :backend/data/stations.csv
+    initGDFWatersheds() {
+      this.dataService.getMesurementGDFWatersheds().then(data => {
+        this.GDFWatershedsDatas = data;  
       });
     }
 
-    //récupère les données des coordonées des piezometres
-    //contenus:identifiant_BSS(string), x_wgs84(number), y_wgs84(number)
+    //récupère les données des gdf des piezometre
+    //contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
     //format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
+     //contenus dans geometry: coordinates et type  
     //location du fichier origine : backend/data/piezometry/stations.csv'
-    initPiezoCoord(){
-      this.dataService.getMesurementPiezoCoord().then(data => {
-        this.PiezoCoordData = data;
+    initGDFPiezometry(){
+      this.dataService.getMesurementGDFPiezometre().then(data => {
+        this.GDFPiezometryDatas = data;
       });
     }
 
@@ -141,7 +145,7 @@ import gdfData from 'src/app/model/gdfData';
 
       //création des polygones de toutes les stations
       //boucle pour parcourir toutes les stations
-      this.gdfData.forEach((data, index) => {
+      this.GDFWatershedsDatas.forEach((data, index) => {
         //récupère les coordonées du polygones
         const polygonCoords= data.geometry.coordinates[0].map((coord: any[]) => [coord[1], coord[0]]);
         //ajout du polygone
@@ -158,7 +162,7 @@ import gdfData from 'src/app/model/gdfData';
 
       // Création du polygone autour de la station sélectionnée
       //vérifie que la station existe dans GDF
-      const stationData = this.gdfData.find(data => data.index === stationID);
+      const stationData = this.GDFWatershedsDatas.find(data => data.index === stationID);
       if (!stationData) return; 
       //récupère les coordonées du polygones
       const selectedPolygonCoords = stationData.geometry.coordinates[0];
@@ -174,20 +178,20 @@ import gdfData from 'src/app/model/gdfData';
 
       //création des points station
       //boucle parcourant tous les points des stations
-      for (let i = 0; i < this.DFFDatas.length; i++) {
+      for (let i = 0; i < this.GDFStationDatas.length; i++) {
         // Création du marqueur
-        const markerstations = L.circleMarker([this.DFFDatas[i].y_wgs84, this.DFFDatas[i].x_wgs84], {radius: 1.2,color: 'black'})
-            .bindPopup(`<b>${this.DFFDatas[i].name}</b><br>${this.DFFDatas[i].y_wgs84}<br>${this.DFFDatas[i].x_wgs84}`);
+        const markerstations = L.circleMarker([this.GDFStationDatas[i].y_outlet, this.GDFStationDatas[i].x_outlet], {radius: 1.2,color: 'black'})
+            .bindPopup(`<b>${this.GDFStationDatas[i].name}</b><br>${this.GDFStationDatas[i].y_outlet}<br>${this.GDFStationDatas[i].x_outlet}`);
         // Ajout du marqueur 
         markerstations.addTo(this.RegionalMapLeaflet);
       }
 
       //création des point piezo  
       //boucle parcourant tous les points des piezometre  
-      for (let i = 0; i < this.PiezoCoordData.length; i++){
+      for (let i = 0; i < this.GDFPiezometryDatas.length; i++){
         // Création du marqueur
-        const markerpiezo = L.circleMarker([this.PiezoCoordData[i].y_wgs84,this.PiezoCoordData[i].x_wgs84],{radius:1 , color: '#D800A0'})
-          .bindPopup(`<b>${this.PiezoCoordData[i].identifiant_BSS}</b><br>${this.PiezoCoordData[i].y_wgs84}<br>${this.PiezoCoordData[i].x_wgs84}`)
+        const markerpiezo = L.circleMarker([this.GDFPiezometryDatas[i].y_wgs84,this.GDFPiezometryDatas[i].x_wgs84],{radius:1 , color: '#D800A0'})
+          .bindPopup(`<b>${this.GDFPiezometryDatas[i].identifiant_BSS}</b><br>${this.GDFPiezometryDatas[i].y_wgs84}<br>${this.GDFPiezometryDatas[i].x_wgs84}`)
         // Ajout du marqueur 
         markerpiezo.addTo(this.RegionalMapLeaflet);
       }
@@ -209,11 +213,11 @@ import gdfData from 'src/app/model/gdfData';
       showlegend: false
     };
     // vérifie si la station sélectionner est bien dans les stations
-    const stationData = this.gdfData.find(data => data.index === stationID);
+    const stationData = this.GDFWatershedsDatas.find(data => data.index === stationID);
     if (!stationData) return; // Sinon sort de la fonction 
 
     // Ajoute couches tous les contours de stations 
-    const watershedPolygons = this.gdfData.map((data, index) => {
+    const watershedPolygons = this.GDFWatershedsDatas.map((data, index) => {
       const polygonCoords = data.geometry.coordinates[0];
       return {
         type: 'scattermapbox',
@@ -247,10 +251,10 @@ import gdfData from 'src/app/model/gdfData';
     const nom_station: any[] = [];
     const x_wgs84_station: any[] = [];
     const y_wgs84_station: any[] = [];
-    for (let i = 0; i < this.DFFDatas.length; i++) {
-        nom_station.push(this.DFFDatas[i].name);
-        x_wgs84_station.push(this.DFFDatas[i].x_wgs84);
-        y_wgs84_station.push(this.DFFDatas[i].y_wgs84);
+    for (let i = 0; i < this.GDFStationDatas.length; i++) {
+        nom_station.push(this.GDFStationDatas[i].name);
+        x_wgs84_station.push(this.GDFStationDatas[i].x_outlet);
+        y_wgs84_station.push(this.GDFStationDatas[i].y_outlet);
     }
     //Ajoute couches des points stations
     figData.push({
@@ -267,10 +271,10 @@ import gdfData from 'src/app/model/gdfData';
     const bss_piezo: any[] = [];
     const x_wgs84_piezo: any[] = [];
     const y_wgs84_piezo: any[] = [];
-    for (let i = 0; i < this.PiezoCoordData.length; i++) {
-      bss_piezo.push(this.PiezoCoordData[i].identifiant_BSS);
-      x_wgs84_piezo.push(this.PiezoCoordData[i].x_wgs84);
-      y_wgs84_piezo.push(this.PiezoCoordData[i].y_wgs84);
+    for (let i = 0; i < this.GDFPiezometryDatas.length; i++) {
+      bss_piezo.push(this.GDFPiezometryDatas[i].identifiant_BSS);
+      x_wgs84_piezo.push(this.GDFPiezometryDatas[i].x_wgs84);
+      y_wgs84_piezo.push(this.GDFPiezometryDatas[i].y_wgs84);
     }
     //Ajoute la couche des points piezo
     figData.push({

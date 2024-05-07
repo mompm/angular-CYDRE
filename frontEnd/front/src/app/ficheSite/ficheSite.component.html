@@ -18,8 +18,8 @@
         <div>
           <mat-form-field class="first-dropdown">
             <mat-select placeholder="Sélectionnez une station" [(ngModel)]="selectedStationID" (ngModelChange)="onStationSelectionChange($event)">
-              <mat-option *ngFor="let location of locations" [value]="location.ID">
-                {{ location.ID }} - {{ location.name }}
+              <mat-option *ngFor="let location of GDFStationDatas" [value]="location.index">
+                {{ location.index }} - {{ location.station_name}}
               </mat-option>
             </mat-select>
         </mat-form-field>

@@ -3,10 +3,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { DataService } from 'src/app/service/data.service';
 import * as Plotlydist from 'plotly.js-dist';
 import { Layout ,AxisType} from 'plotly.js-dist';
-import StationsData from '../model/StationsData';
 import OldBSSData from '../model/OldBSSData';
 import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
 import StationDischargedata from '../model/StationDischargedata';
+import GDFPiezometryData from '../model/GDFPiezometryData ';
+import GDFStationData from '../model/GDFStationData';
 
 @Component({
     selector: 'app-fiche-site',
@@ -16,7 +17,7 @@ import StationDischargedata from '../model/StationDischargedata';
 
   export class FicheSiteComponent {
     isDialogOpen: boolean = false;
-    locations: StationsData[] = []; 
+
     selectedStationID: string = 'J0014010';
     selectedOldBSS :string = '02478X0156/PZ';
     OdlBSSs: OldBSSData[] = [];
@@ -27,6 +28,8 @@ import StationDischargedata from '../model/StationDischargedata';
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
+    GDFPiezometryDatas: GDFPiezometryData [] = [];
+    GDFStationDatas: GDFStationData[]  =[];
   
 
 
@@ -36,17 +39,27 @@ import StationDischargedata from '../model/StationDischargedata';
       //la plupart des fonctions récupères des donnée en backend (à changer pour les mettre au démarrage de app)
       //this.stationSelectionChange.emit(this.selectedStationID);
       this.stationMap = 'J0014010';
-      this.initLocations();
       this.initCorrespondanceBSS();
       this.initOldBSS(); 
       this.initStationDischarge(this.selectedStationID);
+      this.initGDFStations();
     }
-
-
 
     // affiche le popup du bouton info
     toggleDialog(): void {
       this.isDialogOpen = !this.isDialogOpen;
+    }
+
+    //récupère les données des gdf des stations
+    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+    //contenus dans geometry: coordinates et type  
+    //location du fichier origine :backend/data/stations.csv
+    initGDFStations() {
+      this.dataService.getMesurementGDFStation().then(data => {
+        this.GDFStationDatas = data;  
+        console.log(this.GDFStationDatas);
+      });
     }
 
 
@@ -97,19 +110,6 @@ import StationDischargedata from '../model/StationDischargedata';
       //console.log(processedData)
     }
 
-    //récupère les données des stations en backend 
-    //contenus: ID(string), name(string), x_outlet(number), y_outlet(number), Area(string)
-    //format coordonées dans x_outlet et y_outlet : wgs84
-    //location du fichier origine : backend/data/map.csv 
-    initLocations() {
-      this.dataService.getMesurementCoordinates().then(stations => {
-        this.locations = stations;
-        // met dans le bon format les names
-        this.locations.forEach(station => {
-          station.name = decodeURIComponent(escape(station.name));
-        });
-      });
-    }
 
     //récupère les données oldBSS
     //contenus : X_WGS84(string), Y_WGS84(string), Identifiant_BSS(string), Ancien_code_national_BSS(string)

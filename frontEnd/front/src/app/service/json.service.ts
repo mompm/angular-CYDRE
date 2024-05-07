@@ -1,13 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {lastValueFrom } from 'rxjs';
-import StationsData from '../model/StationsData';
 import OldBSSData from '../model/OldBSSData';
 import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
-import gdfData from '../model/gdfData';
+import GDFWatershedsData from '../model/GDFWatershedsData';
 import DFFData from '../model/DFFData';
-import PiezoCoordData from '../model/PiezoCoordData';
+import GDFPiezometryData  from '../model/GDFPiezometryData ';
 import StationDischargedata from '../model/StationDischargedata';
+import GDFStationData from '../model/GDFStationData';
 
 
 
@@ -18,9 +18,6 @@ export class JsonService {
 
   constructor(private http: HttpClient){}
 
-	getCoordinates(): Promise<Array<StationsData>>{ 
-		return lastValueFrom(this.http.get<Array<StationsData>>("osur/getCoordinates"));
-	}
 
 	getOldBSS() : Promise<Array<OldBSSData>> {
 		return lastValueFrom(this.http.get<Array<OldBSSData>>("osur/getoldBSS"));
@@ -30,16 +27,20 @@ export class JsonService {
 		return lastValueFrom(this.http.get<Array<CorrespondancesBSSData>>("osur/getcorrespondanceBSS"));
 	}
 
-	getdatagdf(): Promise<Array<gdfData>> {
-		return lastValueFrom(this.http.get<Array<gdfData>>("osur/getdatagdf"));
+	getdataGDFWatersheds(): Promise<Array<GDFWatershedsData>> {
+		return lastValueFrom(this.http.get<Array<GDFWatershedsData>>("osur/GetGDFWatersheds"));
 	  }
 	
 	getdataDFF() : Promise<Array<DFFData>>{
 		return lastValueFrom(this.http.get<Array<DFFData>>("osur/getdff"));
 	}
 
-	getdataPiezoCoord() : Promise<Array<PiezoCoordData>>{
-		return lastValueFrom(this.http.get<Array<PiezoCoordData>>("osur/getCoordpiezo"));
+	gedataGDFStations(): Promise<Array<GDFStationData>>{
+		return lastValueFrom(this.http.get<Array<GDFStationData>>("osur/GetGDFStations"));
+	}
+
+	getdataGDFPiezometry() : Promise<Array<GDFPiezometryData>>{
+		return lastValueFrom(this.http.get<Array<GDFPiezometryData>>("/osur/getGDFPiezometry"));
 	}
 
 	getStationDischargeData(id: string): Promise<Array<StationDischargedata>> {

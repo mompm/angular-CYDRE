@@ -3,13 +3,13 @@ import { Parameter, ParametersGroup } from '../model/parameters-group';
 import { Parser,Builder} from 'xml2js';
 import { XmlService } from './xml.service';
 import { JsonService } from './json.service';
-import StationsData from '../model/StationsData';
 import OldBSSData from '../model/OldBSSData';
 import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
-import gdfData from '../model/gdfData';
+import GDFWatershedsData from '../model/GDFWatershedsData';
 import DFFData from '../model/DFFData';
-import PiezoCoordData from '../model/PiezoCoordData';
+import GDFPiezometryData  from '../model/GDFPiezometryData ';
 import StationDischargedata from '../model/StationDischargedata';
+import GDFStationData from '../model/GDFStationData';
 
 
 @Injectable({
@@ -23,9 +23,7 @@ export class DataService { //service used to load the received xml and to conver
 
   constructor(private requestService: XmlService, private jsonService : JsonService) {}
   
-  getMesurementCoordinates(): Promise<Array<StationsData>>{ // request the list of measurement points
-    return this.jsonService.getCoordinates();
-  }
+
 
   getMesurementOldBSS(): Promise<Array<OldBSSData>>{
     return this.jsonService.getOldBSS();
@@ -35,16 +33,20 @@ export class DataService { //service used to load the received xml and to conver
     return this.jsonService.getCorrespondanceBSS();
   }
 
-  getDatagdf(): Promise<Array<gdfData>> {
-    return this.jsonService.getdatagdf();
+  getMesurementGDFWatersheds(): Promise<Array<GDFWatershedsData>> {
+    return this.jsonService.getdataGDFWatersheds();
   }
 
   getMesurementDFF(): Promise<Array<DFFData>>{
     return this.jsonService.getdataDFF();
   }
 
-  getMesurementPiezoCoord(): Promise<Array<PiezoCoordData>>{
-    return this.jsonService.getdataPiezoCoord();
+  getMesurementGDFStation(): Promise<Array<GDFStationData>>{
+    return this.jsonService.gedataGDFStations();
+  }
+
+  getMesurementGDFPiezometre(): Promise<Array<GDFPiezometryData>>{
+    return this.jsonService.getdataGDFPiezometry();
   }
 
   getMesurementStationDischarge(id : string): Promise<Array<StationDischargedata>>{
