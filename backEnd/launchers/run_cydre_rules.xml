@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Jean-Raynald de Dreuzy (Géosciences Rennes) -->
+<!DOCTYPE rules SYSTEM "../reference_rules_scheme.dtd">
+
+<ParametersGroup name="run_cydre">
+	<ParametersGroup name="simulation">
+		&cydre;
+	</ParametersGroup>
+</ParametersGroup>
+
