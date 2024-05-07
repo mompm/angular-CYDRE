@@ -140,7 +140,7 @@ def get_correspondanceBSS():
 
 
 # Chemin vers le répertoire contenant les fichiers CSV
-hydrology_path = os.path.join(app_root,'data', 'hydrology')
+hydrology_path = os.path.join(app_root,'data', 'hydrometry', 'discharge')
 
 @app.route('/osur/stationDischarge/<string:id>', methods=['GET'])
 @cross_origin()
