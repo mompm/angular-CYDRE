@@ -29,7 +29,7 @@ chemin_absolu = os.path.abspath("api.py")
 app_root = os.path.dirname(chemin_absolu)
 
 
-stations = pd.read_csv(os.path.join(app_root, 'data', 'stations.csv'), delimiter=';', encoding='utf-8')
+stations = pd.read_csv(os.path.join(app_root, 'data', 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
 lambert93_to_wgs84 = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", always_xy=True)
 x_wgs84, y_wgs84 = lambert93_to_wgs84.transform(stations["x_outlet"], stations["y_outlet"])
 geometry_stations = [Point(xy) for xy in zip(x_wgs84, y_wgs84)]
