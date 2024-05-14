@@ -46,7 +46,11 @@ import {MatStepperModule} from '@angular/material/stepper';
 import {MatSelectModule} from "@angular/material/select";
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle'; 
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import { CreateAccountComponent } from './create-account/create-account.component';
+import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
+import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component'; 
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
 
 // End of Hoang module
 export function HttpLoaderFactory(http: HttpClient) {
@@ -74,6 +78,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     RessourceComponent,
     MapComponent,
     FooterComponent,
+    CreateAccountComponent,
+    SimulateurCydreComponent,
+    AnalyseDeSensibiliteComponent,
   ],
   imports: [
     BrowserModule,
@@ -108,6 +115,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatDialogModule,
     MatMenuModule,
     MatSlideToggleModule,
+    NgxSliderModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

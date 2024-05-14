@@ -15,19 +15,23 @@ export class NavbarComponent {
   isLoggedIn! : boolean;
 
   constructor(public authService : AuthService ){
+
+  }
+  ngOnInit(){
+    console.log(this.authService.getUser());
   }
 
 
 
   change(){
-    this.authService.isLogging = false;
+    // this.authService.isLogging = false;
   }
   logout(){
-    this.authService.isLoggedIn = false;
+    this.authService.logout();
     console.log("User logged out");
   }
   login(){
-    this.authService.isLogging = true;
+    // this.authService.isLogging = true;
     console.log("User clicked on login page");
   }
   home(){
@@ -41,5 +45,8 @@ export class NavbarComponent {
   }
   ficheSite(){
     console.log("User clicked on fiche de site page");
+  }
+  createAccount(){
+    console.log("User clicked on fiche de create account page");
   }
 }

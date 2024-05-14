@@ -58,7 +58,7 @@ class Initialization():
         folder = os.path.join(self.app_root, "launchers")
         
         # Initialization of Reference ParametersGroup
-        file_ref = os.path.join(folder,"run_cydre_params.xml")
+        file_ref = os.path.join(folder,"_params.xml")
         
         # ref = pg.ParametersGroup(file_ref)   
         # Loads User ParametersGroup

@@ -48,4 +48,5 @@ export class JsonService {
 		return lastValueFrom(this.http.get<Array<StationDischargedata>>(url));
 	}
 
+
 }

@@ -12,7 +12,11 @@ import unicodedata
 import flask 
 from flask import jsonify, render_template, request
 from flask_cors import CORS, cross_origin
+from flask_sqlalchemy import SQLAlchemy
+import pymysql
 import pyproj
+import sqlalchemy
+from launchers.run_interface import update_cydre_simulation
 import utils.toolbox as TO
 from shapely.geometry import MultiPolygon, Polygon
 import geopandas as gpd
@@ -22,6 +26,7 @@ import plotly.graph_objects as go
 import numpy as np
 from shapely.geometry import mapping , Point
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 
@@ -50,7 +55,7 @@ for i in gdf_watersheds.index:
     gdf_watersheds.loc[i, 'min_lat'] = miny
     gdf_watersheds.loc[i, 'max_lon'] = maxx
     gdf_watersheds.loc[i, 'max_lat'] = maxy
-
+    
 
 
 
@@ -61,6 +66,9 @@ gdf_piezometry = gpd.GeoDataFrame(piezo_stations, geometry=geometry_piezometry, 
 app = flask.Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:diverse35@localhost/cydre'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
 
 
@@ -82,12 +90,19 @@ def cydre():
     xmlPath="cydre_params.xml"
     return flask.send_file(xmlPath, mimetype='application/xml')
 
-@app.route('/osur/run_cydre', methods=['POST'])
-@cross_origin()
+@app.route('/api/run_cydre', methods=['POST'])
 def run_cydre():
-    data = flask.request.get_data()
-    print(data.decode())
-    return flask.jsonify("all good")
+    print('Calcul de prévision lancé')
+    data = request.json
+    watershed_value = data.get('watershed')
+    slider_value = data.get('sliderValue')
+    simulation_date = data.get('simulationDate')
+    
+    try:
+        result = update_cydre_simulation(watershed_value, slider_value, simulation_date)
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/osur/getoldBSS', methods=['GET'])
@@ -274,7 +289,66 @@ def get_GDF_Piezometry():
     
     return json_list
 
+class Users(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(255), unique=True, nullable=False)
+    password = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
+    role = db.Column(db.Enum('acteur de l\'eau', 'scientifique','dev'), nullable=False)
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        salted_password = 'jaimelegateau' + password
+        return check_password_hash(self.password_hash, salted_password)
+    
+@app.route('/users', methods=['POST'])
+def create_user():
+    data = request.get_json()
+
+    # Vérifier si tous les champs requis sont présents
+    if not data or 'username' not in data or 'password' not in data or 'role' not in data:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    # Vérifier si l'utilisateur existe déjà
+    existing_user = Users.query.filter_by(username=data['username']).first()
+    if existing_user is not None:
+        return jsonify({'error': 'User with this username already exists'}), 409
+
+    # Hacher le mot de passe
+    hashed_password = generate_password_hash('jaimelegateau'+ data['password'])
+
+    # Créer un nouvel utilisateur
+    new_user = Users(username=data['username'], password=hashed_password, role=data['role'])
+
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({'message': 'User created successfully'}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': 'Database error: ' + str(e)}), 500
+
+@app.route('/users', methods=['GET'])
+def get_users():
+    users = Users.query.all()
+    output = [{'username': user.username, 'role': user.role} for user in users]
+    return jsonify(output)
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+
+    # Requête pour obtenir l'utilisateur par nom d'utilisateur
+    user = Users.query.filter_by(username=username).first()
+
+    if user and check_password_hash(user.password, password):
+        return jsonify({"username": username, "role": user.role}), 200
+    return jsonify({"error": "Invalid credentials"}), 401
 
 
 if __name__ == '__main__':
