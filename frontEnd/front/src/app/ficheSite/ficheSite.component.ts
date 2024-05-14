@@ -3,6 +3,11 @@ import { MatDialog } from '@angular/material/dialog';
 import { DataService } from 'src/app/service/data.service';
 import * as Plotlydist from 'plotly.js-dist';
 import { Layout ,AxisType} from 'plotly.js-dist';
+import * as chr from 'chroma-js';
+import { median} from 'simple-statistics';
+import * as math from 'mathjs';
+import { from, of, zip } from 'rxjs';
+import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import OldBSSData from '../model/OldBSSData';
 import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
 import StationDischargedata from '../model/StationDischargedata';
@@ -17,7 +22,6 @@ import GDFStationData from '../model/GDFStationData';
 
   export class FicheSiteComponent {
     isDialogOpen: boolean = false;
-
     selectedStationID: string = 'J0014010';
     selectedOldBSS :string = '02478X0156/PZ';
     OdlBSSs: OldBSSData[] = [];
@@ -30,7 +34,10 @@ import GDFStationData from '../model/GDFStationData';
     selectedYears: number[] = [this.currentYear];
     GDFPiezometryDatas: GDFPiezometryData [] = [];
     GDFStationDatas: GDFStationData[]  =[];
-  
+    fig: any;
+    months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+    tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
+    ticktext: string[] = this.months.map(month => month);
 
 
   constructor(private dataService: DataService, private dialog: MatDialog) {}
@@ -41,7 +48,7 @@ import GDFStationData from '../model/GDFStationData';
       this.stationMap = 'J0014010';
       this.initCorrespondanceBSS();
       this.initOldBSS(); 
-      this.initStationDischarge(this.selectedStationID);
+      //this.initStationDischarge(this.selectedStationID);
       this.initGDFStations();
     }
 
@@ -63,52 +70,12 @@ import GDFStationData from '../model/GDFStationData';
     }
 
 
-    initStationDischarge(stationID: string){
-      this.dataService.getMesurementStationDischarge(stationID).then(station => {
-        this.dischargeStation = station;
-        //const dfYear = this.dischargeStation.filter(data => new Date(data['t']).getFullYear() === 2024);
-        //console.log(dfYear);
-        this.processDischargeData()
-      });
+
+
+    onYearChange() {
+      //this.processDischargeData();
     }
 
-    processDischargeData() {
-      const targetYears: number[] = [2024];
-      const processedData = [];
-      const linesByYear = [];
-    
-      // Vérification si this.dischargeStation est défini et non vide
-      if (this.dischargeStation && this.dischargeStation.length > 0) {
-        // Parcourir les données et traiter chaque entrée
-        for (const entry of this.dischargeStation) {
-          const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
-          const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
-          const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
-    
-          // Formater le mois et le jour avec le format "mm-dd"
-          const monthDay = `${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
-    
-          // Ajouter les données traitées dans un nouvel objet
-          const newDataEntry = {
-            Q: entry.Q,
-            t: entry.t,
-            years: year,
-            daily: monthDay
-          };
-    
-          // Ajouter cet objet au tableau de données traitées
-          processedData.push(newDataEntry);
-
-          if (targetYears.includes(year)) {
-            linesByYear.push(entry);
-          }
-        }
-      } else {
-        console.error("No data available in this.dischargeStation.");
-      }
-      console.log(linesByYear);
-      //console.log(processedData)
-    }
 
 
     //récupère les données oldBSS
@@ -135,6 +102,7 @@ import GDFStationData from '../model/GDFStationData';
       console.log('Nouvelle station sélectionnée:', stationID);
       this.stationMap = stationID;
       this.ChangeBSS(stationID);
+      //this.initStationDischarge(stationID);
   
     }
 
@@ -167,3 +135,5 @@ import GDFStationData from '../model/GDFStationData';
       }
     }
 }
+
+

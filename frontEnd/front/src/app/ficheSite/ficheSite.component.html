@@ -58,13 +58,16 @@
     <app-hydrographGlobal [stationSelectionChange] = "stationMap" ></app-hydrographGlobal>
     <div style="text-align: center;">
     <mat-form-field class="second-dropdown">
-      <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" class="second-dropdown">
+      <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" (ngModelChange)="onYearChange()" class="second-dropdown">
         <mat-option *ngFor="let year of years" [value]="year">
           {{ year }}
         </mat-option>
       </mat-select>
     </mat-form-field>
   </div>
+  <app-hydrographSeasonal 
+  [stationSelectionChange] = "stationMap"
+  [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> 
   </div>
   
   
