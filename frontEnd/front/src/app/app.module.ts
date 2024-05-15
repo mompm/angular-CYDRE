@@ -25,6 +25,7 @@ import { RegionalMapComponent } from './ficheSite/RegionalMap/RegionalMap.compon
 import { WatershedMapComponent } from './ficheSite/WatershedMap/WatershedMap.component';
 import { hydrographGlobal } from './ficheSite/hydrographGlobal/hydrographGlobal.component';
 import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSeasonal.component';
+import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -67,6 +68,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     WatershedMapComponent,
     hydrographGlobal,
     hydrographSeasonal,
+    temperatureSeasonal,
     SettingsComponent,
     LoginComponent,
     LocalisationComponent,

@@ -235,6 +235,7 @@ def get_stationdata(id):
                     station_name = gdf_stations.loc[i, 'station_name']
             json_list = []
             json_list.append(station_name)
+            json_list.append(id_upper)
             # Ouvrir le fichier CSV
             with open(csv_file_path, 'r', encoding='utf-8') as csv_file:
                 # Attention au delimiter (si nécessaire)
@@ -361,6 +362,7 @@ def get_water_table_depth(id):
             # Initialiser une liste pour stocker les données JSON
             json_list = []
             json_list.append(station_name)
+            json_list.append(bss_id)
             # Ouvrir le fichier CSV
             with open(csv_file_path, 'r', encoding='utf-8') as csv_file:
                 # Attention au delimiter (si nécessaire)

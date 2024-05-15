@@ -2,23 +2,23 @@ import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as chr from 'chroma-js';
-import { median} from 'simple-statistics';
+import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import StationDischargedata from 'src/app/model/StationDischargedata';
+import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
 
 
 @Component({
-    selector: 'app-hydrographSeasonal',
-    templateUrl: './hydrographSeasonal.component.html',
-    styleUrls: ['./hydrographSeasonal.component.scss']
+    selector: 'app-temperatureSeasonal',
+    templateUrl: './temperatureSeasonal.component.html',
+    styleUrls: ['./temperatureSeasonal.component.scss']
   })
 
-  export class hydrographSeasonal {
+  export class temperatureSeasonal {
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
-    dischargeStation: StationDischargedata[] = [];
+    temperatureStation: StationTemperaturedata[] = [];
     fig: any;
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
@@ -27,35 +27,36 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
     constructor(private dataService: DataService) {}
 
     ngOnInit() {
-        this.initStationDischarge(this.stationSelectionChange);
+        this.initStationTemperature(this.stationSelectionChange);
       }
 
     ngOnChanges(changes: SimpleChanges) {
         // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
         if (changes['stationSelectionChange']) {
-          this.initStationDischarge(changes['stationSelectionChange'].currentValue);
+          this.initStationTemperature(changes['stationSelectionChange'].currentValue);
         }
         else if(changes['yearSelectionChange']){
-            this.hydrograph_Seasonal();
+            this.temperature_Seasonal();
         }
       }
 
-    initStationDischarge(stationID: string){
-        this.dataService.getMesurementStationDischarge(stationID).then(station => {
-            this.dischargeStation = station;
-            this.hydrograph_Seasonal()
+
+    initStationTemperature(stationID: string){
+        this.dataService.getMesurementStationTemperature(stationID).then(station => {
+            this.temperatureStation = station; 
+            this.temperature_Seasonal();  
         });
       }
 
 
-    hydrograph_Seasonal() {
+    temperature_Seasonal() {
         const targetYears: number[] = this.yearSelectionChange;
         const processedData: any[] = [];
         const linesByYear = [];
         let lastUpdate = null;
         // Vérification si this.dischargeStation est défini et non vide
-        if (this.dischargeStation && this.dischargeStation.length > 0) {
-          for (const entry of this.dischargeStation) {
+        if (this.temperatureStation && this.temperatureStation.length > 0) {
+          for (const entry of this.temperatureStation) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
             const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
@@ -88,7 +89,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
           console.error("No data available in this.dischargeStation.");
         }
   
-        //console.log("process data" ,lastUpdate);
+
   
         const resultArray: { key: string; values: number[]; q10?: number;q50?: number;q90?: number; }[] = [];
         let q10: any;
@@ -135,18 +136,16 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
         const resultArrayq10 = resultArray.map(entry => entry.q10);
         const resultArrayq90 = resultArray.map(entry => entry.q90);
         const variabilityY =  resultArrayq10.concat(resultArrayq90.slice().reverse());
-       
-          
+        
       this.fig = {
         data: [],
         layout: {
-            title: { text: 'Débits de cours d\'eau [' + this.dischargeStation[1] + ']' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
+            title: { text: 'Température [' + this.temperatureStation[1] + ']' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
             xaxis: { type: 'category',  'tickvals' : this.tickvals,'ticktext' : this.ticktext,tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black' }, 'gridwidth' : 0.01, 'gridcolor' : 'rgba(0,0,0,0.1)'},
-            yaxis: { title: 'Débit de cours d\'eau [m3/s]' , type: 'log', exponentformat: 'power', tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'} ,showticklabels : true,gridwidth : 0.01, gridcolor : 'rgba(0,0,0,0.1)' },
-            
+            yaxis: { title: 'Température de l\'air [°C]', font: {family: "Segoe UI Semibold", size: 16, color: "black"},tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'} ,showticklabels : true,gridwidth : 0.01, gridcolor : 'rgba(0,0,0,0.1)' },
             annotations: [
                 { text: 'Mis à jour le : DATE', showarrow: false, xref: 'paper', yref: 'paper', x: 0.5, y: 1.15, font: {"family": "Segoe UI Semilight Italic", "size": 18, "color": "#999"} },
-                { text: 'Source : DREAL Bretagne', showarrow: false, xref: 'paper', yref: 'paper', x: 0.5, y: -0.20, font: { "size":14, "color":"gray", "family":'Segoe UI Semilight' } }
+                { text: 'Source : Météo France', showarrow: false, xref: 'paper', yref: 'paper', x: 0.5, y: -0.20, font: { "size":14, "color":"gray", "family":'Segoe UI Semilight' } }
             ],
             // Ajoutez les paramètres de mise en page saisonnière ici
             margin: { t: 125 },
@@ -214,7 +213,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
       }
     
         // Tracer la figure Plotly
-        Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout);
+        Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout);
       
       }
   

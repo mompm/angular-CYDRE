@@ -65,9 +65,10 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <app-hydrographSeasonal 
-  [stationSelectionChange] = "stationMap"
-  [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> 
+  <div><app-hydrographSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
+  <div><app-temperatureSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
+  
+  
   </div>
   
   

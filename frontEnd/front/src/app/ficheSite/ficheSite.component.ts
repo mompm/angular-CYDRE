@@ -13,6 +13,7 @@ import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
 import StationDischargedata from '../model/StationDischargedata';
 import GDFPiezometryData from '../model/GDFPiezometryData ';
 import GDFStationData from '../model/GDFStationData';
+import StationTemperaturedata from '../model/StationTemperaturedata';
 
 @Component({
     selector: 'app-fiche-site',
@@ -28,7 +29,8 @@ import GDFStationData from '../model/GDFStationData';
     CorrespondanceBSSs: CorrespondancesBSSData[] = [];
     isAdesVisible: boolean = true;
     stationMap:string = '';
-    dischargeStation: StationDischargedata[] = [];
+    //dischargeStation: StationDischargedata[] = [];
+    temperatureStation : StationTemperaturedata[] = [];
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
@@ -48,7 +50,6 @@ import GDFStationData from '../model/GDFStationData';
       this.stationMap = 'J0014010';
       this.initCorrespondanceBSS();
       this.initOldBSS(); 
-      //this.initStationDischarge(this.selectedStationID);
       this.initGDFStations();
     }
 
@@ -73,9 +74,8 @@ import GDFStationData from '../model/GDFStationData';
 
 
     onYearChange() {
-      //this.processDischargeData();
+      
     }
-
 
 
     //récupère les données oldBSS
