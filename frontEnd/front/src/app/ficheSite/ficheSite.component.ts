@@ -14,6 +14,7 @@ import StationDischargedata from '../model/StationDischargedata';
 import GDFPiezometryData from '../model/GDFPiezometryData ';
 import GDFStationData from '../model/GDFStationData';
 import StationTemperaturedata from '../model/StationTemperaturedata';
+import WaterTableDepthdata from '../model/WaterTableDepthdata';
 
 @Component({
     selector: 'app-fiche-site',
@@ -30,7 +31,8 @@ import StationTemperaturedata from '../model/StationTemperaturedata';
     isAdesVisible: boolean = true;
     stationMap:string = '';
     //dischargeStation: StationDischargedata[] = [];
-    temperatureStation : StationTemperaturedata[] = [];
+    //temperatureStation : StationTemperaturedata[] = [];
+    DepthStation : WaterTableDepthdata[] = [];
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
