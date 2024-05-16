@@ -84,10 +84,6 @@ WaterShedsMapLayers = {
       });
     }
  
-      
-
-
-
     //récupère les données des correspondance stations et piezomètres 
     //contenus: NOM_BV (string), ID_HYDRO (string),CODE_BSS (string), TEMPS_RECESS(string)
     //location du fichier origine : backend/data/piezometry/correspondance_watershed_piezometers.csv

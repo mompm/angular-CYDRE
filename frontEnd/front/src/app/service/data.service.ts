@@ -12,6 +12,7 @@ import StationDischargedata from '../model/StationDischargedata';
 import GDFStationData from '../model/GDFStationData';
 import StationTemperaturedata from '../model/StationTemperaturedata';
 import WaterTableDepthdata from '../model/WaterTableDepthdata';
+import StationPrecipitationdata from '../model/StationPrecipitationdata';
 
 
 @Injectable({
@@ -63,6 +64,9 @@ export class DataService { //service used to load the received xml and to conver
     return this.jsonService.getWaterTableDepthdata(id);
   }
 
+  getMesurementStationPrecipitationdata(id : string): Promise<Array<StationPrecipitationdata>>{
+    return this.jsonService.getStationPrecipitationdata(id);
+  }
 
 
   requestXml(){

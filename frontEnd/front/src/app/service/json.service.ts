@@ -10,6 +10,7 @@ import StationDischargedata from '../model/StationDischargedata';
 import GDFStationData from '../model/GDFStationData';
 import StationTemperaturedata from '../model/StationTemperaturedata';
 import WaterTableDepthdata from '../model/WaterTableDepthdata';
+import StationPrecipitationdata from '../model/StationPrecipitationdata';
 
 
 
@@ -58,6 +59,11 @@ export class JsonService {
 	getWaterTableDepthdata(id: string): Promise<Array<WaterTableDepthdata>> {
 		const url = `/osur/stationWaterTableDepth/${id}`;
 		return lastValueFrom(this.http.get<Array<WaterTableDepthdata>>(url));
+	}
+
+	getStationPrecipitationdata(id: string): Promise<Array<StationPrecipitationdata>> {
+		const url = `/osur/stationPrecipitation/${id}`;
+		return lastValueFrom(this.http.get<Array<StationPrecipitationdata>>(url));
 	}
 
 }

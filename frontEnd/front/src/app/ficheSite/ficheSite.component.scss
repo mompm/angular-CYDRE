@@ -173,3 +173,28 @@ mat-form-field.second-dropdown{
 
 }
 
+.seasonal_plot_div {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    margin-top: 20px;
+    }
+
+.container_seasonal {
+        text-align: center; /* Centre le contenu horizontalement */
+    }
+.seasonal_plot_left {
+        width:40%;
+        display: inline-block;
+        margin-left: 0%;
+        }
+
+.seasonal_plot_right  {
+        width:40%;
+        display: inline-block;
+        margin-right: 0%;
+        }
+

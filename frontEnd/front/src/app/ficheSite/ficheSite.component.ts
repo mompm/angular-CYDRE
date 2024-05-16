@@ -15,6 +15,7 @@ import GDFPiezometryData from '../model/GDFPiezometryData ';
 import GDFStationData from '../model/GDFStationData';
 import StationTemperaturedata from '../model/StationTemperaturedata';
 import WaterTableDepthdata from '../model/WaterTableDepthdata';
+import StationPrecipitationdata from '../model/StationPrecipitationdata';
 
 @Component({
     selector: 'app-fiche-site',
@@ -29,10 +30,8 @@ import WaterTableDepthdata from '../model/WaterTableDepthdata';
     OdlBSSs: OldBSSData[] = [];
     CorrespondanceBSSs: CorrespondancesBSSData[] = [];
     isAdesVisible: boolean = true;
+    correspondance: boolean = true;
     stationMap:string = '';
-    //dischargeStation: StationDischargedata[] = [];
-    //temperatureStation : StationTemperaturedata[] = [];
-    DepthStation : WaterTableDepthdata[] = [];
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
@@ -55,6 +54,8 @@ import WaterTableDepthdata from '../model/WaterTableDepthdata';
       this.initGDFStations();
     }
 
+
+
     // affiche le popup du bouton info
     toggleDialog(): void {
       this.isDialogOpen = !this.isDialogOpen;
@@ -72,13 +73,8 @@ import WaterTableDepthdata from '../model/WaterTableDepthdata';
       });
     }
 
-
-
-
-    onYearChange() {
-      
+    onYearChange() {      
     }
-
 
     //récupère les données oldBSS
     //contenus : X_WGS84(string), Y_WGS84(string), Identifiant_BSS(string), Ancien_code_national_BSS(string)
@@ -104,10 +100,19 @@ import WaterTableDepthdata from '../model/WaterTableDepthdata';
       console.log('Nouvelle station sélectionnée:', stationID);
       this.stationMap = stationID;
       this.ChangeBSS(stationID);
+      this.correspondanceBSS(stationID)
       //this.initStationDischarge(stationID);
   
     }
-
+    correspondanceBSS(stationID: string){
+      const selectedCorrespondance = this.CorrespondanceBSSs.find(CorrespondanceBSS => CorrespondanceBSS.ID_HYDRO === stationID);
+      if(selectedCorrespondance){
+        this.correspondance = true;
+      }
+      else{
+        this.correspondance = false;
+      }
+    }
     // Donne old BSS code pour le bouton Ades sinon il rend le bouton invisible 
     ChangeBSS(stationID: string){
       // Recherche de ID correspondant dans le tableau correspondance

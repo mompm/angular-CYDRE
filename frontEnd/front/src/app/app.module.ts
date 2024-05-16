@@ -27,6 +27,7 @@ import { hydrographGlobal } from './ficheSite/hydrographGlobal/hydrographGlobal.
 import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSeasonal.component';
 import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 import { WaterTableDepthSeasonal } from './ficheSite/WaterTableDepthSeasonal/WaterTableDepthSeasonal.component';
+import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipitationSeasonal.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -71,6 +72,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     hydrographSeasonal,
     temperatureSeasonal,
     WaterTableDepthSeasonal,
+    precipitationSeasonal,
     SettingsComponent,
     LoginComponent,
     LocalisationComponent,
