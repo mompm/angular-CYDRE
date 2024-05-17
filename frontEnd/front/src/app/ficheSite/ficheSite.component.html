@@ -58,6 +58,8 @@
     <div class="seasonal_plot_div">
     <app-hydrographGlobal [stationSelectionChange] = "stationMap" ></app-hydrographGlobal>
     <div style="text-align: center;">
+    <h3>Dynamique saisonnière de la ressource en eau</h3>
+    <p>Choix d'une année à visualiser :</p>
     <mat-form-field class="second-dropdown">
       <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" (ngModelChange)="onYearChange()" class="second-dropdown">
         <mat-option *ngFor="let year of years" [value]="year">
@@ -67,10 +69,16 @@
     </mat-form-field>
   </div>
   <div class="container_seasonal">
-  <div class="seasonal_plot_left"><app-temperatureSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
-  <div class="seasonal_plot_right"><app-precipitationSeasonal  [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears"></app-precipitationSeasonal></div>
-  <div class="seasonal_plot_left"><app-hydrographSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
-  <div class="seasonal_plot_right" *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
+    <div class="seasonal_plot">
+      <div ><app-temperatureSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
+      <div ><app-precipitationSeasonal  [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears"></app-precipitationSeasonal></div>
+    </div>
+    <div class="seasonal_plot">
+      <div ><app-hydrographSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
+      <div  *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
+    </div>
+  
+  
   </div>
   </div>
   

@@ -71,8 +71,8 @@ import GDFStationData from 'src/app/model/GDFStationData';
        ngDoCheck() {      
         // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
         if (this.GDFStationDatas.length > 0 && this.GDFPiezometryDatas.length > 0 && this.GDFWatershedsDatas.length >0 && !this.MapExecutee) {
-          //this.RegionalMap_Plotly(this.stationSelectionChange);
-          this.RegionalMap_Leaflet(this.stationSelectionChange);
+          this.RegionalMap_Plotly(this.stationSelectionChange);
+          //this.RegionalMap_Leaflet(this.stationSelectionChange);
           //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
           this.MapExecutee = true;
         }
@@ -240,7 +240,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
       lon: selectedPolygonCoords.map((coord: number[]) => coord[0]),
       lat: selectedPolygonCoords.map((coord: number[]) => coord[1]),
       mode: 'lines',
-      line: { width: 0.0001 },
+      line: { width: 0.0001 , color: '#3E88A6'},
       fill: 'toself',
       fillcolor: 'rgba(255, 0, 0, 0.5)',
       hoverinfo: 'none',
@@ -248,42 +248,44 @@ import GDFStationData from 'src/app/model/GDFStationData';
     });
 
     //récupère les informations des points stations
-    const nom_station: any[] = [];
     const x_wgs84_station: any[] = [];
     const y_wgs84_station: any[] = [];
+    const text_station: any[] = []; 
     for (let i = 0; i < this.GDFStationDatas.length; i++) {
-        nom_station.push(this.GDFStationDatas[i].name);
         x_wgs84_station.push(this.GDFStationDatas[i].x_outlet);
         y_wgs84_station.push(this.GDFStationDatas[i].y_outlet);
+        text_station.push(`${this.GDFStationDatas[i].index} - ${this.GDFStationDatas[i].station_name}`);
     }
     //Ajoute couches des points stations
     figData.push({
       type: 'scattermapbox',
-      text: nom_station,
       lon: x_wgs84_station,
       lat: y_wgs84_station,
       mode: 'markers',
-      marker: { size: 5, color: 'black' },
+      marker: { size: 5, color: '#3E88A6' },
+      hoverinfo:'text',
+      hovertext: text_station,
       name: '',
     });
 
     //récupère les information points piezo
-    const bss_piezo: any[] = [];
     const x_wgs84_piezo: any[] = [];
     const y_wgs84_piezo: any[] = [];
+    const text_piezo: any[] = []; 
     for (let i = 0; i < this.GDFPiezometryDatas.length; i++) {
-      bss_piezo.push(this.GDFPiezometryDatas[i].identifiant_BSS);
       x_wgs84_piezo.push(this.GDFPiezometryDatas[i].x_wgs84);
       y_wgs84_piezo.push(this.GDFPiezometryDatas[i].y_wgs84);
+      text_piezo.push(`${this.GDFPiezometryDatas[i].identifiant_BSS} - ${this.GDFPiezometryDatas[i].Nom}`);
     }
     //Ajoute la couche des points piezo
     figData.push({
       type: 'scattermapbox',
-      text : bss_piezo,
       lon: x_wgs84_piezo,
       lat: y_wgs84_piezo,
       mode: 'markers',
-      marker: { size: 5, color: '#D800A0' },
+      marker: { size: 5, color: 'purple' },
+      hoverinfo:'text',
+      hovertext: text_piezo,
       name: '',
     });
 

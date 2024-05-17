@@ -14,12 +14,14 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
     templateUrl: './WaterTableDepthSeasonal.component.html',
     styleUrls: ['./WaterTableDepthSeasonal.component.scss']
   })
-
+//component pour graphique profondeur nappe
   export class WaterTableDepthSeasonal {
+    //valeur récupérent dans le parent FicheSite 
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
     DepthStation : WaterTableDepthdata[] = [];
     fig: any;
+    //variables pour l'axe x 
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
@@ -32,6 +34,7 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
 
     ngOnChanges(changes: SimpleChanges) {
         // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
+        // si stationSelectionChange' on récupère les données de la stations puis on affiche le graph
         if (changes['stationSelectionChange']) {
           this.initStationDepth(changes['stationSelectionChange'].currentValue);
         }
@@ -39,7 +42,11 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
             this.Depth_Seasonal();
         }
       }
-
+    //récupère les données de profondeur d'une station 
+    //contenus: name(string),               H: entry.H,d: entry.d,t: entry.t,
+    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+    //contenus dans geometry: coordinates et type  
+    //location du fichier origine :backend/data/stations.csv
     initStationDepth(stationID: string){
         this.dataService.getMesurementWaterTableDepth(stationID).then(station => {
             this.DepthStation = station;

@@ -35,12 +35,8 @@ import StationPrecipitationdata from '../model/StationPrecipitationdata';
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
-    GDFPiezometryDatas: GDFPiezometryData [] = [];
     GDFStationDatas: GDFStationData[]  =[];
-    fig: any;
-    months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-    tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
-    ticktext: string[] = this.months.map(month => month);
+
 
 
   constructor(private dataService: DataService, private dialog: MatDialog) {}
@@ -97,14 +93,15 @@ import StationPrecipitationdata from '../model/StationPrecipitationdata';
     
     // fonction actioné avec le dropdown , il active les fonctions qui sont modifié dans ce cas
     onStationSelectionChange(stationID: string) {
-      console.log('Nouvelle station sélectionnée:', stationID);
       this.stationMap = stationID;
       this.ChangeBSS(stationID);
       this.correspondanceBSS(stationID)
-      //this.initStationDischarge(stationID);
+     
   
     }
+    //fonction permet d'eviter d'afficher le graphique profondeur de nappe ( ayant besoin de donnée piezomètre ) 
     correspondanceBSS(stationID: string){
+      // Recherche de ID correspondant dans le tableau correspondance
       const selectedCorrespondance = this.CorrespondanceBSSs.find(CorrespondanceBSS => CorrespondanceBSS.ID_HYDRO === stationID);
       if(selectedCorrespondance){
         this.correspondance = true;
@@ -117,7 +114,6 @@ import StationPrecipitationdata from '../model/StationPrecipitationdata';
     ChangeBSS(stationID: string){
       // Recherche de ID correspondant dans le tableau correspondance
       const selectedCorrespondance = this.CorrespondanceBSSs.find(CorrespondanceBSS => CorrespondanceBSS.ID_HYDRO === stationID);
-    
       // Vérification si l'élément a été trouvé
       if (selectedCorrespondance) {
         console.log(selectedCorrespondance)

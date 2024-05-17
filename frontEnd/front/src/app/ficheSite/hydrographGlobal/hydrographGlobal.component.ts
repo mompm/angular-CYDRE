@@ -61,7 +61,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
           title: {
               text: "Débits journaliers mesurés à la station hydrologique",
               x: 0.5,
-              font: { family: "Arial", size: 16 }
+              font: { family: "Segoe UI Semibold", size: 22, color: 'black' }
           },
           xaxis: { title: "Date" },
           yaxis: { 
@@ -77,11 +77,11 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
         Plotlydist.newPlot('hydrograph', data, layout);
         const name = this.dischargeStation[0];
         const annotation: Partial<Plotly.Annotations>  = {
-          text:  `station : ${this.stationSelectionChange} - ${name}`, 
+          text:  `${name} [${this.stationSelectionChange}]`, 
           xref: 'paper', yref: 'paper',
           x: 0.5, y: 1.1,
           showarrow: false,
-          font: { size: 14 }
+          font: { family:"Segoe UI Semilight Italic", size:18, color:"#999" }
         };
   
        Plotlydist.relayout('hydrograph', {annotations: [annotation]});

@@ -155,8 +155,8 @@ WaterShedMap_Leaflet(stationID:string){
     if (stationData) {
       const selectedPolygonCoords = stationData.geometry.coordinates[0].map((coord: any[]) => [coord[1], coord[0]]);
       L.polyline(selectedPolygonCoords, {
-        color: 'blue',
-        weight: 4,
+        color: '#3E88A6',
+        weight: 2,
         fill: false,
         fillColor: 'red',
         fillOpacity: 0.5
@@ -167,8 +167,8 @@ WaterShedMap_Leaflet(stationID:string){
     // Créer un marqueur pour la station sélectionnée
     const selectedStation = this.GDFStationDatas.find(data => data.index === stationID);
     if (selectedStation) {
-      const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 4, color: 'black',fill:true, fillColor: 'black',fillOpacity:1 })
-        .bindPopup(`<b>${selectedStation.name}</b><br>${selectedStation.y_outlet}<br>${selectedStation.x_outlet}`);
+      const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 7, color: 'black',weight : 1, fill:true, fillColor: '#38BFFF',fillOpacity:0.4 })
+        .bindPopup(`<b>Identifiant :</b> ${selectedStation.index}<br> <b>Nom de la station hydrologique : </b> ${selectedStation.station_name}<br> <b> Nom de la station piezometrique : </b>${selectedStation.BSS_name}`);
       stationMarker.addTo(this.WatershedMapLeaflet);
     }
 
@@ -177,8 +177,8 @@ WaterShedMap_Leaflet(stationID:string){
     if (selectedCorrespondance) {
       const piezoSelectedStation = this.GDFPiezometryDatas.find(data => data.identifiant_BSS === selectedCorrespondance.CODE_BSS);
       if (piezoSelectedStation) {
-        const piezoMarker = L.circleMarker([piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84], { radius: 4, color: '#D800A0',fill:true, fillColor: '#D800A0',fillOpacity:1})
-          .bindPopup(`<b>${piezoSelectedStation.identifiant_BSS}</b><br>${piezoSelectedStation.y_wgs84}<br>${piezoSelectedStation.x_wgs84}`);
+        const piezoMarker = L.circleMarker([piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84], { radius: 7, color: 'black',weight : 1,fill:true, fillColor: '#D800A0',fillOpacity:0.4})
+          .bindPopup(`<b>Identifiant : ${piezoSelectedStation.identifiant_BSS}</b>`);
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
     } 

@@ -184,17 +184,13 @@ mat-form-field.second-dropdown{
     }
 
 .container_seasonal {
-        text-align: center; /* Centre le contenu horizontalement */
-    }
-.seasonal_plot_left {
-        width:40%;
-        display: inline-block;
-        margin-left: 0%;
-        }
+    text-align: center; 
+}
 
-.seasonal_plot_right  {
-        width:40%;
-        display: inline-block;
-        margin-right: 0%;
-        }
-
+.seasonal_plot {
+    width: 100%;
+    display: flex; 
+    justify-content: space-around;
+    
+}
+    

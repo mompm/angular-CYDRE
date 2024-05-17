@@ -140,7 +140,7 @@ import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
       this.fig = {
         data: [],
         layout: {
-            title: { text: 'Température [' + this.temperatureStation[1] + ']' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
+            title: { text: 'Température' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
             xaxis: { type: 'category',  'tickvals' : this.tickvals,'ticktext' : this.ticktext,tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black' }, 'gridwidth' : 0.01, 'gridcolor' : 'rgba(0,0,0,0.1)'},
             yaxis: { title: 'Température de l\'air [°C]', font: {family: "Segoe UI Semibold", size: 16, color: "black"},tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'} ,showticklabels : true,gridwidth : 0.01, gridcolor : 'rgba(0,0,0,0.1)' },
             annotations: [
