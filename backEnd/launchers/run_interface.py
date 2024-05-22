@@ -6,13 +6,22 @@ Created on Mon Aug 14 15:27:02 2023
 """
 
 # Python modules
+import base64
+from datetime import datetime
+import io
+import json
 import os
 import sys
+from flask import jsonify
 import pandas as pd
 import geopandas as gpd
 import pyproj
 from shapely.geometry import Point
+import plotly.tools as tls
+import matplotlib
+matplotlib.use('agg')
 
+from datetime import datetime
 
 # Plotly, Dash
 import dash
@@ -40,7 +49,7 @@ import libraries.forecast.outputs as OU
 #%% PREPARATION
 
 # Cydre results path
-output_path = "C:/Users/nicol/OneDrive - Université de Rennes/IR_CYDRE/figures/Projections"
+output_path = os.path.join(app_root,"outputs","projections")
 
 # Initialize Cydre application, loading input parameters, datasets, etc.
 init = IN.Initialization(app_root)
@@ -410,34 +419,123 @@ def update_cydre_results_display(n_clicks, watershed_value, slider_value, simula
     results, _ = update_cydre_simulation(watershed_value, slider_value, simulation_date)
     return results, None
         
+def extract_plotly_data(fig):
+    """
+    Extract data and layout from a Plotly figure object.
+    
+    Parameters:
+    fig (plotly.graph_objs.Figure): The Plotly figure object to extract data from.
+
+    Returns:
+    tuple: A tuple containing the data and layout of the Plotly figure.
+    """
+    plotly_json = fig.to_plotly_json()
+
+    # Convert numpy arrays to lists
+    def convert(obj):
+        if isinstance(obj, np.ndarray):
+            return np.nan_to_num(obj, nan=0.0).tolist()         
+        if isinstance(obj, dict):
+            return {k: convert(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [convert(i) for i in obj]
+        return obj
+
+    data = convert(plotly_json['data'])
+    layout = convert(plotly_json['layout'])
+    return data, layout
+
 
 #%% RUN CYDRE APPLICATION
 
 def update_cydre_simulation(watershed_value, slider_value, simulation_date):
-    
     param_names = ['user_watershed_id', 'user_horizon', 'date']
     param_paths = init.get_parameters_path(param_names)
      
-    init.params.find_and_replace_param(param_paths[0],watershed_value)
-    init.params.find_and_replace_param(param_paths[1],int(slider_value))
+    init.params.find_and_replace_param(param_paths[0], watershed_value)
+    init.params.find_and_replace_param(param_paths[1], int(slider_value))
     init.params.find_and_replace_param(param_paths[2], str(simulation_date))
 
     cydre_app = init.create_cydre_app()
-    
+
+
     # Run cydre seasonal forecast
-    streamflow_fig, results = run_cydre(cydre_app)
+    streamflow_fig_data, results = run_cydre(cydre_app)
     typology_fig = typology_map(cydre_app.Similarity.similar_watersheds, gdf_stations)
-    
-    # Get correlatix matrix
+    # Extract data from Plotly figure
+    streamflow_datasets, streamflow_layout = extract_plotly_data(streamflow_fig_data)
+    # Get correlation matrix
     corr_matrix = pd.DataFrame(cydre_app.scenarios_grouped)
     df = corr_matrix.reset_index()
     df.columns = ['Year', 'ID', 'Coeff']
     df['Coeff'] = df['Coeff'].round(2)
     df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
-    
-    # Output forecasting vizualisation
-    return  display_cydre_results(df, typology_fig, streamflow_fig, results, gdf_stations), None
 
+    # Convert int64 to int for JSON serialization
+    df = df.astype({'Year': 'int', 'Coeff': 'float'})
+
+    # Format the results into a dictionary
+    response = {
+        'proj_values': {
+            'Q50': float(results.proj_values.Q50),
+            'Q10': float(results.proj_values.Q10),
+            'Q90': float(results.proj_values.Q90)
+        },
+        'ndays_before_alert':{
+            'Q50': int(results.ndays_before_alert_Q50),
+            'Q90': int(results.ndays_before_alert_Q90),
+            'Q10': int(results.ndays_before_alert_Q10),
+        },
+        'ndays_below_alert': {
+            'Q50': int(results.ndays_below_alert.Q50),
+            'Q90': int(results.ndays_below_alert.Q90),
+            'Q10': int(results.ndays_below_alert.Q10)
+        },
+        'prop_alert_all_series': float(results.prop_alert_all_series),
+        'volume50': int(results.volume50),
+        'volume10': int(results.volume10),
+        'last_date': results.projection_period[-1].strftime("%d/%m/%Y"),
+        'first_date': results.simulation_date.strftime('%Y-%m-%d'),
+        'corr_matrix': df.to_dict(orient='records'),
+        # 'typologyDatasets': typology_fig['datasets'],  # Utiliser les données de typology_map
+        # 'typologyLabels': typology_fig['labels'],      # Utiliser les labels de typology_map
+        # 'typologyOptions': typology_fig['layout'],    # Utiliser les options de typology_map
+        'streamflow_datasets': streamflow_datasets,
+        'streamflow_layout': streamflow_layout
+        # 'streamflowOptions': streamflow_fig_data['layout'],  # Options de mise en page
+        # 'scale': False
+    }
+    return response
+
+
+def typology_map(similar_watersheds, gdf_stations):
+    gdf_subset = gdf_stations[gdf_stations["ID"].isin(similar_watersheds)]
+    
+    # Extraire les données nécessaires
+    typology_data = {
+        'datasets': [{
+            'label': 'Similar Watersheds',
+            'data': [{
+                'lat': row.geometry.y,
+                'lon': row.geometry.x,
+                'name': row.station_name
+            } for idx, row in gdf_subset.iterrows()]
+        }],
+        'labels': gdf_subset['station_name'].tolist(),
+        'options': {
+            'mapbox': {
+                'style': "open-street-map",
+                'center': {"lat": 48.2141667, "lon": -2.9424167},
+                'zoom': 6.8
+            },
+            'layout': {
+                'paper_bgcolor': "rgba(0,0,0,0)",
+                'margin': {"l": 0, "r": 0, "t": 0, "b": 0}
+            }
+        }
+    }
+        
+    return typology_data
 
 def run_cydre(cydre_app):
     

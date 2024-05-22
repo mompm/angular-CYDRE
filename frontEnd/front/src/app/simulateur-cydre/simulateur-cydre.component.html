@@ -1,72 +1,82 @@
 <div class="container">
-    <div class="row align-items-center my-4">
-      <div class="col">
-        <h4>Sélection de la station hydrologique de référence</h4>
-      </div>
-      <div class="col-auto">
-        <button type="button" class="btn btn-info" (click)="openModal()">?</button>
-      </div>
+  <div class="row align-items-center my-4">
+    <div class="col">
+      <h4>Sélection de la station hydrologique de référence</h4>
     </div>
-    
-    <div class="form-group">
-      <label for="stationSelect">Station hydrologique :</label>
-      <select class="form-control" id="stationSelect" [(ngModel)]="selectedStation">
-        <option *ngFor="let station of stations" [value]="station.index">{{station.index}} - {{station.station_name}}</option>
-      </select>
-    </div>
-    
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail" style="height: 20px;">
-      <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="Ades" style="height: 20px;">
-    </div>
-    
-    <div class="card mb-4">
-      <div class="card-header">
-        Conditions de la prévision
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col">
-            <h5>Echéance de la prévision (jours)</h5>
-            <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
-            <small class="form-text text-muted">Lorsque l'échéance est importante l'incertitude sur les projections augmente.</small>
-          </div>
-          <div class="col">
-            <h5>Date de la simulation</h5>
-            <input type="date" class="form-control" id="simulationDate" [(ngModel)]="simulationDate">
-            <small class="form-text text-muted">Par défaut la date de simulation est la date du jour. Il est possible d'effectuer des prévisions à des dates antérieures, notamment pour évaluer la qualité des projections avec les données d'observations.</small>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div class="text-center">
-      <button type="button" class="btn btn-primary" (click)="runSimulation()">Lancer l'application</button>
-      <div class="mt-2">
-        <small class="form-text text-muted">Les calculs durent entre 15s et 1min</small>
-      </div>
+    <div class="col-auto">
+      <button type="button" class="btn btn-info" (click)="openModal()">?</button>
     </div>
   </div>
   
-  <!-- Custom Backdrop -->
-  <div class="modal-backdrop-custom" *ngIf="isModalOpen" (click)="closeModal()"></div>
+  <div class="form-group">
+    <label for="stationSelect">Station hydrologique :</label>
+    <select class="form-control" id="stationSelect" [(ngModel)]="selectedStation" (ngModelChange)="onStationSelected($event)">
+      <option *ngFor="let station of stations" [value]="station.index" [disabled]="list_of_disabled_options.includes(station.index)">
+        {{station.index}} - {{station.station_name}}
+      </option>
+    </select>
+  </div>
   
-  <!-- Modal -->
-  <div class="modal show d-block" tabindex="-1" role="dialog" *ngIf="isModalOpen">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="infoModalLabel">Sélection de la station hydrologique</h5>
-          <button type="button" class="close" (click)="closeModal()" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail" style="height: 20px;">
+    <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="Ades" style="height: 20px;">
+  </div>
+  
+  <div class="card mb-4">
+    <div class="card-header">
+      Conditions de la prévision
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col">
+          <h5>Echéance de la prévision (jours)</h5>
+          <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
+          <small class="form-text text-muted">Lorsque l'échéance est importante l'incertitude sur les projections augmente.</small>
         </div>
-        <div class="modal-body">
-          Sélectionner une station hydrologique dans la liste déroulante suivante. 
-          Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.
-          Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.
+        <div class="col">
+          <h5>Date de la simulation</h5>
+          <input type="date" class="form-control" id="simulationDate" [(ngModel)]="simulationDate">
+          <small class="form-text text-muted">Par défaut la date de simulation est la date du jour. Il est possible d'effectuer des prévisions à des dates antérieures, notamment pour évaluer la qualité des projections avec les données d'observations.</small>
         </div>
       </div>
     </div>
   </div>
   
+  <div class="text-center">
+    <button type="button" class="btn btn-primary" (click)="onStartSimulation()">Lancer l'application</button>
+    <div class="mt-2">
+      <small class="form-text text-muted">Les calculs durent entre 15s et 1min</small>
+    </div>
+  </div>
+  <div *ngIf="progress.length">
+    <h3>Progression de la simulation:</h3>
+    <ul>
+      <li *ngFor="let step of progress">{{ step }}</li>
+    </ul>
+  </div>
+<app-simulation-results *ngIf="results && showResults" [results]="results" [watershedName]="selectedStationName" [showResults]="true"></app-simulation-results>
+
+
+</div>
+
+<!-- Custom Backdrop -->
+<div class="modal-backdrop-custom" *ngIf="isModalOpen" (click)="closeModal()"></div>
+
+<!-- Modal -->
+<div class="modal show d-block" tabindex="-1" role="dialog" *ngIf="isModalOpen">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="infoModalLabel">Sélection de la station hydrologique</h5>
+        <button type="button" class="close" (click)="closeModal()" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Sélectionner une station hydrologique dans la liste déroulante suivante. 
+        Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.
+        Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.
+      </div>
+    </div>
+  </div>
+</div>
