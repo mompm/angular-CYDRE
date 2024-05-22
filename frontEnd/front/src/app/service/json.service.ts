@@ -8,6 +8,9 @@ import DFFData from '../model/DFFData';
 import GDFPiezometryData  from '../model/GDFPiezometryData ';
 import StationDischargedata from '../model/StationDischargedata';
 import GDFStationData from '../model/GDFStationData';
+import StationTemperaturedata from '../model/StationTemperaturedata';
+import WaterTableDepthdata from '../model/WaterTableDepthdata';
+import StationPrecipitationdata from '../model/StationPrecipitationdata';
 
 
 
@@ -35,7 +38,7 @@ export class JsonService {
 		return lastValueFrom(this.http.get<Array<DFFData>>("osur/getdff"));
 	}
 
-	gedataGDFStations(): Promise<Array<GDFStationData>>{
+	getdataGDFStations(): Promise<Array<GDFStationData>>{
 		return lastValueFrom(this.http.get<Array<GDFStationData>>("osur/GetGDFStations"));
 	}
 
@@ -46,6 +49,21 @@ export class JsonService {
 	getStationDischargeData(id: string): Promise<Array<StationDischargedata>> {
 		const url = `/osur/stationDischarge/${id}`;
 		return lastValueFrom(this.http.get<Array<StationDischargedata>>(url));
+	}
+
+	getStationTemperatureData(id: string): Promise<Array<StationTemperaturedata>> {
+		const url = `/osur/stationTemperature/${id}`;
+		return lastValueFrom(this.http.get<Array<StationTemperaturedata>>(url));
+	}
+
+	getWaterTableDepthdata(id: string): Promise<Array<WaterTableDepthdata>> {
+		const url = `/osur/stationWaterTableDepth/${id}`;
+		return lastValueFrom(this.http.get<Array<WaterTableDepthdata>>(url));
+	}
+
+	getStationPrecipitationdata(id: string): Promise<Array<StationPrecipitationdata>> {
+		const url = `/osur/stationPrecipitation/${id}`;
+		return lastValueFrom(this.http.get<Array<StationPrecipitationdata>>(url));
 	}
 
 }
