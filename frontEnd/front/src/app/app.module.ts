@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -28,6 +28,7 @@ import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSea
 import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 import { WaterTableDepthSeasonal } from './ficheSite/WaterTableDepthSeasonal/WaterTableDepthSeasonal.component';
 import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipitationSeasonal.component';
+import { Simulateur } from './Simulateur/Simulateur.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -50,7 +51,12 @@ import {MatStepperModule} from '@angular/material/stepper';
 import {MatSelectModule} from "@angular/material/select";
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
-import {MatSlideToggleModule} from '@angular/material/slide-toggle'; 
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import {AsyncPipe} from '@angular/common';
+import {MatInputModule} from '@angular/material/input';
+import {MatFormFieldModule} from '@angular/material/form-field';
+
 
 // End of Hoang module
 export function HttpLoaderFactory(http: HttpClient) {
@@ -72,6 +78,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     hydrographSeasonal,
     temperatureSeasonal,
     WaterTableDepthSeasonal,
+    Simulateur,
     precipitationSeasonal,
     SettingsComponent,
     LoginComponent,
@@ -89,6 +96,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     HttpClientModule,
     AppRoutingModule,
     FormsModule,
+    ReactiveFormsModule,
     TableModule,
     ButtonModule,
     InputTextModule,
@@ -116,6 +124,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatDialogModule,
     MatMenuModule,
     MatSlideToggleModule,
+    MatAutocompleteModule,
+    AsyncPipe,
+    MatInputModule,
+    MatFormFieldModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

@@ -7,10 +7,12 @@ import { ModelingComponent } from "./modeling/modeling.component";
 import {LocalisationComponent} from "./modeling/localisation/localisation.component";
 import {ModelisationComponent} from "./modeling/modelisation/modelisation.component";
 import { FicheSiteComponent } from './ficheSite/ficheSite.component';
+import { Simulateur } from './Simulateur/Simulateur.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
   { path: 'home', component: HomeComponent },
   { path: 'ficheSite', component: FicheSiteComponent },
+  { path: 'Simulateur', component: Simulateur},
   { path: 'modeling',
     component: ModelingComponent,
     children: [

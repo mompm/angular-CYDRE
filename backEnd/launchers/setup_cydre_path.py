@@ -12,6 +12,7 @@ import sys
 def setup_cydre_path():
     
     # Get the value of the "CYDRE" environment variable
+    #app_root = "C:\\Users\\monab\\Desktop\\CydreAngular\\cydre-angular\\backEnd"
     app_root = os.getenv("CYDRE_DASH")
 
     if app_root is None:

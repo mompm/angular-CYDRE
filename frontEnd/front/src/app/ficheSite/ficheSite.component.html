@@ -1,48 +1,60 @@
 <div class="body">
-    <div>
-      <div class="button_info_div">
-        <div class="h4_center">Sélection de la station hydrologique de référence</div>
-        <button mat-icon-button class="button_info" [matMenuTriggerFor]="popoverMenu">
-          <mat-icon>info</mat-icon>
-        </button>
-        <mat-menu #popoverMenu="matMenu" xPosition="after">
-          <ng-template matMenuContent >
-            <p>Sélectionner une station hydrologique dans la liste déroulante suivante.</p>
-            <p>Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.</p>
-            <p>Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.</p>
-          </ng-template>
-        </mat-menu>
-      </div>
-
-      <div class="choix_station_div">
-        <div>
-          <mat-form-field class="first-dropdown">
-            <mat-select placeholder="Sélectionnez une station" [(ngModel)]="selectedStationID" (ngModelChange)="onStationSelectionChange($event)">
-              <mat-option *ngFor="let location of GDFStationDatas" [value]="location.index">
-                {{ location.index }} - {{ location.station_name}}
-              </mat-option>
-            </mat-select>
-        </mat-form-field>
-        </div>
-        <div >
-          <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/' + selectedStationID + '/fiche'" target="_blank" class="button_link_hydroportail">
-            <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail" style="height: 20px;">
-          </a>
-          <a mat-button *ngIf="isAdesVisible" [href]="'https://ades.eaufrance.fr/Fiche/PtEau?Code=' + selectedOldBSS" target="_blank" class="button_link_ades">
-            <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="ADES" style="height: 20px;">
-          </a>
-        </div>
-      </div>
-
+  <div>
+    <div class="button_info_div">
+      <div class="h4_center">Sélection de la station hydrologique de référence</div>
+      <button mat-icon-button class="button_info" [matMenuTriggerFor]="popoverMenu">
+        <mat-icon>info</mat-icon>
+      </button>
+      <mat-menu #popoverMenu="matMenu" xPosition="after">
+        <ng-template matMenuContent >
+          <p>Sélectionner une station hydrologique dans la liste déroulante suivante.</p>
+          <p>Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.</p>
+          <p>Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.</p>
+        </ng-template>
+      </mat-menu>
     </div>
+
+    <div>
+      <div class="choix_station_div">
+          <div>
+              <form class="dropdown-form">
+                  <mat-form-field class="first-dropdown">
+                      <mat-label>Station</mat-label>
+                      <input type="text"
+                          placeholder="Sélectionner une station"
+                          aria-label="Number"
+                          matInput
+                          [formControl]="myControl"
+                          [matAutocomplete]="auto">
+                      <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
+                          <mat-option *ngFor="let option of filteredOptions | async" 
+                                      [value]="option" 
+                                      [disabled]="isOptionDisabled(option)" 
+                                      [ngClass]="{'disabled-option': isOptionDisabled(option)}">
+                              {{ option.index }} - {{ option.station_name }}
+                          </mat-option>
+                      </mat-autocomplete>
+                  </mat-form-field>
+              </form>
+          </div>
+          <div class="button-links">
+              <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/'+ selectedWatershedID + '/fiche'" target="_blank" class="button_link_hydroportail">
+                  <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail">
+              </a>
+              <a mat-button [href]="'https://ades.eaufrance.fr/Fiche/PtEau?Code='+ selectedWatershedBSS" target="_blank" class="button_link_ades">
+                  <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="ADES">
+              </a>
+          </div>   
+      </div>
+  </div>
   
     <div>
       <div class="h3_div">
         <h3 class="h3_text">Localisation du bassin versant</h3>
       </div> 
       <div class="maps_div">
-        <app-RegionalMap [stationSelectionChange] = "stationMap" class="regional_map"></app-RegionalMap>
-        <app-WatershedMap [stationSelectionChange] = "stationMap" class="watershed_map"></app-WatershedMap>
+        <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" class="regional_map"></app-RegionalMap>
+        <app-WatershedMap [stationSelectionChange] = "selectedWatershedID" class="watershed_map"></app-WatershedMap>
       </div>
       <div>
         <p class="parapgraphe_without_padding">L'association d'une station piézométrique au bassin versant est définie selon 3 critères : 1) proximité géographique; 2) couverture géologique et; 3) cohérence amont/aval.</p>
@@ -56,12 +68,12 @@
       </div>
     </div>
     <div class="seasonal_plot_div">
-    <app-hydrographGlobal [stationSelectionChange] = "stationMap" ></app-hydrographGlobal>
+    <app-hydrographGlobal [stationSelectionChange] = "selectedWatershedID" ></app-hydrographGlobal>
     <div style="text-align: center;">
     <h3>Dynamique saisonnière de la ressource en eau</h3>
     <p>Choix d'une année à visualiser :</p>
     <mat-form-field class="second-dropdown">
-      <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" (ngModelChange)="onYearChange()" class="second-dropdown">
+      <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" class="second-dropdown">
         <mat-option *ngFor="let year of years" [value]="year">
           {{ year }}
         </mat-option>
@@ -70,12 +82,12 @@
   </div>
   <div class="container_seasonal">
     <div class="seasonal_plot">
-      <div ><app-temperatureSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
-      <div ><app-precipitationSeasonal  [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears"></app-precipitationSeasonal></div>
+      <div ><app-temperatureSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
+      <div ><app-precipitationSeasonal  [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears"></app-precipitationSeasonal></div>
     </div>
     <div class="seasonal_plot">
-      <div ><app-hydrographSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
-      <div  *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "stationMap" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
+      <div ><app-hydrographSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
+      <div  *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
     </div>
   
   

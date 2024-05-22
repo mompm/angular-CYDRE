@@ -12,6 +12,7 @@
           <ul class="navbar-nav mr-auto nav-nav">
             <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li>
             <li *ngIf="!this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite"  routerLinkActive="active" translate (click)="login()">fiche de site</a></li>
+            <li *ngIf="!this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/Simulateur"  routerLinkActive="active" translate (click)="login()">Simulateur Cydre</a></li>
             <li *ngIf="!this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/login"  routerLinkActive="active" translate (click)="login()">login</a></li>
             <li *ngIf="this.authService.isLoggedIn" ><a class="navbar-underline-onglet menu-item" routerLink="/modeling" routerLinkActive="active" translate (click)="data()">data</a></li>
             <li *ngIf="this.authService.isLoggedIn"><a class="navbar-underline-onglet menu-item" routerLink="/settings" routerLinkActive="active" translate (click)="settings()">settings</a></li>
