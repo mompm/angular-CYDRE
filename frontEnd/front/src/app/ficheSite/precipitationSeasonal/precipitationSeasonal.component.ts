@@ -154,7 +154,7 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
               return aDay - bDay;
             }
           });
-          console.log("re", resultArray);
+          //console.log("re", resultArray);
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
         const resultArrayq10 = resultArray.map(entry => entry.q10);

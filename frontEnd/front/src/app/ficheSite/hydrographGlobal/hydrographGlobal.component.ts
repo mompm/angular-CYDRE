@@ -28,7 +28,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
     initStationDischarge(stationID: string){
         this.dataService.getMesurementStationDischarge(stationID).then(station => {
           this.dischargeStation = station;
-          console.log(this.dischargeStation);
+          //console.log(this.dischargeStation);
           this.hydrograph();
         });
       }

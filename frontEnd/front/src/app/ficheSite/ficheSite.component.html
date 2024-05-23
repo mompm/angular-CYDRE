@@ -43,7 +43,7 @@
         <h3 class="h3_text">Localisation du bassin versant</h3>
       </div> 
       <div class="maps_div">
-        <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" class="regional_map"></app-RegionalMap>
+        <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" (markerClick)="handleMarkerClick($event)" class="regional_map"></app-RegionalMap>
         <app-WatershedMap [stationSelectionChange] = "selectedWatershedID" class="watershed_map"></app-WatershedMap>
       </div>
       <div>

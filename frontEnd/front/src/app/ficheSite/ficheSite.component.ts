@@ -49,6 +49,26 @@ import {MatDialog} from '@angular/material/dialog';
       }
       //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
     }
+
+    handleMarkerClick(id: string): void {
+      console.log(`ID du marker dans le composant parent : ${id}`);
+      const selectedOption = this.GDFStationDatas.find(station => station.index === id);
+      if (selectedOption) {
+        this.myControl.setValue(selectedOption);
+        this.selectedWatershedID = selectedOption.index;
+        this.sharedService.setSelectedValue(selectedOption.index);
+        if(this.list_of_disabled_options.includes(selectedOption.index)){
+          this.correspondance = false;
+        }
+        else{
+          this.correspondance = true;
+        }
+        this.selectedWatershedBSS = selectedOption.BSS_ID;
+        this.sharedService.setSelectedValueBSS(selectedOption.BSS_ID);
+        }
+      
+    }
+
     openDialog() {
       this.dialog.open(PopupDialogFicheSite);
     }
