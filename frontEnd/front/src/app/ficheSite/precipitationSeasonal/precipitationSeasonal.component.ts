@@ -294,6 +294,11 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout);
+
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+        });
       
       }
   

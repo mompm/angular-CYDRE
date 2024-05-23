@@ -181,7 +181,10 @@ WaterShedMap_Leaflet(stationID:string){
           .bindPopup(`<b>Identifiant : ${piezoSelectedStation.identifiant_BSS}</b>`);
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
-    } 
+    }
+    window.addEventListener('resize', () => {
+      this.WatershedMapLeaflet.invalidateSize();
+    }); 
   }
 
   

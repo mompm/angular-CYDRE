@@ -5,6 +5,7 @@ import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import GDFStationData from '../model/GDFStationData';
+import {MatDialog, MatDialogModule} from '@angular/material/dialog';
 
 
 @Component({
@@ -27,7 +28,7 @@ export class Simulateur implements OnInit {
     'J5412110', 'J7083110', 'J7114010', 'J7824010', 'J7833010', 'J7973010', 'J8202310', 'J8363110', 'J8443010', 'J8502310', 'J8813010'
   ];
 
-  constructor(private dataService: DataService, private sharedService : SharedWatershedService) { }
+  constructor(private dataService: DataService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
 
   ngOnInit() {
     this.initGDFStations();
@@ -35,6 +36,10 @@ export class Simulateur implements OnInit {
     this.selectedWatershedBSS =this.sharedService.getSelectedValueBSS();
     console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
   }
+  openDialog() {
+    this.dialog.open(PopupDialog);
+  }
+
 
   initGDFStations() {
     this.dataService.getMesurementGDFStation().then(data => {
@@ -87,4 +92,26 @@ export class Simulateur implements OnInit {
   displayFn(option: { index: string, station_name: string }): string {
     return option ? `${option.index} - ${option.station_name}` : '';
   }
+
+  showDialogIfDisabled() {
+    const selectedOption = this.myControl.value;
+    if (this.isOptionDisabled(selectedOption)) {
+      this.dialog.open(StationUnavailableDialog);
+    } else {
+      this.sharedService.setSelectedValue(selectedOption.index);
+      console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
+    }
+  }
 }
+
+@Component({
+  selector: 'popupDialog',
+  templateUrl: './popupDialog.html',
+})
+export class PopupDialog {}
+
+@Component({
+  selector: 'stationUnavailableDialog',
+  templateUrl: './stationUnavailableDialog.html',
+})
+export class StationUnavailableDialog {}

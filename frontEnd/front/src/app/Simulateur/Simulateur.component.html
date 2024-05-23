@@ -2,17 +2,8 @@
 <div>
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <button mat-icon-button class="button_info" [matMenuTriggerFor]="popoverMenu">
-        <mat-icon>info</mat-icon>
-      </button>
-      <mat-menu #popoverMenu="matMenu" xPosition="after">
-        <ng-template matMenuContent >
-          <p>Sélectionner une station hydrologique dans la liste déroulante suivante.</p>
-          <p>Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.</p>
-          <p>Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.</p>
-        </ng-template>
-      </mat-menu>
-    </div>
+      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+</div>
 
 <div>
     <div class="choix_station_div">
@@ -47,3 +38,5 @@
         </div>   
     </div>
 </div>
+
+<button mat-raised-button color="primary" (click)="showDialogIfDisabled()">Sélectionner</button>

@@ -291,6 +291,10 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
     // Création de la carte regional ! identifiant de cette element est map :)
     Plotlydist.newPlot('RegionalMapPlotly', figData, figLayout);
+    window.addEventListener('resize', () => {
+      const hydrographWidth = 0.50 * window.innerWidth;
+      Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
+    });
   }
 
    

@@ -214,6 +214,10 @@ import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout);
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
+        });
       
       }
   
