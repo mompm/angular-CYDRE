@@ -605,6 +605,7 @@ class Graph():
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'similarity_period' : self.similarity_period.strftime('%Y-%m-%d').tolist(),
         'm10' : float(self.mod10)
+        
         }
 
         return data

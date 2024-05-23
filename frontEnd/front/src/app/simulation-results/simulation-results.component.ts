@@ -22,14 +22,7 @@ export class SimulationResultsComponent implements OnInit {
   layout: Partial<Plotly.Layout> | undefined;
   endDate: Date | undefined;
 
-  sliderOptions: Options = {
-    floor: 0,
-    ceil: 1,
-    step: 0.001,
-    translate: (value: number): string => {
-      return value.toString();
-    }
-  };
+  
 
   @ViewChild(MatPaginator)
   paginator!: MatPaginator;
@@ -59,6 +52,7 @@ export class SimulationResultsComponent implements OnInit {
   startDate: Date = new Date(this.results.similarity_period[0]);
   yMin = 0;
   yMax = 0;
+  maxPredictedValue : number[] = [];
 
   colorScheme: Color = {
     name: 'default',
@@ -67,23 +61,34 @@ export class SimulationResultsComponent implements OnInit {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
   };
 
+  sliderOptions: Options = {
+    floor: 0,
+    ceil: Math.max(this.yMax, 1),
+    step: 0.001,
+    translate: (value: number): string => {
+      return value.toString();
+    }
+  };
+
   ngOnInit(): void {
     this.dataSource = new MatTableDataSource(this.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;  
+
     console.log("showresults", this.showResults);
+
     window.addEventListener('resize', () => {
       const previsionGraphWidth = 0.72 * window.innerWidth;
-      if (document.getElementById('previsions')) {
+      if (document.getElementById('previsions' )&& this.showResults) {
         Plotly.relayout('previsions', { width: previsionGraphWidth });
       }
     });
   }
 
-  async ngOnChanges(changes: SimpleChanges): Promise<void> {
+  ngOnChanges(changes: SimpleChanges): void {
     console.log(changes);
-    if (changes['results'] && document.getElementById('previsions')) {
-      await this.updateGraphData();
+    if (changes['results'] && this.showResults && document.getElementById('previsions')) {
+      this.updateGraphData();
       this.updateLayout();
       this.showPlot();
     }
@@ -91,95 +96,99 @@ export class SimulationResultsComponent implements OnInit {
 
   onM10Change(value: number) {
     this.m10sliderValue = value;
-    this.updateLayout(); // Update layout with new red line position
-    this.showPlot(); // Apply updated layout
+    this.updateLayout();
+    this.showPlot();
+    // this.updateRedLine();
   }
 
-  async updateGraphData(): Promise<void> {
+  updateGraphData(): void {
     if (this.showResults && this.results.graph && this.results.graph.data) {
-      this.traces = []; // Reset traces array
+      this.traces= [];
       var q10Trace: Plotly.Data | undefined;
       var q90Trace: Plotly.Data | undefined;
-      
+      this.startDate = new Date(this.results.similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
+      
 
       this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any; }) => {
-        console.log('Processing line:', line);
-        if (line.x && line.y && line.x.length === line.y.length) {
-          var parsedDates = line.x.map(date => new Date(date));
-          if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
-            this.endDate = parsedDates[parsedDates.length - 1];
-          }
+          console.log('Processing line:', line);
+          if (line.x && line.y && line.x.length === line.y.length) {
+              var parsedDates = line.x.map(date => new Date(date));
+              if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
+                  this.endDate = parsedDates[parsedDates.length - 1];
+              }
 
-          for (let i = 0; i < parsedDates.length; i++) {
-            if (parsedDates[i] >= this.startDate && parsedDates[i] <= this.endDate) {
-              yValuesWithinObservedPeriod.push(line.y[i]);
+              for (let i = 0; i < parsedDates.length; i++) {
+                if (parsedDates[i] >= this.startDate && parsedDates[i] <= this.endDate) {
+                    yValuesWithinObservedPeriod.push(line.y[i]);
+                }
+                if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
+                    this.maxPredictedValue.push(line.y[i]);
+              }
+
             }
-          }
+            this.yMin = Math.min(...yValuesWithinObservedPeriod);
+            this.yMin = Math.min(this.yMin, this.results.m10-1);
+            this.yMax = Math.max(...yValuesWithinObservedPeriod);
 
-          var trace: Plotly.Data = {
-            x: parsedDates,
-            y: line.y,
-            mode: 'lines',
-            type: 'scatter',
-            name: line.name,
-            line: line.line
-          };
 
-          if (line.name === 'Q10') {
-            q10Trace = trace;
-          } else if (line.name === 'Q90') {
-            if (line.x.length > 0) {
-              this.simulationStartDate = parsedDates[0];
-              this.simulationEndDate = parsedDates[parsedDates.length - 1];
-            }
-            q90Trace = trace;
+
+              var trace: Plotly.Data = {
+                  x: parsedDates,
+                  y: line.y,
+                  mode: 'lines',
+                  type: 'scatter',
+                  name: line.name,
+                  line: line.line
+              };
+
+              if (line.name === 'Q10') {
+                  q10Trace = trace;
+              } else if (line.name === 'Q90') {
+                  if (line.x.length > 0) {
+                    this.simulationStartDate = parsedDates[0];
+                    this.simulationEndDate = parsedDates[parsedDates.length-1];
+                  }
+                  q90Trace = trace;
+              } else {
+                this.traces.push(trace);
+              }
           } else {
-            this.traces.push(trace);
+              console.error('Data length mismatch or invalid data', line);
           }
-        } else {
-          console.error('Data length mismatch or invalid data', line);
-        }
       });
+          if (q10Trace && q90Trace) {
+            (q90Trace as any).fill = null;
+            (q90Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
+            (q90Trace as any).line = { color: '#407fbd', width: 1 };
+            (q90Trace as any).showlegend = false;
+            (q90Trace as any).hoverinfo = 'skip';
 
-      const HorizontalLineLegendTrace: Plotly.Data = {
-        x: [0, 0],
-        y: [0, 0],
-        mode: 'lines',
-        line: {
-          color: 'red',
-          width: 2,
-          dash: 'solid'
-        },
-        showlegend: true,
-        name: '1/10 du module',
-      };
-      this.traces.push(HorizontalLineLegendTrace);
+            (q10Trace as any).fill = 'tonexty';
+            (q10Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
+            (q10Trace as any).line = { color: '#407fbd', width: 1 };
+            (q10Trace as any).name = "zone d'incertitude";
+            (q10Trace as any).hoverinfo = 'skip';
 
-      this.yMin = Math.min(...yValuesWithinObservedPeriod);
-      this.yMin = Math.min(this.yMin, this.results.m10 - 1);
-      this.yMax = Math.max(...yValuesWithinObservedPeriod);
+            this.traces.push(q90Trace);
+            this.traces.push(q10Trace);
+        }
 
-      if (q10Trace && q90Trace) {
-        (q90Trace as any).fill = null;
-        (q90Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-        (q90Trace as any).line = { color: '#407fbd', width: 1 };
-        (q90Trace as any).showlegend = false;
-        (q90Trace as any).hoverinfo = 'skip';
-
-        (q10Trace as any).fill = 'tonexty';
-        (q10Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-        (q10Trace as any).line = { color: '#407fbd', width: 1 };
-        (q10Trace as any).name = "zone d'incertitude";
-        (q10Trace as any).hoverinfo = 'skip';
-
-        this.traces.push(q90Trace);
-        this.traces.push(q10Trace);
-      }
-
-      this.showResults = true;
-    }  
+        this.updateSliderOptions();
+    }
   }
+
+  updateSliderOptions() {
+    this.sliderOptions = {
+      floor: 0,
+      ceil: Math.max(...this.maxPredictedValue, 1),
+      step: 0.001,
+      translate: (value: number): string => {
+        return value.toString();
+      }
+    };
+  }
+  
 
   updateLayout() {
     this.layout = {
@@ -222,6 +231,22 @@ export class SimulationResultsComponent implements OnInit {
       }] : [],
     };
   }
+
+  // updateRedLine() {
+  //   if (this.layout && this.simulationStartDate && this.simulationEndDate) {
+  //     this.layout.shapes = this.layout.shapes?.map(shape => {
+  //       if (shape.type === 'line' && shape.line!.color === 'red') {
+  //         return {
+  //           ...shape,
+  //           y0: this.m10sliderValue,
+  //           y1: this.m10sliderValue
+  //         };
+  //       }
+  //       return shape;
+  //     });
+  //     Plotly.relayout('previsions', { shapes: this.layout.shapes });
+  //   }
+  // }
 
   showPlot() {
     Plotly.newPlot('previsions', this.traces, this.layout);
