@@ -1,4 +1,5 @@
 <div *ngIf="showResults" >
+  <button type="button" class="btn btn-primary" (click)="updateResults()">Refresh</button>
   <div >
     <h4>Visualisation des prévisions saisonnières</h4>
     <div>
@@ -51,8 +52,8 @@
               <p>Proportion d'événements où le 1/10 du module est atteint dans les prochains mois</p>
             </div>
             <div class="col text-center">
-              <h4 >{{ (results.volume50||0) }} m3</h4>
-              <p >{{ (results.volume10||0) }} - {{ (results.volume10||0) }}</p>
+              <h4 >{{ (results.volume50||0 | number: '1.2-2') }} m3</h4>
+              <p >{{ (results.volume10||0) | number: '1.3-3' }} - {{ (results.volume90||0) | number: '1.3-3' }}</p>
               <p>Volume manquant pour compenser le dépassement du 1/10 du module</p>
             </div>
           </div>
@@ -71,7 +72,7 @@
         <div class="row">
             <div class="col-md-6">
                 <h4>Matrice de corrélation</h4>
-                <div class="mat-elevation-z8">
+                <div *ngIf="dataSource" class="mat-elevation-z8">
                   <mat-table [dataSource]="dataSource" matSort>
               
                     <!-- Year Column -->

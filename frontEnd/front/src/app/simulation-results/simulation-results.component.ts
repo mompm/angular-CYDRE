@@ -5,6 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
+import { JsonService } from '../service/json.service';
 
 @Component({
   selector: 'app-simulation-results',
@@ -13,8 +14,9 @@ import * as Plotly from 'plotly.js-dist';
 })
 export class SimulationResultsComponent implements OnInit {
   
+  constructor(private jsonService: JsonService){}
   displayedColumns: string[] = ['Year', 'ID', 'Coeff'];
-  dataSource!: MatTableDataSource<any>;
+  dataSource : MatTableDataSource<any> | undefined;
 
   simulationStartDate: Date | undefined;
   simulationEndDate: Date | undefined;
@@ -31,21 +33,21 @@ export class SimulationResultsComponent implements OnInit {
 
   @Input() results: any = {
     proj_values: { Q50: 0, Q10: 0, Q90: 0 },
-    ndays_before_alert_Q50: 1,
-    ndays_before_alert_Q90: 1,
-    ndays_before_alert_Q10: 1,
+    ndays_before_alert_Q50: { Q50: 0, Q90: 0, Q10: 0 },
     ndays_below_alert: { Q50: 0, Q90: 0, Q10: 0 },
     prop_alert_all_series: 0,
     volume50: 0,
     volume10: 0,
     last_date: '',
     first_date: '',
-    corr_matrix: [],
     scale: false,
     graph: false,
     similarity_period: [],
-    m10: 0.0
+    m10: 0.0, 
+    compute_matrix : false
   };
+
+  @Input() corr_matrix: any[] = [];
   @Input() showResults: boolean = false;
   @Input() watershedName: string = "";
   m10sliderValue = this.results.m10 || 0.0;
@@ -71,9 +73,9 @@ export class SimulationResultsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
+    this.dataSource = new MatTableDataSource(this.corr_matrix);
     this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;  
+    this.dataSource.sort = this.sort; 
 
     console.log("showresults", this.showResults);
 
@@ -91,13 +93,19 @@ export class SimulationResultsComponent implements OnInit {
       this.updateGraphData();
       this.updateLayout();
       this.showPlot();
+      if(!this.results.compute_matrix){
+        this.getCorrMatrix();
+        this.results.compute_matrix = true;
+      }
     }
+  
   }
 
   onM10Change(value: number) {
     this.m10sliderValue = value;
     this.updateLayout();
     this.showPlot();
+    // this.updateResults();
     // this.updateRedLine();
   }
 
@@ -110,7 +118,7 @@ export class SimulationResultsComponent implements OnInit {
       var yValuesWithinObservedPeriod: number[] = [];
       
 
-      this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any; }) => {
+      this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
           console.log('Processing line:', line);
           if (line.x && line.y && line.x.length === line.y.length) {
               var parsedDates = line.x.map(date => new Date(date));
@@ -124,7 +132,7 @@ export class SimulationResultsComponent implements OnInit {
                 }
                 if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
                     this.maxPredictedValue.push(line.y[i]);
-              }
+                }
 
             }
             this.yMin = Math.min(...yValuesWithinObservedPeriod);
@@ -151,6 +159,14 @@ export class SimulationResultsComponent implements OnInit {
                   }
                   q90Trace = trace;
               } else {
+                if(line.name.includes("Projection")){
+                  trace.showlegend = false;
+                  trace.hoverinfo = 'none'
+                  trace.line!.dash = 'dash';
+                  trace.line!.color = 'rgba(0, 0, 255, 0.1)';
+                }else{
+                trace.hoverinfo = 'all';
+                }
                 this.traces.push(trace);
               }
           } else {
@@ -260,9 +276,54 @@ export class SimulationResultsComponent implements OnInit {
 
     Plotly.relayout('previsions', { annotations: [annotation] });
   }
+    getCorrMatrix(){
+      this.jsonService.getCorrMatrix().subscribe({
+        next:(response)=>{
+          var taskId = response.task_id;
+          this.checkMatrixResults(taskId);
+        }
+        });
+    }
+    checkMatrixResults(taskId:string) {
+      if (taskId) {
+        this.jsonService.getResults(taskId).subscribe({
+          next: (data) => {
+            if (data.status !== 'processing') {
+              this.corr_matrix = data;
+              console.log(this.corr_matrix);
+              this.dataSource = new MatTableDataSource(this.corr_matrix);
+              this.dataSource.paginator = this.paginator;
+              this.dataSource.sort = this.sort; 
+            }
+          },
+          error: (error) => {
+            console.error('Error occurred:', error);
+          }
+        });
+      }
+    }
+
+  updateResults() {
+    this.jsonService.getUpdatedResults(this.m10sliderValue).subscribe({
+      next: (response) => {
+        console.log(response)
+        this.results.volume10 = response['volume10'];
+        this.results.volume50 = response['volume50'];
+        this.results.volume90 = response['volume90'];
+        this.results.ndays_before_alert = response['ndays_before_alert'],
+        this.results.ndays_below_alert = response['ndays_below_alert'],
+        this.results.prop_alert_all_series = response['prop_alert_all_series']
+      },
+      error: (error) => {
+        console.error('Error occurred:', error);
+      }
+    });
+  }
+
 
   ngAfterViewInit() {
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
+    this.dataSource = new MatTableDataSource(this.corr_matrix);
+    console.log(this.dataSource)
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.updateGraphData();
@@ -272,9 +333,9 @@ export class SimulationResultsComponent implements OnInit {
 
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filter = filterValue.trim().toLowerCase();
-    if (this.dataSource.paginator) {
-      this.dataSource.paginator.firstPage();
+    this.dataSource!.filter = filterValue.trim().toLowerCase();
+    if (this.dataSource!.paginator) {
+      this.dataSource!.paginator.firstPage();
     }
   }
 }

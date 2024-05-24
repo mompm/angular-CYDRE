@@ -360,18 +360,46 @@ results_storage = {}
 @app.route('/api/get_run_cydre', methods=['POST'])
 def get_run_cydre():
     data = request.json
-    watershed = data.get('watershed')
-    slider = data.get('slider')
-    date = data.get('date')
-    
-    # Generate a unique task ID
+    task = data.get('task')
+    print("task: ", task)
     task_id = str(uuid.uuid4())
-    
-    # Start a new thread to run the long-running task
-    thread = threading.Thread(target=getGraph, args=(task_id, watershed, slider, date))
+    if task == 'getGraph':
+        watershed = data.get('watershed')
+        slider = data.get('slider')
+        date = data.get('date')
+        thread = threading.Thread(target=getGraph, args=(task_id, watershed, slider, date))
+    elif task == 'getCorrMatrix':
+        thread = threading.Thread(target=getCorrMatrix, args=(task_id,))
     thread.start()
-    
     return jsonify({'task_id': task_id})
+
+
+@app.route('/api/update_indicator', methods=['POST'])
+def update_indicator():
+    data = request.json
+    m10_value = data.get('m10')
+
+    try:
+        # Retrieve the stored Cydre app and Graph object
+        cydre_app = app.config.get('cydre_app')
+        graph_results = app.config.get('graph_results')
+
+        if cydre_app is None:
+            app.logger.error('Cydre app is not initialized')
+            return jsonify({'error': 'Cydre app is not initialized'}), 500
+
+        if graph_results is None:
+            app.logger.error('Graph results are not initialized')
+            return jsonify({'error': 'Graph results are not initialized'}), 500
+
+        # Update the indicator and get new projections
+        new_results = graph_results.new_projections(m10_value)
+
+        return jsonify(new_results), 200
+    except Exception as e:
+        app.logger.error('Error updating indicator: %s', str(e))
+        return jsonify({'error': str(e)}), 500
+
 
 @app.route('/api/results/<task_id>', methods=['GET'])
 def get_results(task_id):
@@ -379,12 +407,24 @@ def get_results(task_id):
         return jsonify(results_storage[task_id])
     else:
         return jsonify({'status': 'processing'})
+    
+def getCorrMatrix(task_id):
+    try:
+        corr_matrix = pd.DataFrame(app.config['cydre_app'].scenarios_grouped)
+        df = corr_matrix.reset_index()
+        df.columns = ['Year', 'ID', 'Coeff']
+        df['Coeff'] = df['Coeff'].round(2)
+        df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
+        df = df.astype({'Year': 'int', 'Coeff': 'float'})
+        corr_matrix = df.to_dict(orient='records')
+        results_storage[task_id] = corr_matrix
+    except Exception as e:
+        results_storage[task_id] = {'error': str(e)}
+    return
+
 
     
 def getGraph(task_id, watershed, slider, date):
-    # watershed_value = flask.request.args.get('watershed')
-    # slider_value = flask.request.args.get('sliderValue')
-    # simulation_date = flask.request.args.get('simulationDate')
     print("________________")
     print("Récupération du graphe")
     print("________________")
@@ -412,23 +452,25 @@ def getGraph(task_id, watershed, slider, date):
         cydre_app.run_timeseries_similarity()
         cydre_app.select_scenarios(spatial=True)
 
+        
+    
+
         df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast()
 
         watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
-        # corr_matrix = pd.DataFrame(cydre_app.scenarios_grouped)
-        # df = corr_matrix.reset_index()
-        # df.columns = ['Year', 'ID', 'Coeff']
-        # df['Coeff'] = df['Coeff'].round(2)
-        # df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
-        # df = df.astype({'Year': 'int', 'Coeff': 'float'})
-        # corr_matrix = df.to_dict(orient='records')
+        
 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date,
                         log=True, module=True, baseflow=False, options='viz_plotly')
+        # Store the initialized Cydre app and Graph object in memory
+        with app.app_context():
+            app.config['cydre_app'] = cydre_app
+            app.config['graph_results'] = results
+            app.logger.info('Cydre app and Graph results are initialized and stored')
         
         results_storage[task_id] = results.plot_streamflow_projections(module=True)
     except Exception as e:
-        results_storage[task_id] = {'error': str(e)}
+        results_storage[task_id] = {'error': str(e)}     
 
 
 class Graph():
@@ -471,6 +513,98 @@ class Graph():
         
         return reference_df, projection_df, projection_series
     
+    def new_projections(self, m10):
+        reference_df, projection_df, projection_series = self._get_streamflow()
+        # Update the module calculation
+        self.mod10 = m10
+        
+        # Proportion of past events below the alert threshold
+        n_events = len(projection_series)
+        n_events_alert = 0
+        
+        for events in range(len(projection_series)):
+            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
+            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
+            if projection_series[events]['alert'].any():
+                n_events_alert += 1
+            else:
+                n_events_alert += 0
+        
+        self.prop_alert_all_series = n_events_alert / n_events
+
+        # Initialize volumes
+        self.volume10 = 0
+        self.volume50 = 0
+        self.volume90 = 0
+        
+
+        # Ensure proper calculation and error handling for each volume
+        try:
+            alert_df = projection_df[projection_df['Q10'] <= self.mod10]
+            q_values = alert_df['Q10'] * 86400
+            self.volume10 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume10 calculation: {e}")
+
+        try:
+            alert_df = projection_df[projection_df['Q50'] <= self.mod10]
+            q_values = alert_df['Q50'] * 86400
+            self.volume50 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume50 calculation: {e}")
+
+        try:
+            alert_df = projection_df[projection_df['Q90'] <= self.mod10]
+            q_values = alert_df['Q90'] * 86400
+            self.volume90 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume90 calculation: {e}")
+
+        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
+        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
+
+        try:
+            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
+            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q10 = None
+            self.ndays_before_alert_Q10 = 0
+        
+        try:
+            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
+            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q50 = None
+            self.ndays_before_alert_Q50 = 0
+            
+        try:
+            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
+            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q90 = None
+            self.ndays_before_alert_Q90 = 0
+        # Number of cumulated days below the alert threshold
+        self.ndays_below_alert = np.sum(mod10_intersect)
+
+        results = {
+            'volume50': float(self.volume50),
+            'volume10': float(self.volume10),
+            'volume90': float(self.volume90),
+            'prop_alert_all_series': int(self.prop_alert_all_series),
+            'ndays_before_alert':{
+                'Q10': float(self.ndays_before_alert_Q10),
+                'Q50': float(self.ndays_before_alert_Q50),
+                'Q90': float(self.ndays_before_alert_Q90),
+            },
+            'ndays_below_alert': {
+                'Q10': float(self.ndays_below_alert['Q10']),
+                'Q50': float(self.ndays_below_alert['Q50']),
+                'Q90': float(self.ndays_below_alert['Q90']),
+            },
+        }
+        return results
+
+    
     def plot_streamflow_projections(self, log=True, module=False, baseflow=False, options='viz_plotly'):
         
         # -------------- CYDRE RESULTS --------------
@@ -492,6 +626,7 @@ class Graph():
         # Calculate the module (1/10 x mean streamflow)
         if module:
             self.mod, self.mod10 = self._module(reference_df)
+        
         
         # Projected streamflow (last day value and evolution)
         self.proj_values = projection_df.iloc[-1]
@@ -581,6 +716,17 @@ class Graph():
         ).to_plotly_json()
         }
 
+        # Convert each projection series DataFrame to a Plotly trace
+        for idx, serie in enumerate(projection_series):
+            serie_trace = go.Scatter(
+                x=serie.index.tolist(),
+                y=serie['Q_streamflow'].tolist(),
+                mode='lines',
+                line=dict(color='rgba(0, 0, 255, 0.2)', width=1),  # Semi-transparent blue lines
+                name=f'Projection {idx + 1}'
+            ).to_plotly_json()
+            graph_data['data'].append(serie_trace)
+
         data = {
         'graph': graph_data,
         'proj_values': {
@@ -599,13 +745,13 @@ class Graph():
             'Q10': float(self.ndays_below_alert['Q10'])
         },
         'prop_alert_all_series': int(self.prop_alert_all_series),
-        'volume50': int(self.volume50),
-        'volume10': int(self.volume10),
+        'volume50': float(self.volume50),
+        'volume10': float(self.volume10),
+        'volume90': float(self.volume90),
         'last_date': self.projection_period[-1].strftime("%d/%m/%Y"),
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'similarity_period' : self.similarity_period.strftime('%Y-%m-%d').tolist(),
         'm10' : float(self.mod10)
-        
         }
 
         return data

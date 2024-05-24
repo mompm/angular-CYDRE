@@ -64,6 +64,7 @@ export class SimulateurCydreComponent implements OnInit {
   
   onStartSimulation() {
     const params = {
+      task : "getGraph",
       watershed: this.selectedStation,
       slider: this.sliderValue,
       date: this.simulationDate
@@ -85,6 +86,7 @@ export class SimulateurCydreComponent implements OnInit {
         next: (data) => {
           if (data.status !== 'processing') {
             this.results = data;
+            this.results['compute_matrix'] = false;
             this.progress.push('Simulation completed');
             this.showResults = true;
           } else {
@@ -97,6 +99,9 @@ export class SimulateurCydreComponent implements OnInit {
       });
     }
   }
+
+  
+
   onStationSelected(stationIndex: number) {
     this.selectedStation = stationIndex.toString();
     const selectedStation = this.stations.find(station => station.index === stationIndex);

@@ -58,14 +58,22 @@ export class JsonService {
 	//   }	
 	
 	runSimulation(params: any): Observable<any> {
-	return this.http.post<any>('http://localhost:5000/api/get_run_cydre', params);
+		return this.http.post<any>('http://localhost:5000/api/get_run_cydre', params);
 	}
+
 	
 	getResults(taskId: string): Observable<any> {
 		return timer(0, 5000).pipe(
 		  switchMap(() => this.http.get<any>(`http://localhost:5000/api/results/${taskId}`)),
-		  takeWhile(response => response.status === 'processing', true)
+		  takeWhile(response =>  response.status === 'processing',true)
 		);
-	  }
-	  
+	}
+	getCorrMatrix(): Observable<any> {
+		const corr_params = {task :'getCorrMatrix'}
+		return this.http.post<any>('http://localhost:5000/api/get_run_cydre', corr_params);
+	}
+	getUpdatedResults(indicator: number): Observable<any> {
+		const data = { m10: indicator };
+		return this.http.post<any>('http://localhost:5000/api/update_indicator', data);
+	}
 }
