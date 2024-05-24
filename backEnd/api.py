@@ -360,25 +360,63 @@ results_storage = {}
 @app.route('/api/get_run_cydre', methods=['POST'])
 def get_run_cydre():
     data = request.json
-    task = data.get('task')
-    print("task: ", task)
     task_id = str(uuid.uuid4())
-    if task == 'getGraph':
+    print("________________")
+    print("Récupération du graphe")
+    print("________________")
+
+    try:
+        # Récupérer les données de la payload
         watershed = data.get('watershed')
         slider = data.get('slider')
         date = data.get('date')
-        thread = threading.Thread(target=getGraph, args=(task_id, watershed, slider, date))
-    elif task == 'getCorrMatrix':
-        thread = threading.Thread(target=getCorrMatrix, args=(task_id,))
-    thread.start()
-    return jsonify({'task_id': task_id})
 
+        init = INI.Initialization(app_root)
+        cydre_app = init.cydre_initialization()
 
+        param_names = ['user_watershed_id', 'user_horizon', 'date']
+        param_paths = init.get_parameters_path(param_names)
+        
+        init.params.find_and_replace_param(param_paths[0], watershed)
+
+        init.params.find_and_replace_param(param_paths[1], int(slider))
+
+        init.params.find_and_replace_param(param_paths[2], str(date))
+
+        cydre_app = init.create_cydre_app()
+        # Run the Cydre application
+        cydre_app.run_spatial_similarity(spatial=True)
+        cydre_app.run_timeseries_similarity()
+        cydre_app.select_scenarios(spatial=True)
+
+        watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+
+        with app.app_context():
+            app.config['cydre_app'] = cydre_app
+            app.config['watershed_name'] = watershed_name
+        results_storage[task_id] = {"task_id": task_id}
+
+        return jsonify({"task_id":task_id}), 200
+
+    except Exception as e:
+        app.logger.error('Error starting cydre_app: %s', str(e))
+        return jsonify({'error': str(e)}), 500      
+        
 @app.route('/api/update_indicator', methods=['POST'])
 def update_indicator():
     data = request.json
     m10_value = data.get('m10')
+    try:
+        with app.app_context():
+            app.config['m10_indicator'] = m10_value
+        return jsonify({'success':"M10 indicator updated with value "+str(m10_value)})
+    
+    except Exception as e:
+        app.logger.error('Error updating indicator: %s', str(e))
+        return jsonify({'error': str(e)}), 500
 
+@app.route('/api/simulateur/get_m10_values/<task_id>', methods=['GET'])
+def get_m10_values(task_id):
     try:
         # Retrieve the stored Cydre app and Graph object
         cydre_app = app.config.get('cydre_app')
@@ -393,11 +431,20 @@ def update_indicator():
             return jsonify({'error': 'Graph results are not initialized'}), 500
 
         # Update the indicator and get new projections
-        new_results = graph_results.new_projections(m10_value)
+        new_results = graph_results.new_projections(app.config.get('m10_indicator'))
+        results_storage[task_id]['ndays_before_alert'] = new_results['ndays_before_alert']
+        results_storage[task_id]['ndays_below_alert'] = new_results['ndays_below_alert']
+        results_storage[task_id]['volume10'] = new_results['volume10']
+        results_storage[task_id]['volume50'] = new_results['volume50']
+        results_storage[task_id]['volume90'] = new_results['volume90']
+        results_storage[task_id]['prop_alert_all_series'] = new_results['prop_alert_all_series']
+
+
+        results_storage[task_id]['ndays_below_alert'] = new_results['ndays_below_alert']
 
         return jsonify(new_results), 200
     except Exception as e:
-        app.logger.error('Error updating indicator: %s', str(e))
+        app.logger.error('Error getting updated m10 values %s', str(e))
         return jsonify({'error': str(e)}), 500
 
 
@@ -407,71 +454,44 @@ def get_results(task_id):
         return jsonify(results_storage[task_id])
     else:
         return jsonify({'status': 'processing'})
-    
+
+@app.route('/api/simulateur/getCorrMatrix/<task_id>', methods=['GET'])
 def getCorrMatrix(task_id):
+    cydre_app = app.config['cydre_app']
     try:
-        corr_matrix = pd.DataFrame(app.config['cydre_app'].scenarios_grouped)
+        corr_matrix = pd.DataFrame(cydre_app.scenarios_grouped)
         df = corr_matrix.reset_index()
         df.columns = ['Year', 'ID', 'Coeff']
         df['Coeff'] = df['Coeff'].round(2)
         df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
         df = df.astype({'Year': 'int', 'Coeff': 'float'})
         corr_matrix = df.to_dict(orient='records')
-        results_storage[task_id] = corr_matrix
+        results_storage[task_id]['corr_matrix'] = corr_matrix
+        return jsonify(corr_matrix),200
     except Exception as e:
-        results_storage[task_id] = {'error': str(e)}
-    return
+        return jsonify({'error': str(e)}), 500
 
 
-    
-def getGraph(task_id, watershed, slider, date):
-    print("________________")
-    print("Récupération du graphe")
-    print("________________")
-
+@app.route('/api/simulateur/getGraph/<task_id>', methods=['GET'])
+def getGraph(task_id):
+    cydre_app = app.config['cydre_app']
+    task= str(task_id)
     try:
-        init = INI.Initialization(app_root)
-        cydre_app = init.cydre_initialization()
-
-        param_names = ['user_watershed_id', 'user_horizon', 'date']
-        param_paths = init.get_parameters_path(param_names)
-        
-        init.params.find_and_replace_param(param_paths[0], watershed)
-        # init.params.find_and_replace_param(param_paths[0], "J0014010")
-
-        init.params.find_and_replace_param(param_paths[1], int(slider))
-        # init.params.find_and_replace_param(param_paths[1], 60)
-
-        init.params.find_and_replace_param(param_paths[2], str(date))
-        # init.params.find_and_replace_param(param_paths[2], "2024-05-17")
-
-
-        cydre_app = init.create_cydre_app()
-        # Run the Cydre application
-        cydre_app.run_spatial_similarity(spatial=True)
-        cydre_app.run_timeseries_similarity()
-        cydre_app.select_scenarios(spatial=True)
-
-        
-    
-
         df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast()
 
-        watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+        results = Graph(cydre_app, app.config['watershed_name'], stations, cydre_app.date,
+                            log=True, module=True, baseflow=False, options='viz_plotly')
+            
+        app.logger.info('Cydre app and Graph results are initialized and stored')
         
-
-        results = Graph(cydre_app, watershed_name, stations, cydre_app.date,
-                        log=True, module=True, baseflow=False, options='viz_plotly')
-        # Store the initialized Cydre app and Graph object in memory
+        results_storage[task_id].update(results.plot_streamflow_projections(module=True))
         with app.app_context():
-            app.config['cydre_app'] = cydre_app
+            app.config['m10_indicator'] = results.mod10
             app.config['graph_results'] = results
-            app.logger.info('Cydre app and Graph results are initialized and stored')
-        
-        results_storage[task_id] = results.plot_streamflow_projections(module=True)
-    except Exception as e:
-        results_storage[task_id] = {'error': str(e)}     
+        return jsonify({'success':'Graph has been returned and stored'}), 200
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 class Graph():
     def __init__(self,cydre_app,watershed_name, stations, selected_date,

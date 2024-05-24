@@ -48,13 +48,23 @@
       <small class="form-text text-muted">Les calculs durent entre 15s et 1min</small>
     </div>
   </div>
-  <div *ngIf="progress.length">
+  <div *ngIf="progressMessages.length">
     <h3>Progression de la simulation:</h3>
-    <ul>
-      <li *ngFor="let step of progress">{{ step }}</li>
-    </ul>
+    <p>{{ currentProgressMessage }}</p>
+    <div class= "progress-container">
+    <div class="progress">
+      <div 
+        class="progress-bar" 
+        role="progressbar" 
+        [style.width.%]="progressValue" 
+        [attr.aria-valuenow]="progressValue" 
+        aria-valuemin="0" 
+        aria-valuemax="100">
+      </div>
+    </div>
   </div>
-<app-simulation-results *ngIf="results && showResults" [results]="results" [watershedName]="selectedStationName" [showResults]="true"></app-simulation-results>
+  </div>
+<app-simulation-results *ngIf="results && showResults" [results]="results" [watershedName]="selectedStationName" [showResults]="true" [m10SliderValue]="results.m10" [corr_matrix]="results.corr_matrix"></app-simulation-results>
 
 
 </div>

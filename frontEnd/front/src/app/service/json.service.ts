@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, Subject, lastValueFrom, switchMap, takeWhile, timer } from 'rxjs';
+import {Observable, Subject, catchError, lastValueFrom, of, switchMap, takeWhile, tap, timer } from 'rxjs';
 import OldBSSData from '../model/OldBSSData';
 import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
 import GDFWatershedsData from '../model/GDFWatershedsData';
@@ -15,6 +15,8 @@ import GDFStationData from '../model/GDFStationData';
   providedIn: 'root'
 })
 export class JsonService {
+private baseUrl = 'http://localhost:5000';
+
 
   constructor(private http: HttpClient){}
 
@@ -57,23 +59,68 @@ export class JsonService {
 	// 	return this.http.get<any>('http://localhost:5000/getGraph', { params });
 	//   }	
 	
-	runSimulation(params: any): Observable<any> {
-		return this.http.post<any>('http://localhost:5000/api/get_run_cydre', params);
-	}
-
-	
-	getResults(taskId: string): Observable<any> {
-		return timer(0, 5000).pipe(
-		  switchMap(() => this.http.get<any>(`http://localhost:5000/api/results/${taskId}`)),
-		  takeWhile(response =>  response.status === 'processing',true)
+	getRunCydre(params :any ): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/get_run_cydre`, params).pipe(
+		  tap(() => console.log('Running Cydre app...'))
 		);
-	}
-	getCorrMatrix(): Observable<any> {
-		const corr_params = {task :'getCorrMatrix'}
-		return this.http.post<any>('http://localhost:5000/api/get_run_cydre', corr_params);
-	}
-	getUpdatedResults(indicator: number): Observable<any> {
-		const data = { m10: indicator };
-		return this.http.post<any>('http://localhost:5000/api/update_indicator', data);
-	}
+	  }
+	  getGraph(taskId:string ): Observable<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/getGraph/`+taskId).pipe(
+		  tap(() => console.log('Generating graph...'))
+		);
+	  }
+	
+	  getM10Values(taskId: string): Observable<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/get_m10_values/`+taskId).pipe(
+		  tap(() => console.log('Fetching M10 values...'))
+		);
+	  }
+
+	  updateM10Value(params: any): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/update_indicator`, params).pipe(
+		  tap(() => console.log('Fetching M10 values...'))
+		);
+	  }
+	
+	  getCorrMatrix(taskId: string): Observable<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/getCorrMatrix/`+taskId).pipe(
+		  tap(() => console.log('Fetching correlation matrix...'))
+		);
+	  }
+	
+	  getResults(taskId: string): Observable<any> {
+		return this.http.get(`${this.baseUrl}/api/results/`+taskId).pipe(
+		  tap(() => console.log('Fetching results...'))
+		);
+	  }
+	
+	  runSimulation(params : any ,progressCallback: (message: string, progress: number) => void): Observable<any> {
+		let taskId: string;
+	
+		progressCallback('Initialisation de la simulation...', 0);
+		return this.getRunCydre(params).pipe(
+		  tap(response => {
+			taskId = response.task_id;
+			console.log(taskId)
+			console.log(`${this.baseUrl}/api/simulateur/getGraph/`+taskId)
+			progressCallback('Cydre app lancée.',50);
+		  }),
+		  switchMap(() => this.getGraph(taskId).pipe(
+			tap(() => progressCallback('Graphe généré.',60))
+		  )),
+		  switchMap(() => this.getM10Values(taskId).pipe(
+			tap(() => progressCallback('Valeurs M10 récupérées.',70))
+		  )),
+		  switchMap(() => this.getCorrMatrix(taskId).pipe(
+			tap(() => progressCallback('Matrice de corrélation récupérée.',80))
+		  )),
+		  switchMap(() => this.getResults(taskId).pipe(
+			tap(() => progressCallback('Résultats récupérés.',100))
+		  )),
+		  catchError(error => {
+			progressCallback('Erreur lors de la simulation.',0);
+			return of(null);
+		  })
+		);
+	  }
 }

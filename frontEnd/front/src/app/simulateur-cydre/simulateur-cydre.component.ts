@@ -3,6 +3,8 @@ import { Options } from '@angular-slider/ngx-slider';
 import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
 
+
+
 @Component({
   selector: 'app-simulateur-cydre',
   templateUrl: './simulateur-cydre.component.html',
@@ -11,7 +13,9 @@ import { HttpClient } from '@angular/common/http';
 export class SimulateurCydreComponent implements OnInit {
 
   constructor(private jsonService: JsonService, private http: HttpClient) { }
-
+  progressMessages: string[] = [];
+  progressValue = 0;
+  currentProgressMessage = '';
   stations: any[] = [];
   selectedStation: string = '';
   selectedStationName: string = '';
@@ -26,7 +30,6 @@ export class SimulateurCydreComponent implements OnInit {
 
   simulationResults: any = null;
   results: any = {};
-  progress: string[] = [];
   taskId: string | undefined;
   showResults :boolean = false;
 
@@ -64,41 +67,57 @@ export class SimulateurCydreComponent implements OnInit {
   
   onStartSimulation() {
     const params = {
-      task : "getGraph",
       watershed: this.selectedStation,
       slider: this.sliderValue,
       date: this.simulationDate
     };
 
-    this.jsonService.runSimulation(params).subscribe({
-      next: (response) => {
-        this.taskId = response.task_id;
-        this.checkResults();
-      },
-      error: (error) => {
-        console.error('Error occurred:', error);
-      }
-    });
-  }
-  checkResults() {
-    if (this.taskId) {
-      this.jsonService.getResults(this.taskId).subscribe({
-        next: (data) => {
-          if (data.status !== 'processing') {
-            this.results = data;
-            this.results['compute_matrix'] = false;
-            this.progress.push('Simulation completed');
-            this.showResults = true;
-          } else {
-            this.progress.push('Still processing...');
-          }
-        },
-        error: (error) => {
-          console.error('Error occurred:', error);
+    this.progressMessages = [];
+    this.progressValue = 0;
+    this.currentProgressMessage = 'Initialisation de la simulation...';
+
+
+    this.jsonService.runSimulation(params, this.updateProgress.bind(this)).subscribe(
+      (data) => {
+        if (data) {
+          this.results = data;
+          this.taskId = data.task_id;
+          this.progressMessages.push('Simulation terminée avec succès.');
+          this.showResults = true;
         }
-      });
-    }
+      },
+      (error) => {
+        this.progressMessages.push('Erreur lors de la simulation.');
+        console.error(error);
+      }
+    );
   }
+  
+  updateProgress(message: string, progress: number) {
+    this.currentProgressMessage = message;
+    this.progressValue = progress;
+    this.progressMessages.push(message);
+  }
+
+  // checkResults() {
+  //   if (this.taskId) {
+  //     this.jsonService.getResults(this.taskId).subscribe({
+  //       next: (data) => {
+  //         if (data.status !== 'processing') {
+  //           this.results = data;
+  //           this.results['compute_matrix'] = false;
+  //           this.progressMessages.push('Simulation completed');
+  //           this.showResults = true;
+  //         } else {
+  //           this.progressMessages.push('Still processing...');
+  //         }
+  //       },
+  //       error: (error) => {
+  //         console.error('Error occurred:', error);
+  //       }
+  //     });
+  //   }
+  // }
 
   
 

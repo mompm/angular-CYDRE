@@ -1,11 +1,12 @@
 import { Options } from '@angular-slider/ngx-slider/options';
-import { Component, Input, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
 import { JsonService } from '../service/json.service';
+import { switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-simulation-results',
@@ -44,13 +45,18 @@ export class SimulationResultsComponent implements OnInit {
     graph: false,
     similarity_period: [],
     m10: 0.0, 
-    compute_matrix : false
+    compute_matrix : false,
+    corr_matrix: [],
+    task_id:""
   };
+
+  taskId: string = "";
 
   @Input() corr_matrix: any[] = [];
   @Input() showResults: boolean = false;
   @Input() watershedName: string = "";
-  m10sliderValue = this.results.m10 || 0.0;
+  
+  @Input() m10SliderValue = this.results.m10 || 0.0;
   startDate: Date = new Date(this.results.similarity_period[0]);
   yMin = 0;
   yMax = 0;
@@ -73,40 +79,46 @@ export class SimulationResultsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.dataSource = new MatTableDataSource(this.corr_matrix);
+    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort; 
 
     console.log("showresults", this.showResults);
 
     window.addEventListener('resize', () => {
-      const previsionGraphWidth = 0.72 * window.innerWidth;
+      const previsionGraphWidth = 0.45 * window.innerWidth;
       if (document.getElementById('previsions' )&& this.showResults) {
         Plotly.relayout('previsions', { width: previsionGraphWidth });
       }
     });
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log(changes);
-    if (changes['results'] && this.showResults && document.getElementById('previsions')) {
-      this.updateGraphData();
-      this.updateLayout();
-      this.showPlot();
-      if(!this.results.compute_matrix){
-        this.getCorrMatrix();
-        this.results.compute_matrix = true;
-      }
-    }
-  
-  }
 
   onM10Change(value: number) {
-    this.m10sliderValue = value;
+    this.m10SliderValue = value;
     this.updateLayout();
     this.showPlot();
-    // this.updateResults();
-    // this.updateRedLine();
+  }
+
+  updateResults() {
+    if(this.results.task_id != ""){
+      this.jsonService.updateM10Value({ "m10": this.m10SliderValue }).pipe(
+        switchMap(() => this.jsonService.getM10Values(this.results.task_id)) // Utilisez le task ID ici
+      ).subscribe(
+        (data) => {
+          this.results.ndays_below_alert = data.ndays_below_alert;
+          this.results.ndays_before_alert = data.ndays_before_alert;
+          this.results.prop_alert_all_series = data.prop_alert_all_series;
+          this.results.volume10 = data.volume10;
+          this.results.volume50 = data.volume50;
+          this.results.volume90 = data.volume90;
+          console.log('Updated results:', data);
+        },
+        (error) => {
+          console.error('Error updating results:', error);
+        }
+      );
+    }
   }
 
   updateGraphData(): void {
@@ -238,8 +250,8 @@ export class SimulationResultsComponent implements OnInit {
         type: 'line',
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
-        y0: this.m10sliderValue,
-        y1: this.m10sliderValue,
+        y0: this.m10SliderValue,
+        y1: this.m10SliderValue,
         line: {
           color: 'red',
           width: 2,
@@ -247,22 +259,6 @@ export class SimulationResultsComponent implements OnInit {
       }] : [],
     };
   }
-
-  // updateRedLine() {
-  //   if (this.layout && this.simulationStartDate && this.simulationEndDate) {
-  //     this.layout.shapes = this.layout.shapes?.map(shape => {
-  //       if (shape.type === 'line' && shape.line!.color === 'red') {
-  //         return {
-  //           ...shape,
-  //           y0: this.m10sliderValue,
-  //           y1: this.m10sliderValue
-  //         };
-  //       }
-  //       return shape;
-  //     });
-  //     Plotly.relayout('previsions', { shapes: this.layout.shapes });
-  //   }
-  // }
 
   showPlot() {
     Plotly.newPlot('previsions', this.traces, this.layout);
@@ -274,61 +270,18 @@ export class SimulationResultsComponent implements OnInit {
       font: { size: 14 }
     };
 
-    Plotly.relayout('previsions', { annotations: [annotation] });
-  }
-    getCorrMatrix(){
-      this.jsonService.getCorrMatrix().subscribe({
-        next:(response)=>{
-          var taskId = response.task_id;
-          this.checkMatrixResults(taskId);
-        }
-        });
-    }
-    checkMatrixResults(taskId:string) {
-      if (taskId) {
-        this.jsonService.getResults(taskId).subscribe({
-          next: (data) => {
-            if (data.status !== 'processing') {
-              this.corr_matrix = data;
-              console.log(this.corr_matrix);
-              this.dataSource = new MatTableDataSource(this.corr_matrix);
-              this.dataSource.paginator = this.paginator;
-              this.dataSource.sort = this.sort; 
-            }
-          },
-          error: (error) => {
-            console.error('Error occurred:', error);
-          }
-        });
-      }
-    }
-
-  updateResults() {
-    this.jsonService.getUpdatedResults(this.m10sliderValue).subscribe({
-      next: (response) => {
-        console.log(response)
-        this.results.volume10 = response['volume10'];
-        this.results.volume50 = response['volume50'];
-        this.results.volume90 = response['volume90'];
-        this.results.ndays_before_alert = response['ndays_before_alert'],
-        this.results.ndays_below_alert = response['ndays_below_alert'],
-        this.results.prop_alert_all_series = response['prop_alert_all_series']
-      },
-      error: (error) => {
-        console.error('Error occurred:', error);
-      }
-    });
+    Plotly.relayout('previsions', { annotations: [annotation] ,width :0.45 * window.innerWidth });
   }
 
 
   ngAfterViewInit() {
-    this.dataSource = new MatTableDataSource(this.corr_matrix);
-    console.log(this.dataSource)
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort;
-    this.updateGraphData();
-    this.updateLayout();
-    this.showPlot();
+    this.updateComponentsWithResults(this.results);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['results'] && changes['results'].currentValue) {
+      this.updateComponentsWithResults(changes['results'].currentValue);
+    }
   }
 
   applyFilter(event: Event) {
@@ -338,4 +291,19 @@ export class SimulationResultsComponent implements OnInit {
       this.dataSource!.paginator.firstPage();
     }
   }
+
+
+  private updateComponentsWithResults(results: any): void {
+    // Mise à jour des résultats et de la matrice de corrélation
+    this.results = results;
+    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+  
+    // Mise à jour des autres éléments
+    this.updateGraphData();
+    this.updateLayout();
+    this.showPlot();
+  }
+
 }

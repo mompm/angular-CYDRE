@@ -1,10 +1,10 @@
 <div *ngIf="showResults" >
-  <button type="button" class="btn btn-primary" (click)="updateResults()">Refresh</button>
   <div >
     <h4>Visualisation des prévisions saisonnières</h4>
     <div>
-      <ngx-slider [(value)]="m10sliderValue" [options]="sliderOptions" (valueChange)="onM10Change($event)"></ngx-slider>
+      
       <div id="previsions"></div>
+      <ngx-slider [(value)]="m10SliderValue" [options]="sliderOptions" (valueChange)="onM10Change($event)"></ngx-slider>
       <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
     </div>
     <div>
@@ -22,7 +22,11 @@
         [autoScale]="true">
       </ngx-charts-scatter-chart> -->
     </div>
-  
+    <div class="d-flex">
+      <div class="ml-auto">
+    <button type="button" class="btn btn-primary" (click)="updateResults()">Mettre à jour avec le nouvel indicateur</button>
+      </div>
+    </div>
     <div class="card my-4 ">
         <div class="card-header">
           <h3>Indicateurs opérationnels</h3>
