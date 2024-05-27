@@ -28,7 +28,6 @@ import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSea
 import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 import { WaterTableDepthSeasonal } from './ficheSite/WaterTableDepthSeasonal/WaterTableDepthSeasonal.component';
 import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipitationSeasonal.component';
-import { Simulateur } from './Simulateur/Simulateur.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -54,8 +53,6 @@ import { MatMenuModule } from '@angular/material/menu';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
-import { MatInputModule } from '@angular/material/input';
-
 import { CreateAccountComponent } from './create-account/create-account.component';
 import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component'; 
@@ -68,7 +65,6 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import {AsyncPipe} from '@angular/common';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
-
 
 // End of Hoang module
 export function HttpLoaderFactory(http: HttpClient) {
@@ -92,7 +88,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     hydrographSeasonal,
     temperatureSeasonal,
     WaterTableDepthSeasonal,
-    Simulateur,
     precipitationSeasonal,
     SettingsComponent,
     LoginComponent,
