@@ -564,7 +564,6 @@ def run_timeseries_similarity():
 def select_scenarios():
     try:
         app.config['cydre_app'].select_scenarios(spatial=True)
-
     except Exception as e:
         app.logger.error('Error selecting scenarios": %s', str(e))
         return jsonify({'error': str(e)}), 500

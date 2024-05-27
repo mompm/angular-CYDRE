@@ -4,7 +4,7 @@
     <div>
       
       <div id="previsions"></div>
-      <ngx-slider [(value)]="m10SliderValue" [options]="sliderOptions" (valueChange)="onM10Change($event)"></ngx-slider>
+      <input type="number" [(ngModel)]="m10SliderValue" (ngModelChange)="onM10Change($event)" step="0.0001">
       <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
     </div>
     <div>
