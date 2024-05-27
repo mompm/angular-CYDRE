@@ -54,7 +54,7 @@ export class SimulationResultsComponent implements OnInit {
 
   @Input() corr_matrix: any[] = [];
   @Input() showResults: boolean = false;
-  @Input() watershedName: string = "";
+  @Input() watershedName: string | null | undefined;
   
   @Input() m10SliderValue = this.results.m10 || 0.0;
   startDate: Date = new Date(this.results.similarity_period[0]);

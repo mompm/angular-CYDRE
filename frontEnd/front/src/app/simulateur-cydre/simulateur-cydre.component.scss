@@ -46,4 +46,214 @@
     margin-bottom: 15px; /* Ajoute un espace de 15 pixels sous la barre de progression */
   }
   
+  .body{
+    margin-left: 5em;
+    margin-right: 5em;
+}
+//entete style
+.h4_center{
+    font-size: 18px;
+    margin-left: 10px;
+    text-align: center;
+}
+
+.button_info {
+    background-color: white;
+    color: black;              
+    border-radius: 5px;        
+    cursor: pointer;          
+    font-size: 12px; 
+    margin-left:25px;
+    }
+
+
+.button_info_div {
+        display: flex; 
+        margin-top:45px;
+        justify-content: center;
+        align-items: center;
+        width:100%;
+    }
+
+
+
+.center_ligne {
+    display: inline-block; 
+    vertical-align: middle; 
+}
+
+.choix_station_div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    
+}
+
+.dropdown-form {
+    flex: 1; // Pour occuper l'espace disponible
+    max-width: 500px;
+    margin-right: 20px; // Espace à droite pour séparer du bouton
+}
+
+mat-form-field.first-dropdown{
+    width: 375px;
+}
+
+mat-select.first-dropdown {
+    font-size: 12px;
+}
+
+.button-links {
+    display: flex;
+    align-items: center;
+}
+
+.button_link_hydroportail,
+.button_link_ades {
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    margin-left: 20px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.button_link_hydroportail img,
+.button_link_ades img {
+    height: 20px;
+}
+
+.disabled-option {
+    color: red; // Couleur pour les options désactivées
+}
+
+
+
+
+//map style 
+
+.h3_div {
+    background-color: #3C4F58;
+    color: white;
+    border-top-left-radius: 10px; 
+    border-top-right-radius: 10px;
+    padding: 1px;
+}
+
+.h3_text {
+    font-size: 18px;
+    text-align: center;
+    align-items: center;
+    margin-top:10px;
+    margin-bottom:10px;
+}
+
+.regional_map {
+    width: 60%;
+    display: inline-block; 
+    height:350;
+    margin: 0px;
+    padding: 0px;
+}
+
+.watershed_map {
+    width:35%;
+    display: inline-block;
+    height:350;
+    margin: 0px;
+    padding: 0px;
+}
+
+.maps_div {
+    display:flex;
+    justify-content:space-between;
+    margin-top:20px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    margin-top: 20px;
+}
+
+
+.parapgraphe_without_padding {
+    padding-top:5px;
+    font-size:14px;
+    font-style: italic;
+    text-align:justify;
+    margin-left:10px;
+    margin-right:10px,;
+    margin-bottom:10px;
+}
+
+.parapgraphe_with_padding_visible {
+    padding-top:5px;
+    font-size:14px;
+    font-style: italic;
+    text-align:justify;
+    margin-left:10px;
+    margin-right:10px;
+    margin-bottom:10px;
+    padding-bottom:20px,;
+    display : block;
+}
+
+.parapgraphe_with_padding_invisible {
+    padding-top:5px;
+    font-size:14px;
+    font-style: italic;
+    text-align:justify;
+    margin-left:10px;
+    margin-right:10px;
+    margin-bottom:10px;
+    padding-bottom:20px; 
+    display : none;
+}
+
+
+
+mat-form-field.second-dropdown mat-select.second-dropdown {
+    font-size: 12px;
+    text-align: center;
+    display : block;
+}
+
+mat-form-field.second-dropdown{
+    width: 40%;
+    max-width: 50%;
+    border-radius: 10px;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0);
+    margin-bottom: 1px;
+    margin: 0 auto;
+
+}
+
+.seasonal_plot_div {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    margin-top: 20px;
+    }
+
+.container_seasonal {
+    text-align: center; 
+}
+
+.seasonal_plot {
+    width: 100%;
+    display: flex; 
+    justify-content: space-around;
+    
+}
+    
+
   

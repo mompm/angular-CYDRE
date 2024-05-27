@@ -11,12 +11,10 @@ import { CreateAccountComponent } from './create-account/create-account.componen
 import { AuthGuard } from './service/auth.guard';
 import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component';
-import { Simulateur } from './Simulateur/Simulateur.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
   { path: 'home', component: HomeComponent },
   { path: 'ficheSite', component: FicheSiteComponent },
-  { path: 'Simulateur', component: Simulateur},
   { path: 'modeling',
     component: ModelingComponent,
     children: [

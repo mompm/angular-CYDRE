@@ -53,17 +53,8 @@ private baseUrl = 'http://localhost:5000';
 		return lastValueFrom(this.http.get<Array<StationDischargedata>>(url));
 	}
 
-	// getPrevisionGraphData(selectedStation: string, sliderValue: number, simulationDate: string):Observable<any>  {
-	// 	const params = new HttpParams()
-	// 	  .set('watershed', selectedStation)
-	// 	  .set('sliderValue', sliderValue.toString())
-	// 	  .set('simulationDate', simulationDate);
-	
-	// 	return this.http.get<any>('http://localhost:5000/getGraph', { params });
-	//   }	
-	
 	getRunCydre(params :any ): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/get_run_cydre`, params).pipe(
+		return this.http.post(`${this.baseUrl}/api/run_cydre`, params).pipe(
 		  tap(() => console.log('Running Cydre app...'))
 		);
 	  }
@@ -96,6 +87,22 @@ private baseUrl = 'http://localhost:5000';
 		  tap(() => console.log('Fetching results...'))
 		);
 	  }
+	  runSpatialSimilarity(): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity`,{}).pipe(
+		  tap(() => console.log('Running spatial similaritiy'))
+		);
+	  }
+	  runTimeseriesSimilarity(): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity`,{}).pipe(
+		  tap(() => console.log('Running timeseries similaritiy'))
+		);
+	  }
+	  runScenarios(): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/select_scenarios`,{}).pipe(
+		  tap(() => console.log('Running scenarios'))
+		);
+	  }
+	  
 	
 	  runSimulation(params : any ,progressCallback: (message: string, progress: number) => void): Observable<any> {
 		let taskId: string;
@@ -106,16 +113,25 @@ private baseUrl = 'http://localhost:5000';
 			taskId = response.task_id;
 			console.log(taskId)
 			console.log(`${this.baseUrl}/api/simulateur/getGraph/`+taskId)
-			progressCallback('Cydre app lancée.',50);
+			progressCallback('Cydre app lancée.',10);
 		  }),
+		  switchMap(() => this.runSpatialSimilarity().pipe(
+			tap(() => progressCallback('Similarités spatiales exécutées.',20))
+		  )),
+		  switchMap(() => this.runTimeseriesSimilarity().pipe(
+			tap(() => progressCallback('Similarités temporelles exécutées',50))
+		  )),
+		  switchMap(() => this.runScenarios().pipe(
+			tap(() => progressCallback('Scenarios exécutés.',60))
+		  )),
 		  switchMap(() => this.getGraph(taskId).pipe(
-			tap(() => progressCallback('Graphe généré.',60))
+			tap(() => progressCallback('Graphe généré.',75))
 		  )),
 		  switchMap(() => this.getM10Values(taskId).pipe(
-			tap(() => progressCallback('Valeurs M10 récupérées.',70))
+			tap(() => progressCallback('Valeurs M10 récupérées.',80))
 		  )),
 		  switchMap(() => this.getCorrMatrix(taskId).pipe(
-			tap(() => progressCallback('Matrice de corrélation récupérée.',80))
+			tap(() => progressCallback('Matrice de corrélation récupérée.',85))
 		  )),
 		  switchMap(() => this.getResults(taskId).pipe(
 			tap(() => progressCallback('Résultats récupérés.',100))

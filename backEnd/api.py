@@ -22,7 +22,7 @@ from flask_sqlalchemy import SQLAlchemy
 import pymysql
 import pyproj
 import sqlalchemy
-from launchers.run_interface import update_cydre_simulation
+# from launchers.run_interface import update_cydre_simulation
 import utils.toolbox as TO
 from shapely.geometry import MultiPolygon, Polygon
 import geopandas as gpd
@@ -36,12 +36,18 @@ from flask_cors import CORS, cross_origin
 from launchers.setup_cydre_path import setup_cydre_path
 import libraries.forecast.initialization as IN
 import libraries.forecast.outputs as OU
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import plotly.express as px
+
 
 
 
 
 # Application path
 app_root = os.path.dirname(os.path.abspath("api.py"))
+
 hydrometry_path = os.path.join(app_root,'data', 'hydrometry')
 surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
 piezometry_path = os.path.join(app_root, 'data', 'piezometry')
@@ -106,20 +112,6 @@ def paradis():
 def cydre():
     xmlPath="cydre_params.xml"
     return flask.send_file(xmlPath, mimetype='application/xml')
-
-@app.route('/api/run_cydre', methods=['POST'])
-def run_cydre():
-    print('Calcul de prévision lancé')
-    data = request.json
-    watershed_value = data.get('watershed')
-    slider_value = data.get('sliderValue')
-    simulation_date = data.get('simulationDate')
-    
-    try:
-        result = update_cydre_simulation(watershed_value, slider_value, simulation_date)
-        return jsonify(result), 200
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/osur/getoldBSS', methods=['GET'])
@@ -510,38 +502,33 @@ import libraries.forecast.initialization as INI
 
 results_storage = {}
 
-@app.route('/api/get_run_cydre', methods=['POST'])
+@app.route('/api/run_cydre', methods=['POST'])
 def get_run_cydre():
     data = request.json
     task_id = str(uuid.uuid4())
-    print("________________")
-    print("Récupération du graphe")
-    print("________________")
+    print("########\nInitialisation de l'app\n########")
 
     try:
         # Récupérer les données de la payload
         watershed = data.get('watershed')
-        slider = data.get('slider')
-        date = data.get('date')
 
+        slider = data.get('slider')
+
+        date = data.get('date')
+        
         init = INI.Initialization(app_root)
+        
         cydre_app = init.cydre_initialization()
 
         param_names = ['user_watershed_id', 'user_horizon', 'date']
         param_paths = init.get_parameters_path(param_names)
-        
         init.params.find_and_replace_param(param_paths[0], watershed)
-
         init.params.find_and_replace_param(param_paths[1], int(slider))
-
         init.params.find_and_replace_param(param_paths[2], str(date))
 
+        print("########\Création de l'app\n########")
         cydre_app = init.create_cydre_app()
-        # Run the Cydre application
-        cydre_app.run_spatial_similarity(spatial=True)
-        cydre_app.run_timeseries_similarity()
-        cydre_app.select_scenarios(spatial=True)
-
+        
         watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
 
         with app.app_context():
@@ -554,7 +541,37 @@ def get_run_cydre():
     except Exception as e:
         app.logger.error('Error starting cydre_app: %s', str(e))
         return jsonify({'error': str(e)}), 500      
-        
+    
+@app.route('/api/run_spatial_similarity', methods=['POST'])
+def run_spatial_similarity():
+    try:
+        app.config['cydre_app'].run_spatial_similarity(spatial=True)
+    except Exception as e:
+        app.logger.error('Error running spatial similarity": %s', str(e))
+        return jsonify({'error': str(e)}), 500
+    return jsonify({"Succes":"Ran spatial similarity"}), 200
+
+@app.route('/api/run_timeseries_similarity', methods=['POST'])
+def run_timeseries_similarity():
+    try:
+        app.config['cydre_app'].run_timeseries_similarity()
+    except Exception as e:
+        app.logger.error('Error running timeseries similarity": %s', str(e))
+        return jsonify({'error': str(e)}), 500 
+    return jsonify({"Succes":"Ran timeseries similarity"}), 200
+
+@app.route('/api/select_scenarios', methods=['POST'])
+def select_scenarios():
+    try:
+        app.config['cydre_app'].select_scenarios(spatial=True)
+
+    except Exception as e:
+        app.logger.error('Error selecting scenarios": %s', str(e))
+        return jsonify({'error': str(e)}), 500
+    return jsonify({"Succes":"Selected scenarios"}), 200
+
+
+
 @app.route('/api/update_indicator', methods=['POST'])
 def update_indicator():
     data = request.json
