@@ -86,7 +86,7 @@ export class SimulationResultsComponent implements OnInit {
     console.log("showresults", this.showResults);
 
     window.addEventListener('resize', () => {
-      const previsionGraphWidth = 0.45 * window.innerWidth;
+      const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
       if (document.getElementById('previsions' )&& this.showResults) {
         Plotly.relayout('previsions', { width: previsionGraphWidth });
       }
@@ -126,6 +126,8 @@ export class SimulationResultsComponent implements OnInit {
       this.traces= [];
       var q10Trace: Plotly.Data | undefined;
       var q90Trace: Plotly.Data | undefined;
+      var observations: Plotly.Data | undefined;
+
       this.startDate = new Date(this.results.similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
       
@@ -159,7 +161,7 @@ export class SimulationResultsComponent implements OnInit {
                   mode: 'lines',
                   type: 'scatter',
                   name: line.name,
-                  line: line.line
+                  line: line.line,
               };
 
               if (line.name === 'Q10') {
@@ -176,6 +178,8 @@ export class SimulationResultsComponent implements OnInit {
                   trace.hoverinfo = 'none'
                   trace.line!.dash = 'dash';
                   trace.line!.color = 'rgba(0, 0, 255, 0.1)';
+                }else if(line.name == 'Q50') {
+                  observations = trace;
                 }else{
                 trace.hoverinfo = 'all';
                 }
@@ -200,6 +204,7 @@ export class SimulationResultsComponent implements OnInit {
 
             this.traces.push(q90Trace);
             this.traces.push(q10Trace);
+            this.traces.push(observations!);
         }
 
         this.updateSliderOptions();
@@ -270,7 +275,7 @@ export class SimulationResultsComponent implements OnInit {
       font: { size: 14 }
     };
 
-    Plotly.relayout('previsions', { annotations: [annotation] ,width :0.45 * window.innerWidth });
+    Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
   }
 
 
