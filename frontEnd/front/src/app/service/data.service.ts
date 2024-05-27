@@ -10,6 +10,9 @@ import DFFData from '../model/DFFData';
 import GDFPiezometryData  from '../model/GDFPiezometryData ';
 import StationDischargedata from '../model/StationDischargedata';
 import GDFStationData from '../model/GDFStationData';
+import StationTemperaturedata from '../model/StationTemperaturedata';
+import WaterTableDepthdata from '../model/WaterTableDepthdata';
+import StationPrecipitationdata from '../model/StationPrecipitationdata';
 
 
 @Injectable({
@@ -42,7 +45,7 @@ export class DataService { //service used to load the received xml and to conver
   }
 
   getMesurementGDFStation(): Promise<Array<GDFStationData>>{
-    return this.jsonService.gedataGDFStations();
+    return this.jsonService.getdataGDFStations();
   }
 
   getMesurementGDFPiezometre(): Promise<Array<GDFPiezometryData>>{
@@ -52,6 +55,19 @@ export class DataService { //service used to load the received xml and to conver
   getMesurementStationDischarge(id : string): Promise<Array<StationDischargedata>>{
     return this.jsonService.getStationDischargeData(id);
   }
+
+  getMesurementStationTemperature(id : string): Promise<Array<StationTemperaturedata>>{
+    return this.jsonService.getStationTemperatureData(id);
+  }
+
+  getMesurementWaterTableDepth(id : string): Promise<Array<WaterTableDepthdata>>{
+    return this.jsonService.getWaterTableDepthdata(id);
+  }
+
+  getMesurementStationPrecipitationdata(id : string): Promise<Array<StationPrecipitationdata>>{
+    return this.jsonService.getStationPrecipitationdata(id);
+  }
+
 
   requestXml(){
 	this.requestService.getXml(this.xmlPath)
