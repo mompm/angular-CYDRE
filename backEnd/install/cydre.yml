@@ -32,3 +32,5 @@ dependencies:
         - xarray
         - cdsapi
         - dtaidistance
+        - flask_sqlalchemy
+        - pymysql
