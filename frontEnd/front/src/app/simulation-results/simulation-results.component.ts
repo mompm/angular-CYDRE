@@ -25,8 +25,6 @@ export class SimulationResultsComponent implements OnInit {
   layout: Partial<Plotly.Layout> | undefined;
   endDate: Date | undefined;
 
-  
-
   @ViewChild(MatPaginator)
   paginator!: MatPaginator;
   @ViewChild(MatSort)
@@ -62,6 +60,8 @@ export class SimulationResultsComponent implements OnInit {
   yMax = 0;
   maxPredictedValue : number[] = [];
 
+  indicators: Array<{type: string, value: number, color: string, fixed?: boolean}> = [
+  ];
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -82,22 +82,75 @@ export class SimulationResultsComponent implements OnInit {
     this.dataSource = new MatTableDataSource(this.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort; 
-
+    this.indicators.push({type: 'mod10', value: this.m10SliderValue, color:'#Ff0000', fixed: true} )
     console.log("showresults", this.showResults);
 
     window.addEventListener('resize', () => {
       const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
       if (document.getElementById('previsions' )&& this.showResults) {
         Plotly.relayout('previsions', { width: previsionGraphWidth });
+        
       }
     });
   }
+  addIndicator() {
+    this.indicators.push({type: '', color: '#Ff0000' , value: 0}); 
+  }
 
+  removeIndicator(index: number) {
+    if (!this.indicators[index].fixed) { // Assurez-vous que l'indicateur n'est pas fixe avant de le supprimer
+      this.indicators.splice(index, 1);
+      this.updateIndicatorShapes();
+    }
+  }
+  onIndicatorValueChange(value: number, index: number) {
+    if(value){
+      if(this.indicators[index].type=='mod10'){
+        this.onM10Change(value);
+      }else {
+        this.indicators[index].value = value;
+        this.updateIndicatorShapes(); // Met à jour le graphe après un changement de valeur
+      }
+  }
+
+  }
+
+  updateColorStyle(indicator : any){
+    return { 'background-color': indicator.color };
+  }
+
+  updateIndicatorShapes() {
+    // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
+    this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'SimulationPeriod') || [];
+  
+    this.indicators.forEach(indicator => {
+      // Crée une nouvelle shape pour chaque indicateur
+      this.layout!.shapes!.push({
+        type: 'line',
+        x0: this.simulationStartDate,
+        x1: this.simulationEndDate,
+        y0: indicator.value,
+        y1: indicator.value,
+        line: {
+          color: indicator.color,
+          width: 2,
+          dash: 'solid'
+        },
+        xref: 'x',
+        yref: 'y'
+      });
+    });
+  
+    // Met à jour le graphe avec les nouvelles shapes
+    Plotly.relayout('previsions', { shapes: this.layout!.shapes });
+  }
 
   onM10Change(value: number) {
-    this.m10SliderValue = value;
-    this.updateLayout();
-    this.showPlot();
+    if(value){
+      this.m10SliderValue = value;
+      this.updateLayout();
+      this.showPlot();
+    }
   }
 
   updateResults() {
@@ -209,6 +262,7 @@ export class SimulationResultsComponent implements OnInit {
 
         this.updateSliderOptions();
     }
+    this.endDate = (q90Trace as any).x[(q90Trace as any).x.length-1]
   }
 
   updateSliderOptions() {
@@ -221,6 +275,8 @@ export class SimulationResultsComponent implements OnInit {
       }
     };
   }
+
+  
   
 
   updateLayout() {

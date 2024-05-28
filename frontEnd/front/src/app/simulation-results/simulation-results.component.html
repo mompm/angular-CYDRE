@@ -1,11 +1,26 @@
-<div *ngIf="showResults" >
+<div >
   <div >
     <h4>Visualisation des prévisions saisonnières</h4>
     <div>
       
       <div id="previsions"></div>
-      <input type="number" [(ngModel)]="m10SliderValue" (ngModelChange)="onM10Change($event)" step="0.0001">
       <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
+    </div>
+    <div class="card my-4">
+      <div class="card-header">
+        <h3>Indicateurs</h3>
+      </div>
+      <div class="card-body">
+        <div class="input-group mt-2" *ngFor="let indicator of indicators; let i = index">
+          <input type="color" [(ngModel)]="indicator.color" class="color-selector">
+          <input type="text" class="form-control" [(ngModel)]="indicator.type" [readonly]="indicator.fixed" [placeholder]="indicator.type">
+          <input type="number" [(ngModel)]="indicator.value" class="form-control" placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)">
+          <button *ngIf="i !== 0" (click)="removeIndicator(i)" class="btn btn-danger">-</button>
+        </div>
+      
+        <button (click)="addIndicator()" class="btn btn-primary mt-2">+</button>
+      </div>
+      
     </div>
     <div>
       <h4>Bassins versants similaires</h4>

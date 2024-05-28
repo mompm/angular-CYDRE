@@ -44,13 +44,14 @@ export class SimulateurCydreComponent implements OnInit {
   sliderOptions: Options = {
     floor: 0,
     ceil: 120,
-    step: 20,
-    showTicksValues: true,
-    showTicks: true,
+    step: 1, // Permet de sélectionner chaque valeur
+    showTicks: true, // Affiche les traits pour chaque valeur principale
+    showTicksValues: true, // Affiche les valeurs des points principaux
+    ticksArray: [0, 20, 40, 60, 80, 100, 120], // Spécifiez les emplacements des gros points
     translate: (value: number): string => {
       return value.toString();
     }
-  };
+};
 
   ngOnInit() {
     this.initGDFStations();
