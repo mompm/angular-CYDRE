@@ -26,6 +26,9 @@ export class HeaderComponent implements OnInit{
           case '/settings': this.title = 'settingsTitle'; break;
           case '/login': this.title = 'loginTitle'; break;
           case '/modeling': this.title = 'modelingTitle'; break;
+          case '/simulator':this.title = 'simulatorTitle';break;
+          case '/analysis':this.title = 'analysisTitle';break;
+
           default: this.title = 'DefaultTitle'; break;
         }
       }

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import * as Plotly from 'plotly.js';
 import * as Plotlydist from 'plotly.js-dist';
+import { AuthService } from '../service/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -8,5 +9,8 @@ import * as Plotlydist from 'plotly.js-dist';
   styleUrls: ['./home.component.scss']
 })
 export class HomeComponent {
+  constructor(){
+  }
 
 }
+

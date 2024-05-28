@@ -1,0 +1,95 @@
+
+<div class ="container">
+  <div>
+    <div class="button_info_div">
+      <div class="h4_center">Sélection de la station hydrologique de référence</div>
+      <button mat-icon-button class="button_info" [matMenuTriggerFor]="popoverMenu">
+        <mat-icon>info</mat-icon>
+      </button>
+      <mat-menu #popoverMenu="matMenu" xPosition="after">
+        <ng-template matMenuContent >
+          <p>Sélectionner une station hydrologique dans la liste déroulante suivante.</p>
+          <p>Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.</p>
+          <p>Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.</p>
+        </ng-template>
+      </mat-menu>
+    </div>
+
+  <div>
+    <div class="choix_station_div">
+        <div>
+            <form class="dropdown-form">
+                <mat-form-field class="first-dropdown">
+                    <mat-label>Station</mat-label>
+                    <input type="text"
+                        placeholder="Sélectionner une station"
+                        aria-label="Number"
+                        matInput
+                        [formControl]="myControl"
+                        [matAutocomplete]="auto">
+                    <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
+                        <mat-option *ngFor="let option of filteredOptions | async" 
+                                    [value]="option" 
+                                    [disabled]="isOptionDisabled(option)" 
+                                    [ngClass]="{'disabled-option': isOptionDisabled(option)}">
+                            {{ option.index }} - {{ option.station_name }}
+                        </mat-option>
+                    </mat-autocomplete>
+                </mat-form-field>
+            </form>
+        </div>
+        <div class="button-links">
+            <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/'+ selectedStation + '/fiche'" target="_blank" class="button_link_hydroportail">
+                <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail">
+            </a>
+            <a mat-button [href]="'https://ades.eaufrance.fr/Fiche/PtEau?Code='+ selectedStationName" target="_blank" class="button_link_ades">
+                <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="ADES">
+            </a>
+        </div>   
+    </div>
+    
+    <div class="card mb-4">
+      <div class="card-header">
+        Conditions de la prévision
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col">
+            <h5>Echéance de la prévision (jours)</h5>
+            <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
+            <small class="form-text text-muted">Lorsque l'échéance est importante l'incertitude sur les projections augmente.</small>
+          </div>
+          <div class="col">
+            <h5>Date de la simulation</h5>
+            <input type="date" class="form-control" id="simulationDate" [(ngModel)]="simulationDate">
+            <small class="form-text text-muted">Par défaut la date de simulation est la date du jour. Il est possible d'effectuer des prévisions à des dates antérieures, notamment pour évaluer la qualité des projections avec les données d'observations.</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="text-center">
+      <button type="button" class="btn btn-primary" (click)="onStartSimulation()">Lancer l'application</button>
+      <div class="mt-2">
+        <small class="form-text text-muted">Les calculs durent entre 15s et 1min</small>
+      </div>
+    </div>
+    <div *ngIf="progressMessages.length">
+      <h3>Progression de la simulation:</h3>
+      <p>{{ currentProgressMessage }}</p>
+      <div class= "progress-container">
+      <div class="progress">
+        <div 
+          class="progress-bar" 
+          role="progressbar" 
+          [style.width.%]="progressValue" 
+          [attr.aria-valuenow]="progressValue" 
+          aria-valuemin="0" 
+          aria-valuemax="100">
+        </div>
+      </div>
+    </div>
+    </div>
+
+  <app-simulation-results *ngIf="results && showResults" [results]="results" [watershedName]="selectedStationName" [showResults]="true" [m10SliderValue]="results.m10" [corr_matrix]="results.corr_matrix"></app-simulation-results>
+</div>

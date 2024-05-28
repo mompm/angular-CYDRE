@@ -28,7 +28,6 @@ import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSea
 import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 import { WaterTableDepthSeasonal } from './ficheSite/WaterTableDepthSeasonal/WaterTableDepthSeasonal.component';
 import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipitationSeasonal.component';
-import { Simulateur} from './Simulateur/Simulateur.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -52,16 +51,27 @@ import {MatSelectModule} from "@angular/material/select";
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import {MatSlideToggleModule} from '@angular/material/slide-toggle';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSortModule } from '@angular/material/sort';
+import { CreateAccountComponent } from './create-account/create-account.component';
+import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
+import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component'; 
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
+import { SimulationResultsComponent } from './simulation-results/simulation-results.component';
+import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { PlotlyModule } from 'angular-plotly.js';
+import * as PlotlyJS from 'plotly.js-dist';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import {AsyncPipe} from '@angular/common';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
 
-
 // End of Hoang module
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http);
 }
+
+PlotlyModule.plotlyjs = PlotlyJS;
 
 @NgModule({
   declarations: [
@@ -78,7 +88,6 @@ export function HttpLoaderFactory(http: HttpClient) {
     hydrographSeasonal,
     temperatureSeasonal,
     WaterTableDepthSeasonal,
-    Simulateur,
     precipitationSeasonal,
     SettingsComponent,
     LoginComponent,
@@ -89,6 +98,10 @@ export function HttpLoaderFactory(http: HttpClient) {
     RessourceComponent,
     MapComponent,
     FooterComponent,
+    CreateAccountComponent,
+    SimulateurCydreComponent,
+    AnalyseDeSensibiliteComponent,
+    SimulationResultsComponent,
   ],
   imports: [
     BrowserModule,
@@ -117,6 +130,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatProgressSpinnerModule,
     MatTreeModule,
     MatIconModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatInputModule,
     MatButtonModule,
     MatTableModule,
     MatStepperModule,
@@ -124,6 +140,9 @@ export function HttpLoaderFactory(http: HttpClient) {
     MatDialogModule,
     MatMenuModule,
     MatSlideToggleModule,
+    NgxSliderModule,
+    NgxChartsModule,
+    PlotlyModule,
     MatAutocompleteModule,
     AsyncPipe,
     MatInputModule,
