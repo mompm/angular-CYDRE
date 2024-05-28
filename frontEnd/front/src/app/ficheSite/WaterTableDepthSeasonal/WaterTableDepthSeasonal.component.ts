@@ -1,12 +1,13 @@
 import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
+import dataDepth from 'src/app/model/dataDepth';
 
 
 @Component({
@@ -19,14 +20,14 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
     //valeur récupérent dans le parent FicheSite 
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
-    DepthStation : WaterTableDepthdata[] = [];
+    DataDepth : dataDepth[] = [];
     fig: any;
     //variables pour l'axe x 
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnInit() {
         this.initStationDepth(this.stationSelectionChange);
@@ -48,8 +49,8 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
     //contenus dans geometry: coordinates et type  
     //location du fichier origine :backend/data/stations.csv
     initStationDepth(stationID: string){
-        this.dataService.getMesurementWaterTableDepth(stationID).then(station => {
-            this.DepthStation = station;
+        this.jsonService.getDepth(stationID).then(station => {
+            this.DataDepth = station;
             this.Depth_Seasonal();  
         });
       }
@@ -61,8 +62,8 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
         const linesByYear = [];
         let lastUpdate = null;
         // Vérification si this.dischargeStation est défini et non vide
-        if (this.DepthStation && this.DepthStation.length > 0) {
-          for (const entry of this.DepthStation) {
+        if (this.DataDepth && this.DataDepth.length > 0) {
+          for (const entry of this.DataDepth) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
             const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
@@ -158,7 +159,7 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
         data: [],
         layout: {
             title: { 
-                text: 'Profondeur de la nappe [' + this.DepthStation[1] + ']' ,
+                text: 'Profondeur de la nappe [' + this.DataDepth[1] + ']' ,
                 font: {
                     family: "Segoe UI Semibold", 
                     size: 22, 
@@ -287,6 +288,10 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout);
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
+        });
       
       }
   

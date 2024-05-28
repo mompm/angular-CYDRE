@@ -1,5 +1,5 @@
 
-class GDFPiezometryData  {
+class dataGDFPiezometry  {
     identifiant_BSS : any;
     x_wgs84 : any;
     y_wgs84 : any;
@@ -18,6 +18,6 @@ class GDFPiezometryData  {
       this.geometry = geometry;
     }
 }
-export default GDFPiezometryData ;
+export default dataGDFPiezometry ;
 
 

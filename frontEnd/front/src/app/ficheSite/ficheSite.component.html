@@ -2,16 +2,7 @@
   <div>
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <button mat-icon-button class="button_info" [matMenuTriggerFor]="popoverMenu">
-        <mat-icon>info</mat-icon>
-      </button>
-      <mat-menu #popoverMenu="matMenu" xPosition="after">
-        <ng-template matMenuContent >
-          <p>Sélectionner une station hydrologique dans la liste déroulante suivante.</p>
-          <p>Il s'agit des stations pour lesquelles ont été référencées à la fois des données d'observation et des données de modélisation.</p>
-          <p>Vous pouvez aussi sélectionner directement la station depuis la carte régionale affichée ci-dessous.</p>
-        </ng-template>
-      </mat-menu>
+      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
     </div>
 
     <div>
@@ -27,12 +18,11 @@
                           [formControl]="myControl"
                           [matAutocomplete]="auto">
                       <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
-                          <mat-option *ngFor="let option of filteredOptions | async" 
-                                      [value]="option" 
-                                      [disabled]="isOptionDisabled(option)" 
-                                      [ngClass]="{'disabled-option': isOptionDisabled(option)}">
-                              {{ option.index }} - {{ option.station_name }}
-                          </mat-option>
+                        <mat-option *ngFor="let option of filteredOptions | async" 
+                                    [value]="option"
+                                    [style.color]="isOptionDisabled(option) ? 'red' : 'initial'">
+                          {{ option.index }} - {{ option.station_name }}
+                        </mat-option>
                       </mat-autocomplete>
                   </mat-form-field>
               </form>
@@ -53,7 +43,7 @@
         <h3 class="h3_text">Localisation du bassin versant</h3>
       </div> 
       <div class="maps_div">
-        <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" class="regional_map"></app-RegionalMap>
+        <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" (markerClick)="handleMarkerClick($event)" class="regional_map"></app-RegionalMap>
         <app-WatershedMap [stationSelectionChange] = "selectedWatershedID" class="watershed_map"></app-WatershedMap>
       </div>
       <div>

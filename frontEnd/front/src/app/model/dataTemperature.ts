@@ -1,4 +1,4 @@
-class StationDischargedata{
+class dataTemperature{
     name : string
     id : string
     t : string;
@@ -11,5 +11,5 @@ class StationDischargedata{
         this.Q = Q;
     }
 }
-export default StationDischargedata ;
+export default dataTemperature ;
 

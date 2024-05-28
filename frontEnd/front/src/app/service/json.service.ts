@@ -1,16 +1,13 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import {Observable, Subject, catchError, lastValueFrom, of, switchMap, takeWhile, tap, timer } from 'rxjs';
-import OldBSSData from '../model/OldBSSData';
-import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
-import GDFWatershedsData from '../model/GDFWatershedsData';
-import DFFData from '../model/DFFData';
-import GDFPiezometryData  from '../model/GDFPiezometryData ';
-import StationDischargedata from '../model/StationDischargedata';
-import GDFStationData from '../model/GDFStationData';
-import StationTemperaturedata from '../model/StationTemperaturedata';
-import WaterTableDepthdata from '../model/WaterTableDepthdata';
-import StationPrecipitationdata from '../model/StationPrecipitationdata';
+import dataGDFWatersheds from '../model/dataGDFWatersheds';
+import dataGDFPiezometry from '../model/dataGDFPiezometry';
+import dataDischarge from '../model/dataDischarge';
+import dataGDFStation from '../model/dataGDFStation';
+import dataTemperature from '../model/dataTemperature';
+import dataDepth from '../model/dataDepth';
+import dataPrecipitation from '../model/dataPrecipitation';
 
 
 
@@ -24,33 +21,24 @@ private baseUrl = 'http://localhost:5000';
   constructor(private http: HttpClient){}
 
 
-	getOldBSS() : Promise<Array<OldBSSData>> {
-		return lastValueFrom(this.http.get<Array<OldBSSData>>("osur/getoldBSS"));
-	}
 
-	getCorrespondanceBSS() : Promise<Array<CorrespondancesBSSData>>{
-		return lastValueFrom(this.http.get<Array<CorrespondancesBSSData>>("osur/getcorrespondanceBSS"));
-	}
 
-	getdataGDFWatersheds(): Promise<Array<GDFWatershedsData>> {
-		return lastValueFrom(this.http.get<Array<GDFWatershedsData>>("osur/GetGDFWatersheds"));
+	getGDFWatersheds(): Promise<Array<dataGDFWatersheds>> {
+		return lastValueFrom(this.http.get<Array<dataGDFWatersheds>>("osur/GetGDFWatersheds"));
 	  }
 	
-	getdataDFF() : Promise<Array<DFFData>>{
-		return lastValueFrom(this.http.get<Array<DFFData>>("osur/getdff"));
+
+	getGDFStations(): Promise<Array<dataGDFStation>>{
+		return lastValueFrom(this.http.get<Array<dataGDFStation>>("osur/GetGDFStations"));
 	}
 
-	getdataGDFStations(): Promise<Array<GDFStationData>>{
-		return lastValueFrom(this.http.get<Array<GDFStationData>>("osur/GetGDFStations"));
+	getGDFPiezometry() : Promise<Array<dataGDFPiezometry>>{
+		return lastValueFrom(this.http.get<Array<dataGDFPiezometry>>("/osur/getGDFPiezometry"));
 	}
 
-	getdataGDFPiezometry() : Promise<Array<GDFPiezometryData>>{
-		return lastValueFrom(this.http.get<Array<GDFPiezometryData>>("/osur/getGDFPiezometry"));
-	}
-
-	getStationDischargeData(id: string): Promise<Array<StationDischargedata>> {
+	getDischarge(id: string): Promise<Array<dataDischarge>> {
 		const url = `/osur/stationDischarge/${id}`;
-		return lastValueFrom(this.http.get<Array<StationDischargedata>>(url));
+		return lastValueFrom(this.http.get<Array<dataDischarge>>(url));
 	}
 
 	getRunCydre(params :any ): Observable<any> {
@@ -142,19 +130,19 @@ private baseUrl = 'http://localhost:5000';
 		  })
 		);
 	  }
-	getStationTemperatureData(id: string): Promise<Array<StationTemperaturedata>> {
+	getTemperature(id: string): Promise<Array<dataTemperature>> {
 		const url = `/osur/stationTemperature/${id}`;
-		return lastValueFrom(this.http.get<Array<StationTemperaturedata>>(url));
+		return lastValueFrom(this.http.get<Array<dataTemperature>>(url));
 	}
 
-	getWaterTableDepthdata(id: string): Promise<Array<WaterTableDepthdata>> {
+	getDepth(id: string): Promise<Array<dataDepth>> {
 		const url = `/osur/stationWaterTableDepth/${id}`;
-		return lastValueFrom(this.http.get<Array<WaterTableDepthdata>>(url));
+		return lastValueFrom(this.http.get<Array<dataDepth>>(url));
 	}
 
-	getStationPrecipitationdata(id: string): Promise<Array<StationPrecipitationdata>> {
+	getPrecipitation(id: string): Promise<Array<dataPrecipitation>> {
 		const url = `/osur/stationPrecipitation/${id}`;
-		return lastValueFrom(this.http.get<Array<StationPrecipitationdata>>(url));
+		return lastValueFrom(this.http.get<Array<dataPrecipitation>>(url));
 	}
 
 }

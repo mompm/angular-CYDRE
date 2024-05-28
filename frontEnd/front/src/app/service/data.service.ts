@@ -3,16 +3,7 @@ import { Parameter, ParametersGroup } from '../model/parameters-group';
 import { Parser,Builder} from 'xml2js';
 import { XmlService } from './xml.service';
 import { JsonService } from './json.service';
-import OldBSSData from '../model/OldBSSData';
-import CorrespondancesBSSData from '../model/CorrespondanceBSSData';
-import GDFWatershedsData from '../model/GDFWatershedsData';
-import DFFData from '../model/DFFData';
-import GDFPiezometryData  from '../model/GDFPiezometryData ';
-import StationDischargedata from '../model/StationDischargedata';
-import GDFStationData from '../model/GDFStationData';
-import StationTemperaturedata from '../model/StationTemperaturedata';
-import WaterTableDepthdata from '../model/WaterTableDepthdata';
-import StationPrecipitationdata from '../model/StationPrecipitationdata';
+
 
 
 @Injectable({
@@ -28,45 +19,7 @@ export class DataService { //service used to load the received xml and to conver
   
 
 
-  getMesurementOldBSS(): Promise<Array<OldBSSData>>{
-    return this.jsonService.getOldBSS();
-  }
 
-  getMesurementCorrespondanceBSS(): Promise<Array<CorrespondancesBSSData>>{
-    return this.jsonService.getCorrespondanceBSS();
-  }
-
-  getMesurementGDFWatersheds(): Promise<Array<GDFWatershedsData>> {
-    return this.jsonService.getdataGDFWatersheds();
-  }
-
-  getMesurementDFF(): Promise<Array<DFFData>>{
-    return this.jsonService.getdataDFF();
-  }
-
-  getMesurementGDFStation(): Promise<Array<GDFStationData>>{
-    return this.jsonService.getdataGDFStations();
-  }
-
-  getMesurementGDFPiezometre(): Promise<Array<GDFPiezometryData>>{
-    return this.jsonService.getdataGDFPiezometry();
-  }
-
-  getMesurementStationDischarge(id : string): Promise<Array<StationDischargedata>>{
-    return this.jsonService.getStationDischargeData(id);
-  }
-
-  getMesurementStationTemperature(id : string): Promise<Array<StationTemperaturedata>>{
-    return this.jsonService.getStationTemperatureData(id);
-  }
-
-  getMesurementWaterTableDepth(id : string): Promise<Array<WaterTableDepthdata>>{
-    return this.jsonService.getWaterTableDepthdata(id);
-  }
-
-  getMesurementStationPrecipitationdata(id : string): Promise<Array<StationPrecipitationdata>>{
-    return this.jsonService.getStationPrecipitationdata(id);
-  }
 
 
   requestXml(){

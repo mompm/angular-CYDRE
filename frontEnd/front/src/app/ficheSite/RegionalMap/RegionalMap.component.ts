@@ -1,11 +1,11 @@
-import { Component, Input, SimpleChanges} from '@angular/core';
+import { Component, Input, Output , EventEmitter , SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as L from 'leaflet';
-import CorrespondancesBSSData from 'src/app/model/CorrespondanceBSSData';
-import GDFPiezometryData  from 'src/app/model/GDFPiezometryData ';
-import GDFWatershedsData from 'src/app/model/GDFWatershedsData';
-import GDFStationData from 'src/app/model/GDFStationData';
+import dataGDFPiezometry from 'src/app/model/dataGDFPiezometry';
+import dataGDFWatersheds from 'src/app/model/dataGDFWatersheds';
+import dataGDFStation from 'src/app/model/dataGDFStation';
 
 
 @Component({
@@ -15,12 +15,13 @@ import GDFStationData from 'src/app/model/GDFStationData';
   })
   export class RegionalMapComponent {
     @Input() stationSelectionChange!: string;
+    @Output() markerClick: EventEmitter<string> = new EventEmitter<string>();
     private RegionalMapLeaflet!: L.Map;
     MapExecutee = false; 
-    CorrespondanceBSSs: CorrespondancesBSSData[] = [];
-    GDFWatershedsDatas: GDFWatershedsData[]  = [];
-    GDFPiezometryDatas : GDFPiezometryData [] = [];
-    GDFStationDatas: GDFStationData[]  =[];
+
+    DataGDFWatersheds: dataGDFWatersheds[]  = [];
+    DataGDFPiezometry : dataGDFPiezometry [] = [];
+    DataGDFStation: dataGDFStation[]  =[];
 
 
 
@@ -48,10 +49,10 @@ import GDFStationData from 'src/app/model/GDFStationData';
     })    
   };
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnInit() {
-      this.initCorrespondanceBSS();
+
       this.initGDFWatersheds();
       this.initGDFPiezometry();
       this.initGDFStations();
@@ -70,7 +71,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
        // fonction vérifiant en permanence si les conditions sont ok 
        ngDoCheck() {      
         // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
-        if (this.GDFStationDatas.length > 0 && this.GDFPiezometryDatas.length > 0 && this.GDFWatershedsDatas.length >0 && !this.MapExecutee) {
+        if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
           this.RegionalMap_Plotly(this.stationSelectionChange);
           //this.RegionalMap_Leaflet(this.stationSelectionChange);
           //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
@@ -84,23 +85,16 @@ import GDFStationData from 'src/app/model/GDFStationData';
     //contenus dans geometry: coordinates et type  
     //location du fichier origine :backend/data/stations.csv
     initGDFStations() {
-      this.dataService.getMesurementGDFStation().then(data => {
-        this.GDFStationDatas = data;  
-        console.log(this.GDFStationDatas);
+      this.jsonService.getGDFStations().then(data => {
+        this.DataGDFStation = data;  
+        console.log(this.DataGDFStation);
       });
     }
 
 
 
 
-    //récupère les données des correspondance stations et piezomètres 
-    //contenus: NOM_BV (string), ID_HYDRO (string),CODE_BSS (string), TEMPS_RECESS(string)
-    //location du fichier origine : backend/data/piezometry/correspondance_watershed_piezometers.csv
-    initCorrespondanceBSS(){
-      this.dataService.getMesurementCorrespondanceBSS().then(correspondance => {
-        this.CorrespondanceBSSs = correspondance;
-      });
-    }
+
 
         //récupère les données des gdf des stations
     //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
@@ -108,8 +102,8 @@ import GDFStationData from 'src/app/model/GDFStationData';
     //contenus dans geometry: coordinates et type  
     //location du fichier origine :backend/data/stations.csv
     initGDFWatersheds() {
-      this.dataService.getMesurementGDFWatersheds().then(data => {
-        this.GDFWatershedsDatas = data;  
+      this.jsonService.getGDFWatersheds().then(data => {
+        this.DataGDFWatersheds = data;  
       });
     }
 
@@ -119,8 +113,8 @@ import GDFStationData from 'src/app/model/GDFStationData';
      //contenus dans geometry: coordinates et type  
     //location du fichier origine : backend/data/piezometry/stations.csv'
     initGDFPiezometry(){
-      this.dataService.getMesurementGDFPiezometre().then(data => {
-        this.GDFPiezometryDatas = data;
+      this.jsonService.getGDFPiezometry().then(data => {
+        this.DataGDFPiezometry = data;
       });
     }
 
@@ -145,7 +139,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
       //création des polygones de toutes les stations
       //boucle pour parcourir toutes les stations
-      this.GDFWatershedsDatas.forEach((data, index) => {
+      this.DataGDFWatersheds.forEach((data, index) => {
         //récupère les coordonées du polygones
         const polygonCoords= data.geometry.coordinates[0].map((coord: any[]) => [coord[1], coord[0]]);
         //ajout du polygone
@@ -162,7 +156,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
       // Création du polygone autour de la station sélectionnée
       //vérifie que la station existe dans GDF
-      const stationData = this.GDFWatershedsDatas.find(data => data.index === stationID);
+      const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
       if (!stationData) return; 
       //récupère les coordonées du polygones
       const selectedPolygonCoords = stationData.geometry.coordinates[0];
@@ -178,20 +172,21 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
       //création des points station
       //boucle parcourant tous les points des stations
-      for (let i = 0; i < this.GDFStationDatas.length; i++) {
+      for (let i = 0; i < this.DataGDFStation.length; i++) {
         // Création du marqueur
-        const markerstations = L.circleMarker([this.GDFStationDatas[i].y_outlet, this.GDFStationDatas[i].x_outlet], {radius: 1.2,color: 'black'})
-            .bindPopup(`<b>${this.GDFStationDatas[i].name}</b><br>${this.GDFStationDatas[i].y_outlet}<br>${this.GDFStationDatas[i].x_outlet}`);
+        const markerstations = L.circleMarker([this.DataGDFStation[i].y_outlet, this.DataGDFStation[i].x_outlet], {radius: 1.2,color: 'black'})
+            .bindPopup(`<b>${this.DataGDFStation[i].name}</b><br>${this.DataGDFStation[i].y_outlet}<br>${this.DataGDFStation[i].x_outlet}`);
         // Ajout du marqueur 
         markerstations.addTo(this.RegionalMapLeaflet);
       }
+      
 
       //création des point piezo  
       //boucle parcourant tous les points des piezometre  
-      for (let i = 0; i < this.GDFPiezometryDatas.length; i++){
+      for (let i = 0; i < this.DataGDFPiezometry.length; i++){
         // Création du marqueur
-        const markerpiezo = L.circleMarker([this.GDFPiezometryDatas[i].y_wgs84,this.GDFPiezometryDatas[i].x_wgs84],{radius:1 , color: '#D800A0'})
-          .bindPopup(`<b>${this.GDFPiezometryDatas[i].identifiant_BSS}</b><br>${this.GDFPiezometryDatas[i].y_wgs84}<br>${this.GDFPiezometryDatas[i].x_wgs84}`)
+        const markerpiezo = L.circleMarker([this.DataGDFPiezometry[i].y_wgs84,this.DataGDFPiezometry[i].x_wgs84],{radius:1 , color: '#D800A0'})
+          .bindPopup(`<b>${this.DataGDFPiezometry[i].identifiant_BSS}</b><br>${this.DataGDFPiezometry[i].y_wgs84}<br>${this.DataGDFPiezometry[i].x_wgs84}`)
         // Ajout du marqueur 
         markerpiezo.addTo(this.RegionalMapLeaflet);
       }
@@ -213,11 +208,11 @@ import GDFStationData from 'src/app/model/GDFStationData';
       showlegend: false
     };
     // vérifie si la station sélectionner est bien dans les stations
-    const stationData = this.GDFWatershedsDatas.find(data => data.index === stationID);
+    const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
     if (!stationData) return; // Sinon sort de la fonction 
 
     // Ajoute couches tous les contours de stations 
-    const watershedPolygons = this.GDFWatershedsDatas.map((data, index) => {
+    const watershedPolygons = this.DataGDFWatersheds.map((data, index) => {
       const polygonCoords = data.geometry.coordinates[0];
       return {
         type: 'scattermapbox',
@@ -251,10 +246,10 @@ import GDFStationData from 'src/app/model/GDFStationData';
     const x_wgs84_station: any[] = [];
     const y_wgs84_station: any[] = [];
     const text_station: any[] = []; 
-    for (let i = 0; i < this.GDFStationDatas.length; i++) {
-        x_wgs84_station.push(this.GDFStationDatas[i].x_outlet);
-        y_wgs84_station.push(this.GDFStationDatas[i].y_outlet);
-        text_station.push(`${this.GDFStationDatas[i].index} - ${this.GDFStationDatas[i].station_name}`);
+    for (let i = 0; i < this.DataGDFStation.length; i++) {
+        x_wgs84_station.push(this.DataGDFStation[i].x_outlet);
+        y_wgs84_station.push(this.DataGDFStation[i].y_outlet);
+        text_station.push(`${this.DataGDFStation[i].index} - ${this.DataGDFStation[i].station_name}`);
     }
     //Ajoute couches des points stations
     figData.push({
@@ -272,10 +267,10 @@ import GDFStationData from 'src/app/model/GDFStationData';
     const x_wgs84_piezo: any[] = [];
     const y_wgs84_piezo: any[] = [];
     const text_piezo: any[] = []; 
-    for (let i = 0; i < this.GDFPiezometryDatas.length; i++) {
-      x_wgs84_piezo.push(this.GDFPiezometryDatas[i].x_wgs84);
-      y_wgs84_piezo.push(this.GDFPiezometryDatas[i].y_wgs84);
-      text_piezo.push(`${this.GDFPiezometryDatas[i].identifiant_BSS} - ${this.GDFPiezometryDatas[i].Nom}`);
+    for (let i = 0; i < this.DataGDFPiezometry.length; i++) {
+      x_wgs84_piezo.push(this.DataGDFPiezometry[i].x_wgs84);
+      y_wgs84_piezo.push(this.DataGDFPiezometry[i].y_wgs84);
+      text_piezo.push(`${this.DataGDFPiezometry[i].identifiant_BSS} - ${this.DataGDFPiezometry[i].Nom}`);
     }
     //Ajoute la couche des points piezo
     figData.push({
@@ -291,6 +286,22 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
     // Création de la carte regional ! identifiant de cette element est map :)
     Plotlydist.newPlot('RegionalMapPlotly', figData, figLayout);
+
+    const plotlyElement = document.getElementById('RegionalMapPlotly');
+    if (plotlyElement) {
+      (plotlyElement as any).on('plotly_click', (data: any) => {
+        const point = data.points[0];
+        const text = point.hovertext;
+        const id = text.split(' - ')[0]; // Sépare la chaîne en utilisant le caractère "-"
+        this.markerClick.emit(id);
+        console.log(`ID du marker : ${id}`);
+      });
+    }
+    
+    window.addEventListener('resize', () => {
+      const hydrographWidth = 0.50 * window.innerWidth;
+      Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
+    });
   }
 
    
