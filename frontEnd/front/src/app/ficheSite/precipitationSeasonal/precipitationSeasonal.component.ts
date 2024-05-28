@@ -2,7 +2,6 @@ import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
-import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
@@ -10,27 +9,69 @@ import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataPrecipitation from 'src/app/model/dataPrecipitation';
 
 
+/**
+ * Génère une palette de couleurs distinctes.
+ * La fonction crée un tableau de couleurs en utilisant le modèle de couleur HSL (teinte, saturation, luminosité).
+ * Les couleurs sont réparties uniformément sur le cercle chromatique en fonction du nombre de couleurs demandé.
+ * 
+ * @param numColors Le nombre de couleurs à générer.
+ * @returns Un tableau de chaînes de caractères représentant les couleurs en format HSL.
+ */
+function generateColors(numColors: number): string[] {
+  const colors: string[] = []; // Tableau pour stocker les couleurs générées
+  const hueStep = 360 / numColors; // Calcul de l'intervalle de teinte pour chaque couleur
+
+  for (let i = 0; i < numColors; i++) {
+    const hue = i * hueStep; // Calcul de la teinte pour la couleur actuelle
+    colors.push(`hsl(${hue}, 100%, 50%)`); // Ajout de la couleur au format HSL dans le tableau
+  }
+
+  return colors; // Retourne le tableau de couleurs générées
+}
+
+/**
+ * Composant Angular pour afficher les précipitations saisonnières.
+ */
 @Component({
     selector: 'app-precipitationSeasonal',
     templateUrl: './precipitationSeasonal.component.html',
     styleUrls: ['./precipitationSeasonal.component.scss']
   })
 
+  /**
+   * 
+   */
   export class precipitationSeasonal {
-    @Input() stationSelectionChange!: string;
-    @Input() yearSelectionChange!: number[];
-    DataPrecipitation : dataPrecipitation[] = [];
-    fig: any;
+    @Input() stationSelectionChange!: string; // Identifiant de la station sélectionnée
+    @Input() yearSelectionChange!: number[]; // Liste des années sélectionnées
+  
+    DataPrecipitation: dataPrecipitation[] = []; // Données de précipitations pour la station
+    fig: any; // Objet de configuration pour le graphique Plotly
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
+  
+    /**
+     * Constructeur de la classe.
+     * 
+     * @param dataService Service de gestion des données
+     * @param jsonService Service de gestion des JSON
+     */
+    constructor(private dataService: DataService, private jsonService: JsonService) {}
 
-    constructor(private dataService: DataService,private jsonService: JsonService) {}
-
+    /**
+     * Initialisation du composant.
+     * Cette méthode est appelée une fois que les propriétés @Input ont été initialisées.
+     */
     ngOnInit() {
         this.initStationPrecipitation(this.stationSelectionChange);
       }
 
+  /**
+   * Méthode appelée à chaque changement des valeurs des propriétés @Input.
+   * 
+   * @param changes Objet contenant les valeurs changées
+   */
     ngOnChanges(changes: SimpleChanges) {
         // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
         if (changes['stationSelectionChange']) {
@@ -41,7 +82,11 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
         }
       }
 
-
+    /**
+     * Initialise les données de précipitations pour une station donnée.
+     * 
+     * @param stationID Identifiant de la station
+     */
     initStationPrecipitation(stationID: string){
         this.jsonService.getPrecipitation(stationID).then(station => {
             this.DataPrecipitation = station; 
@@ -49,113 +94,143 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
         });
       }
 
+    /**
+     * Traite les données de précipitations et les structure pour une utilisation ultérieure.
+     * 
+     * @returns Un objet contenant les données de précipitations journalières et annuelles ainsi que la dernière date de mise à jour
+     */
+    processedPrecipitation(): { TabPrecipitationByDaily: any[], YearTabPrecipitationByDaily: any[], lastUpdate: any } {
+      const targetYears: number[] = this.yearSelectionChange;
+      const TabPrecipitationByDaily: any[] = [];
+      const YearTabPrecipitationByDaily: any[] = [];
+      let lastUpdate = null;
+
+      // Vérification si this.dischargeStation est défini et non vide
+      if (this.DataPrecipitation && this.DataPrecipitation.length > 0) {
+        for (const entry of this.DataPrecipitation) {
+          const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
+          const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
+          const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
+          const currentDate = new Date(entry.t);
+
+          if (!lastUpdate || currentDate > lastUpdate|| !isNaN(parseFloat(entry.Q))) {
+            lastUpdate = currentDate; 
+          }
+          // Formater le mois et le jour avec le format "mm-dd"
+          const monthDay = `${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
+    
+          // Ajouter les données traitées dans un nouvel objet
+          const newDataEntry = {
+            Q: entry.Q,
+            t: entry.t,
+            years: year,
+            daily: monthDay
+          };
+          
+    
+          // Ajouter cet objet au tableau de données traitées
+          if (!isNaN(parseFloat(entry.Q)) && year !== 1958) {
+            TabPrecipitationByDaily.push(newDataEntry);
+          }
+
+        }
+      } else {
+        console.error("No data available in this.dischargeStation.");
+      }
+      
+      const uniqueYears: number[] = [];
+
+      // Récupérer les années uniques à partir des données traitées
+      for (const entry of TabPrecipitationByDaily) {
+          if (!uniqueYears.includes(entry.years)) {
+              uniqueYears.push(entry.years);
+          }
+      }
+
+      for (const year of uniqueYears) {
+          const yearData = TabPrecipitationByDaily.filter(entry => entry.years === year);
+          let cumulativeRainfall = 0.0;
+      
+          // Itérer sur chaque entrée de données pour l'année donnée
+          for (const entry of yearData) {
+              const rainfall = parseFloat(entry.Q); // Convertir la précipitation en nombre
+              cumulativeRainfall += rainfall;
+              entry.cumulative_daily_rainfall = cumulativeRainfall;
+          }
+      }
+
+      for (const dataEntry of TabPrecipitationByDaily) {
+          if (targetYears.includes(dataEntry.years)) {
+            YearTabPrecipitationByDaily.push(dataEntry);
+          }
+        }
+    
+      return {TabPrecipitationByDaily, YearTabPrecipitationByDaily, lastUpdate};
+  }
+
+  /**
+   * Calcule les quantiles (10%, 50%, 90%) des précipitations journalières cumulées.
+   * 
+   * @param TabPrecipitationByDaily Tableau des précipitations journalières cumulées
+   * @returns Un objet contenant les quantiles calculés pour chaque jour et les quantiles globaux
+   */
+  calculateQuantiles(TabPrecipitationByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
+    const resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = [];
+    let q10: any;
+    let q50: any;
+    let q90: any;
+
+    
+    from(TabPrecipitationByDaily)
+    .pipe(
+      filter(entry => !isNaN(parseFloat(entry.cumulative_daily_rainfall))),
+      groupBy(
+        TabPrecipitationByDaily => TabPrecipitationByDaily.daily,
+        p => p.cumulative_daily_rainfall
+      ),
+      mergeMap(group => zip(of(group.key), group.pipe(toArray())))
+    )
+    .subscribe({
+      //pour chaque daily 
+      next: ([key, values]) => {
+        const numericValues: number[] = values.map(value => parseFloat(value));
+        // Calcule les quantiles et médiane
+        q10 = (math.quantileSeq(numericValues, 0.1));
+        //arrondi 4 chiffres après la virgule
+        q10 =parseFloat(q10.toFixed(4));
+        q50 = median(numericValues);
+        q50 = parseFloat(q50.toFixed(4));
+        q90 = math.quantileSeq(numericValues, 0.9);
+        q90 = parseFloat(q90.toFixed(4));
+        
+        //push dans le tableau
+        const entry = { key, values: numericValues, q10, q50, q90 };
+        resultArray.push(entry);
+      }
+    });
+
+    resultArray.sort((a, b) => {
+      const [aMonth, aDay] = a.key.split('-').map(Number);
+      const [bMonth, bDay] = b.key.split('-').map(Number);
+      if (aMonth !== bMonth) {
+        return aMonth - bMonth;
+      } else {
+        return aDay - bDay;
+      }
+    });
+
+    return { resultArray, q10, q50, q90 };
+  }
+
+    /**
+     * Méthode principale pour afficher les précipitations saisonnières.
+     * Elle utilise les données de précipitations traitées pour générer un graphique Plotly.
+     */ 
     Precipitation_Seasonal() {
         const targetYears: number[] = this.yearSelectionChange;
-        const processedData: any[] = [];
-        const linesByYear = [];
-        let lastUpdate = null;
-        // Vérification si this.dischargeStation est défini et non vide
-        if (this.DataPrecipitation && this.DataPrecipitation.length > 0) {
-          for (const entry of this.DataPrecipitation) {
-            const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
-            const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
-            const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
-            const currentDate = new Date(entry.t);
-  
-            if (!lastUpdate || currentDate > lastUpdate|| !isNaN(parseFloat(entry.Q))) {
-              lastUpdate = currentDate; 
-            }
-            // Formater le mois et le jour avec le format "mm-dd"
-            const monthDay = `${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
-      
-            // Ajouter les données traitées dans un nouvel objet
-            const newDataEntry = {
-              Q: entry.Q,
-              t: entry.t,
-              years: year,
-              daily: monthDay
-            };
-            
-      
-            // Ajouter cet objet au tableau de données traitées
-            if (!isNaN(parseFloat(entry.Q)) && year !== 1958) {
-              processedData.push(newDataEntry);
-            }
-  
-          }
-        } else {
-          console.error("No data available in this.dischargeStation.");
-        }
-        
-        const uniqueYears: number[] = [];
-
-        // Récupérer les années uniques à partir des données traitées
-        for (const entry of processedData) {
-            if (!uniqueYears.includes(entry.years)) {
-                uniqueYears.push(entry.years);
-            }
-        }
-
-        for (const year of uniqueYears) {
-            const yearData = processedData.filter(entry => entry.years === year);
-            let cumulativeRainfall = 0.0;
-        
-            // Itérer sur chaque entrée de données pour l'année donnée
-            for (const entry of yearData) {
-                const rainfall = parseFloat(entry.Q); // Convertir la précipitation en nombre
-                cumulativeRainfall += rainfall;
-                entry.cumulative_daily_rainfall = cumulativeRainfall;
-            }
-        }
-
-        for (const dataEntry of processedData) {
-            if (targetYears.includes(dataEntry.years)) {
-                linesByYear.push(dataEntry);
-            }
-          }
-
-        const resultArray: { key: string; values: number[]; q10?: number;q50?: number;q90?: number;}[] = [];
-        let q10: any;
-        let q50: any;
-        let q90: any;
-        from(processedData)
-          .pipe(
-            filter(entry => !isNaN(parseFloat(entry.cumulative_daily_rainfall))),
-            groupBy(
-              processedData => processedData.daily,
-              p => p.cumulative_daily_rainfall
-            ),
-            mergeMap(group => zip(of(group.key), group.pipe(toArray())))
-          )
-          .subscribe({
-            //pour chaque daily 
-            next: ([key, values]) => {
-              const numericValues: number[] = values.map(value => parseFloat(value));
-              // Calcule les quantiles et médiane
-              q10 = (math.quantileSeq(numericValues, 0.1));
-              //arrondi 4 chiffres après la virgule
-              q10 =parseFloat(q10.toFixed(4));
-              q50 = median(numericValues);
-              q50 = parseFloat(q50.toFixed(4));
-              q90 = math.quantileSeq(numericValues, 0.9);
-              q90 = parseFloat(q90.toFixed(4));
-              
-              //push dans le tableau
-              const entry = { key, values: numericValues, q10, q50, q90 };
-              resultArray.push(entry);
-            }
-          });
-  
-          resultArray.sort((a, b) => {
-            const [aMonth, aDay] = a.key.split('-').map(Number);
-            const [bMonth, bDay] = b.key.split('-').map(Number);
-            if (aMonth !== bMonth) {
-              return aMonth - bMonth;
-            } else {
-              return aDay - bDay;
-            }
-          });
-          //console.log("re", resultArray);
+        const {TabPrecipitationByDaily, YearTabPrecipitationByDaily, lastUpdate} = this.processedPrecipitation();
+        const {resultArray, q10, q50, q90 } = this.calculateQuantiles(TabPrecipitationByDaily);
+    
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
         const resultArrayq10 = resultArray.map(entry => entry.q10);
@@ -168,40 +243,23 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
         layout: {
             title: { 
                 text: 'Précipitations' ,
-                font: {
-                    family: "Segoe UI Semibold", 
-                    size: 22, 
-                    color: "black"
-                } 
+                font: {family: "Segoe UI Semibold", size: 22, color: "black"} 
             },
             xaxis: { 
                 type: 'category',  
                 'tickvals' : this.tickvals,
                 'ticktext' : this.ticktext,
-                tickfont: { 
-                    size: 14, 
-                    family: 'Segoe UI Semibold', 
-                    color: 'black' 
-                }, 
+                tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black' }, 
                 'gridwidth' : 0.01, 
                 'gridcolor' : 'rgba(0,0,0,0.1)'
             },
             yaxis: { 
                 title: 'Cumul des précipitations [mm]', 
-                font: {
-                    family: "Segoe UI Semibold", 
-                    size: 16, 
-                    color: "black"
-                },
-                tickfont: { 
-                    size: 14, 
-                    family: 'Segoe UI Semibold', 
-                    color: 'black'
-                }, 
+                font: {family: "Segoe UI Semibold", size: 16, color: "black"},
+                tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'}, 
                 showticklabels: true, 
                 gridwidth: 0.01, 
                 gridcolor: 'rgba(0,0,0,0.1)', 
-                
             },
             annotations: [
                 {   text: 'Mis à jour le : DATE', 
@@ -210,11 +268,7 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
                     yref: 'paper', 
                     x: 0.5, 
                     y: 1.15, 
-                    font: {
-                        family: "Segoe UI Semilight Italic", 
-                        size: 18, 
-                        color: "#999"
-                    } 
+                    font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
                 },
                 {   text: 'Source : Météo France', 
                     showarrow: false, 
@@ -222,11 +276,7 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
                     yref: 'paper', 
                     x: 0.5, 
                     y: -0.20, 
-                    font: { 
-                        family:'Segoe UI Semilight',
-                        size:14,
-                        color:"gray"
-                    } 
+                    font: {family:'Segoe UI Semilight', size:14, color:"gray"} 
                 }
             ],
             margin: { t: 125 },
@@ -237,8 +287,8 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
             legend: { orientation: "h", yanchor: "top", y: 1.1, xanchor: "right", x: 1 }
         }
     };
-        const startYear = processedData.length > 0 ? processedData[1].years : 'N/A';
-        const endYear = processedData.length > 0 ? processedData[processedData.length - 1].years : 'N/A';
+        const startYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[1].years : 'N/A';
+        const endYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[TabPrecipitationByDaily.length - 1].years : 'N/A';
         // Construction du libellé pour la moyenne
         const labelmedian = `moyenne [${startYear} - ${endYear}]`;
         const labelinvariant = `variabilité [${startYear} - ${endYear}]`;
@@ -264,11 +314,10 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
           hoverinfo: 'none' 
         });
         const lengthYear = targetYears.length;
-        const chromaColors = chr.scale('Set1').colors(lengthYear);
-            // Boucle sur les événements
+        const colors = generateColors(lengthYear);
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
-        const df_event = linesByYear.filter(item => item.years === year);
+        const df_event = YearTabPrecipitationByDaily.filter(item => item.years === year);
         if (df_event) {
           const trace = {
             x: df_event.map(item => item.daily),
@@ -276,7 +325,7 @@ import dataPrecipitation from 'src/app/model/dataPrecipitation';
             mode: 'lines',
             name: String(year),
             line: {
-              color: chromaColors[i], // Utilisation des couleurs générées par Chroma.js
+              color: colors[i], // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             }
           };

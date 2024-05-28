@@ -2,12 +2,31 @@ import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
-import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataDepth from 'src/app/model/dataDepth';
+
+/**
+ * Génère une palette de couleurs distinctes.
+ * La fonction crée un tableau de couleurs en utilisant le modèle de couleur HSL (teinte, saturation, luminosité).
+ * Les couleurs sont réparties uniformément sur le cercle chromatique en fonction du nombre de couleurs demandé.
+ * 
+ * @param numColors Le nombre de couleurs à générer.
+ * @returns Un tableau de chaînes de caractères représentant les couleurs en format HSL.
+ */
+function generateColors(numColors: number): string[] {
+  const colors: string[] = []; // Tableau pour stocker les couleurs générées
+  const hueStep = 360 / numColors; // Calcul de l'intervalle de teinte pour chaque couleur
+
+  for (let i = 0; i < numColors; i++) {
+    const hue = i * hueStep; // Calcul de la teinte pour la couleur actuelle
+    colors.push(`hsl(${hue}, 100%, 50%)`); // Ajout de la couleur au format HSL dans le tableau
+  }
+
+  return colors; // Retourne le tableau de couleurs générées
+}
 
 
 @Component({
@@ -257,7 +276,7 @@ import dataDepth from 'src/app/model/dataDepth';
           hoverinfo: 'none' 
         });
         const lengthYear = targetYears.length;
-        const chromaColors = chr.scale('Set1').colors(lengthYear);
+        const colors =generateColors(lengthYear);
             // Boucle sur les événements
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
@@ -269,7 +288,7 @@ import dataDepth from 'src/app/model/dataDepth';
             mode: 'lines',
             name: String(year),
             line: {
-              color: chromaColors[i], // Utilisation des couleurs générées par Chroma.js
+              color: colors[i], // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             }
           };
