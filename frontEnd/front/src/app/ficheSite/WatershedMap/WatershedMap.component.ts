@@ -80,7 +80,7 @@ WaterShedsMapLayers = {
     initGDFStations() {
       this.dataService.getMesurementGDFStation().then(data => {
         this.GDFStationDatas = data;  
-        console.log("stations",this.GDFStationDatas);
+        //console.log("stations",this.GDFStationDatas);
       });
     }
  
@@ -100,7 +100,7 @@ WaterShedsMapLayers = {
     initGDFWatersheds() {
       this.dataService.getMesurementGDFWatersheds().then(data => {
         this.GDFWatershedsDatas = data;  
-        console.log("watersheds", this.GDFWatershedsDatas);
+        //console.log("watersheds", this.GDFWatershedsDatas);
       });
     }
 
@@ -112,7 +112,7 @@ WaterShedsMapLayers = {
     initGDFPiezometry(){
       this.dataService.getMesurementGDFPiezometre().then(data => {
         this.GDFPiezometryDatas = data;
-        console.log(this.GDFPiezometryDatas);
+        //console.log(this.GDFPiezometryDatas);
       });
     }
   
@@ -181,7 +181,10 @@ WaterShedMap_Leaflet(stationID:string){
           .bindPopup(`<b>Identifiant : ${piezoSelectedStation.identifiant_BSS}</b>`);
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
-    } 
+    }
+    window.addEventListener('resize', () => {
+      this.WatershedMapLeaflet.invalidateSize();
+    }); 
   }
 
   

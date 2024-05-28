@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges} from '@angular/core';
+import { Component, Input, Output , EventEmitter , SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as L from 'leaflet';
@@ -15,6 +15,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
   })
   export class RegionalMapComponent {
     @Input() stationSelectionChange!: string;
+    @Output() markerClick: EventEmitter<string> = new EventEmitter<string>();
     private RegionalMapLeaflet!: L.Map;
     MapExecutee = false; 
     CorrespondanceBSSs: CorrespondancesBSSData[] = [];
@@ -185,6 +186,7 @@ import GDFStationData from 'src/app/model/GDFStationData';
         // Ajout du marqueur 
         markerstations.addTo(this.RegionalMapLeaflet);
       }
+      
 
       //création des point piezo  
       //boucle parcourant tous les points des piezometre  
@@ -291,6 +293,22 @@ import GDFStationData from 'src/app/model/GDFStationData';
 
     // Création de la carte regional ! identifiant de cette element est map :)
     Plotlydist.newPlot('RegionalMapPlotly', figData, figLayout);
+
+    const plotlyElement = document.getElementById('RegionalMapPlotly');
+    if (plotlyElement) {
+      (plotlyElement as any).on('plotly_click', (data: any) => {
+        const point = data.points[0];
+        const text = point.hovertext;
+        const id = text.split(' - ')[0]; // Sépare la chaîne en utilisant le caractère "-"
+        this.markerClick.emit(id);
+        console.log(`ID du marker : ${id}`);
+      });
+    }
+    
+    window.addEventListener('resize', () => {
+      const hydrographWidth = 0.50 * window.innerWidth;
+      Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
+    });
   }
 
    

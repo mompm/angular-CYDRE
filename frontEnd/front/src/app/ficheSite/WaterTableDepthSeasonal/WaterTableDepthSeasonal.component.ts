@@ -287,6 +287,10 @@ import WaterTableDepthdata from 'src/app/model/WaterTableDepthdata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout);
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
+        });
       
       }
   

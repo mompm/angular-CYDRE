@@ -6,6 +6,7 @@ import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import GDFStationData from '../model/GDFStationData';
+import {MatDialog} from '@angular/material/dialog';
 
 
 
@@ -34,7 +35,7 @@ import GDFStationData from '../model/GDFStationData';
       'J5412110', 'J7083110', 'J7114010', 'J7824010', 'J7833010', 'J7973010', 'J8202310', 'J8363110', 'J8443010', 'J8502310', 'J8813010'
     ];
   
-    constructor(private dataService: DataService, private sharedService : SharedWatershedService) { }
+    constructor(private dataService: DataService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
   
     ngOnInit() {
       this.initGDFStations();
@@ -47,6 +48,29 @@ import GDFStationData from '../model/GDFStationData';
         this.selectedWatershedBSS = BSS
       }
       //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
+    }
+
+    handleMarkerClick(id: string): void {
+      console.log(`ID du marker dans le composant parent : ${id}`);
+      const selectedOption = this.GDFStationDatas.find(station => station.index === id);
+      if (selectedOption) {
+        this.myControl.setValue(selectedOption);
+        this.selectedWatershedID = selectedOption.index;
+        this.sharedService.setSelectedValue(selectedOption.index);
+        if(this.list_of_disabled_options.includes(selectedOption.index)){
+          this.correspondance = false;
+        }
+        else{
+          this.correspondance = true;
+        }
+        this.selectedWatershedBSS = selectedOption.BSS_ID;
+        this.sharedService.setSelectedValueBSS(selectedOption.BSS_ID);
+        }
+      
+    }
+
+    openDialog() {
+      this.dialog.open(PopupDialogFicheSite);
     }
   
     initGDFStations() {
@@ -90,6 +114,12 @@ import GDFStationData from '../model/GDFStationData';
         this.selectedWatershedBSS = select;
         this.sharedService.setSelectedValueBSS(select);
       }
+      if (this.list_of_disabled_options.includes(selectedOption.index)){
+        this.correspondance = false;
+      }
+      else{
+        this.correspondance = true;
+      }
       //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
     }
   
@@ -101,4 +131,10 @@ import GDFStationData from '../model/GDFStationData';
       return option ? `${option.index} - ${option.station_name}` : '';
     }
   }
+
+  @Component({
+    selector: 'popupDialogFicheSite',
+    templateUrl: './popupDialogFicheSite.html',
+  })
+  export class PopupDialogFicheSite {}
   

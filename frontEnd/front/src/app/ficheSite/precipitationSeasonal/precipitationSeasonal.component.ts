@@ -154,7 +154,7 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
               return aDay - bDay;
             }
           });
-          console.log("re", resultArray);
+          //console.log("re", resultArray);
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
         const resultArrayq10 = resultArray.map(entry => entry.q10);
@@ -294,6 +294,11 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout);
+
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+        });
       
       }
   

@@ -215,6 +215,11 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout);
+
+        window.addEventListener('resize', () => {
+          const hydrographWidth = 0.40 * window.innerWidth;
+          Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
+        });
       
       }
   
