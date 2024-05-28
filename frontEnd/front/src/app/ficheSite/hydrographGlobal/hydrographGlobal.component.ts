@@ -1,8 +1,9 @@
 import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import { Layout ,AxisType} from 'plotly.js-dist';
-import StationDischargedata from 'src/app/model/StationDischargedata';
+import dataDischarge from 'src/app/model/dataDischarge';
 
 
 
@@ -14,9 +15,9 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
   export class hydrographGlobal{
     @Input() stationSelectionChange!: string;
     on: boolean = false;
-    dischargeStation: StationDischargedata[] = [];
+    Datadischarge: dataDischarge[] = [];
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['stationSelectionChange']) {
@@ -26,9 +27,9 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
 
 
     initStationDischarge(stationID: string){
-        this.dataService.getMesurementStationDischarge(stationID).then(station => {
-          this.dischargeStation = station;
-          //console.log(this.dischargeStation);
+        this.jsonService.getDischarge(stationID).then(station => {
+          this.Datadischarge = station;
+          //console.log(this.Datadischarge);
           this.hydrograph();
         });
       }
@@ -42,7 +43,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
       
         let df: { x: string; y: string; }[] = [];
   
-        this.dischargeStation.forEach(station => {
+        this.Datadischarge.forEach(station => {
           df.push({ x: station.t, y: station.Q });
         });
         
@@ -75,7 +76,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
         
   
         Plotlydist.newPlot('hydrograph', data, layout);
-        const name = this.dischargeStation[0];
+        const name = this.Datadischarge[0];
         const annotation: Partial<Plotly.Annotations>  = {
           text:  `${name} [${this.stationSelectionChange}]`, 
           xref: 'paper', yref: 'paper',

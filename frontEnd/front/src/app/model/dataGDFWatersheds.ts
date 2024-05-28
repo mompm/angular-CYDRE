@@ -1,4 +1,4 @@
-export default class GDFWatershedsData {
+export default class dataGDFWatersheds {
     index : string;
     name: string;
     geometry_area: number;

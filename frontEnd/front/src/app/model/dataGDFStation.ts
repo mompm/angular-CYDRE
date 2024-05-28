@@ -1,4 +1,4 @@
-class GDFStationData {
+class dataGDFStation {
     index : any;
     name : any;
     station_name : any;
@@ -23,4 +23,4 @@ class GDFStationData {
         this.geometry = geometry;
     }
 }
-export default GDFStationData ;
+export default dataGDFStation ;

@@ -1,12 +1,13 @@
 import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
+import dataTemperature from 'src/app/model/dataTemperature';
 
 
 @Component({
@@ -18,13 +19,13 @@ import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
   export class temperatureSeasonal {
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
-    temperatureStation: StationTemperaturedata[] = [];
+    DataTemperature: dataTemperature[] = [];
     fig: any;
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnInit() {
         this.initStationTemperature(this.stationSelectionChange);
@@ -42,8 +43,8 @@ import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
 
 
     initStationTemperature(stationID: string){
-        this.dataService.getMesurementStationTemperature(stationID).then(station => {
-            this.temperatureStation = station; 
+        this.jsonService.getTemperature(stationID).then(station => {
+            this.DataTemperature = station; 
             this.temperature_Seasonal();  
         });
       }
@@ -55,8 +56,8 @@ import StationTemperaturedata from 'src/app/model/StationTemperaturedata';
         const linesByYear = [];
         let lastUpdate = null;
         // Vérification si this.dischargeStation est défini et non vide
-        if (this.temperatureStation && this.temperatureStation.length > 0) {
-          for (const entry of this.temperatureStation) {
+        if (this.DataTemperature && this.DataTemperature.length > 0) {
+          for (const entry of this.DataTemperature) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
             const day = new Date(entry.t).getDate(); // Récupérer le jour de la date

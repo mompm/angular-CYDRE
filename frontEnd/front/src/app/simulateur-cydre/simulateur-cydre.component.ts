@@ -60,9 +60,9 @@ export class SimulateurCydreComponent implements OnInit {
   }
 
   initGDFStations() {
-    this.dataService.getMesurementGDFStation().then(data => {
+    this.jsonService.getGDFStations().then(data => {
       this.stations = data;
-      //console.log(this.GDFStationDatas);
+
 
       // Initialise `filteredOptions` après avoir chargé les données
       this.filteredOptions = this.myControl.valueChanges.pipe(

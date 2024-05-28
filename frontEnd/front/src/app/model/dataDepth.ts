@@ -1,4 +1,4 @@
-class WaterTableDepthdata{
+class dataDepth{
     name : string
     id : string
     t : string;
@@ -13,5 +13,5 @@ class WaterTableDepthdata{
         this.d = d;
     }
 }
-export default WaterTableDepthdata;
+export default dataDepth;
 

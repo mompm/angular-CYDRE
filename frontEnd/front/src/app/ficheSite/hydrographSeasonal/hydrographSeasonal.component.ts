@@ -1,12 +1,13 @@
 import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as chr from 'chroma-js';
 import { median} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import StationDischargedata from 'src/app/model/StationDischargedata';
+import dataDischarge from 'src/app/model/dataDischarge';
 
 
 @Component({
@@ -18,13 +19,13 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
   export class hydrographSeasonal {
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
-    dischargeStation: StationDischargedata[] = [];
+    Datadischarge: dataDischarge[] = [];
     fig: any;
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnInit() {
         this.initStationDischarge(this.stationSelectionChange);
@@ -41,8 +42,8 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
       }
 
     initStationDischarge(stationID: string){
-        this.dataService.getMesurementStationDischarge(stationID).then(station => {
-            this.dischargeStation = station;
+        this.jsonService.getDischarge(stationID).then(station => {
+            this.Datadischarge = station;
             this.hydrograph_Seasonal()
         });
       }
@@ -53,9 +54,9 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
         const processedData: any[] = [];
         const linesByYear = [];
         let lastUpdate = null;
-        // Vérification si this.dischargeStation est défini et non vide
-        if (this.dischargeStation && this.dischargeStation.length > 0) {
-          for (const entry of this.dischargeStation) {
+        // Vérification si this.Datadischarge est défini et non vide
+        if (this.Datadischarge && this.Datadischarge.length > 0) {
+          for (const entry of this.Datadischarge) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
             const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
@@ -85,7 +86,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
             }
           }
         } else {
-          console.error("No data available in this.dischargeStation.");
+          console.error("No data available in this.Datadischarge.");
         }
   
         //console.log("process data" ,lastUpdate);
@@ -140,7 +141,7 @@ import StationDischargedata from 'src/app/model/StationDischargedata';
       this.fig = {
         data: [],
         layout: {
-            title: { text: 'Débits de cours d\'eau [' + this.dischargeStation[1] + ']' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
+            title: { text: 'Débits de cours d\'eau [' + this.Datadischarge[1] + ']' ,font: {family: "Segoe UI Semibold", size: 22, color: "black"} },
             xaxis: { type: 'category',  'tickvals' : this.tickvals,'ticktext' : this.ticktext,tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black' }, 'gridwidth' : 0.01, 'gridcolor' : 'rgba(0,0,0,0.1)'},
             yaxis: { title: 'Débit de cours d\'eau [m3/s]' , type: 'log', exponentformat: 'power', tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'} ,showticklabels : true,gridwidth : 0.01, gridcolor : 'rgba(0,0,0,0.1)' },
             

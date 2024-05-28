@@ -1,12 +1,13 @@
 import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
 import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
+import dataPrecipitation from 'src/app/model/dataPrecipitation';
 
 
 @Component({
@@ -18,13 +19,13 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
   export class precipitationSeasonal {
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
-    precipitationStation : StationPrecipitationdata[] = [];
+    DataPrecipitation : dataPrecipitation[] = [];
     fig: any;
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
 
-    constructor(private dataService: DataService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {}
 
     ngOnInit() {
         this.initStationPrecipitation(this.stationSelectionChange);
@@ -42,8 +43,8 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
 
 
     initStationPrecipitation(stationID: string){
-        this.dataService.getMesurementStationPrecipitationdata(stationID).then(station => {
-            this.precipitationStation = station; 
+        this.jsonService.getPrecipitation(stationID).then(station => {
+            this.DataPrecipitation = station; 
             this.Precipitation_Seasonal();
         });
       }
@@ -54,8 +55,8 @@ import StationPrecipitationdata from 'src/app/model/StationPrecipitationdata';
         const linesByYear = [];
         let lastUpdate = null;
         // Vérification si this.dischargeStation est défini et non vide
-        if (this.precipitationStation && this.precipitationStation.length > 0) {
-          for (const entry of this.precipitationStation) {
+        if (this.DataPrecipitation && this.DataPrecipitation.length > 0) {
+          for (const entry of this.DataPrecipitation) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
             const day = new Date(entry.t).getDate(); // Récupérer le jour de la date

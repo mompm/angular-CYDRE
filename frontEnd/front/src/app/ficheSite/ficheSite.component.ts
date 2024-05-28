@@ -1,11 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { DataService } from 'src/app/service/data.service';
+import { JsonService } from '../service/json.service';
 import { SharedWatershedService } from '../service/shared-watershed.service';
 import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import GDFStationData from '../model/GDFStationData';
+import dataGDFStation from '../model/dataGDFStation';
 import {MatDialog} from '@angular/material/dialog';
 
 
@@ -21,7 +22,7 @@ import {MatDialog} from '@angular/material/dialog';
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
     selectedYears: number[] = [this.currentYear];
-    GDFStationDatas: GDFStationData[]  =[];
+    DataGDFStation: dataGDFStation[]  =[];
     myControl = new FormControl();
     filteredOptions!: Observable<{ index: string, station_name: string }[]>;
     selectedWatershedID: string = '';
@@ -35,7 +36,7 @@ import {MatDialog} from '@angular/material/dialog';
       'J5412110', 'J7083110', 'J7114010', 'J7824010', 'J7833010', 'J7973010', 'J8202310', 'J8363110', 'J8443010', 'J8502310', 'J8813010'
     ];
   
-    constructor(private dataService: DataService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
+    constructor(private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
   
     ngOnInit() {
       this.initGDFStations();
@@ -47,12 +48,11 @@ import {MatDialog} from '@angular/material/dialog';
       if (BSS){
         this.selectedWatershedBSS = BSS
       }
-      //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
     }
 
     handleMarkerClick(id: string): void {
       console.log(`ID du marker dans le composant parent : ${id}`);
-      const selectedOption = this.GDFStationDatas.find(station => station.index === id);
+      const selectedOption = this.DataGDFStation.find(station => station.index === id);
       if (selectedOption) {
         this.myControl.setValue(selectedOption);
         this.selectedWatershedID = selectedOption.index;
@@ -74,9 +74,9 @@ import {MatDialog} from '@angular/material/dialog';
     }
   
     initGDFStations() {
-      this.dataService.getMesurementGDFStation().then(data => {
-        this.GDFStationDatas = data;
-        //console.log(this.GDFStationDatas);
+      this.jsonService.getGDFStations().then(data => {
+        this.DataGDFStation = data;
+        //console.log(this.DataGDFStation);
   
         // Initialise `filteredOptions` après avoir chargé les données
         this.filteredOptions = this.myControl.valueChanges.pipe(
@@ -85,7 +85,7 @@ import {MatDialog} from '@angular/material/dialog';
         );
   
         // Définir la valeur initiale de l'input
-        const initialOption = this.GDFStationDatas.find(station => station.index === this.sharedService.getSelectedValue());
+        const initialOption = this.DataGDFStation.find(station => station.index === this.sharedService.getSelectedValue());
         //this.selectedWatershed = this.sharedService.getSelectedValue();
         if (initialOption) {
           this.myControl.setValue(initialOption);
@@ -97,7 +97,7 @@ import {MatDialog} from '@angular/material/dialog';
       value = value.toString()
       const filterValue = value.toLowerCase();
   
-      return this.GDFStationDatas
+      return this.DataGDFStation
         .filter(station =>
           station.index.toLowerCase().includes(filterValue) ||
           station.station_name.toLowerCase().includes(filterValue)
@@ -109,7 +109,7 @@ import {MatDialog} from '@angular/material/dialog';
       const selectedOption = event.option.value;
       this.sharedService.setSelectedValue(selectedOption.index);
       this.selectedWatershedID = selectedOption.index;
-      const select = this.GDFStationDatas.find(station => station.index === selectedOption.index)?.BSS_ID;
+      const select = this.DataGDFStation.find(station => station.index === selectedOption.index)?.BSS_ID;
       if (select){
         this.selectedWatershedBSS = select;
         this.sharedService.setSelectedValueBSS(select);
