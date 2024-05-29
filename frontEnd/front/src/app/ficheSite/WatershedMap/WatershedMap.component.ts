@@ -7,12 +7,17 @@ import dataGDFPiezometry from 'src/app/model/dataGDFPiezometry';
 import dataGDFWatersheds from 'src/app/model/dataGDFWatersheds';
 import dataGDFStation from 'src/app/model/dataGDFStation';
 
-
+/**
+ * 
+ */
 @Component({
     selector: 'app-WatershedMap',
     templateUrl: './WatershedMap.component.html',
     styleUrls: ['./WatershedMap.component.scss']
   })
+  /**
+   * 
+   */
   export class WatershedMapComponent {
     @Input() stationSelectionChange!: string;
     private WatershedMapLeaflet!: L.Map;
@@ -40,15 +45,25 @@ WaterShedsMapLayers = {
       attribution: '&copy; <a href="https://www.ign.fr/">BD Ortho IGN</a> '
     })    
   };
-
+  /**
+   * 
+   * @param dataService 
+   * @param jsonService 
+   */
   constructor(private dataService: DataService,private jsonService: JsonService) {}
 
+    /**
+     * 
+     */
     ngOnInit() {
       this.initGDFWatersheds();
       this.initGDFPiezometry();
       this.initGDFStations();
     }
-
+    /**
+     * 
+     * @param changes 
+     */
     ngOnChanges(changes: SimpleChanges) {
       // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
       // Vous pouvez y réagir en conséquence
@@ -58,7 +73,9 @@ WaterShedsMapLayers = {
         
       }
     }
-       // fonction vérifiant en permanence si les conditions sont ok 
+       /**
+        * 
+        */ 
        ngDoCheck() {      
         // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
         if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
@@ -69,24 +86,26 @@ WaterShedsMapLayers = {
         }
       }
 
-    //récupère les données des gdf des stations
-    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-    //contenus dans geometry: coordinates et type  
-    //location du fichier origine :backend/data/stations.csv
+    /**
+     * récupère les données des gdf des stations
+     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+     * contenus dans geometry: coordinates et type 
+     * location du fichier origine :backend/data/stations.csv
+     */
     initGDFStations() {
       this.jsonService.getGDFStations().then(data => {
         this.DataGDFStation = data;  
-        //console.log("stations",this.DataGDFStation);
       });
     }
- 
 
-    //récupère les données des gdf des stations
-    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-    //contenus dans geometry: coordinates et type  
-    //location du fichier origine :backend/data/stations.csv
+    /**
+     * récupère les données des gdf des stations
+     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+     * contenus dans geometry: coordinates et type  
+     * location du fichier origine :backend/data/stations.csv
+     */
     initGDFWatersheds() {
       this.jsonService.getGDFWatersheds().then(data => {
         this.DataGDFWatersheds = data;  
@@ -94,18 +113,24 @@ WaterShedsMapLayers = {
       });
     }
 
-    //récupère les données des gdf des piezometre
-    //contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
-    //format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
-     //contenus dans geometry: coordinates et type  
-    //location du fichier origine : backend/data/piezometry/stations.csv'
+    /**
+     * récupère les données des gdf des piezometre
+     * contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
+     * format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
+     * contenus dans geometry: coordinates et type
+     * location du fichier origine : backend/data/piezometry/stations.csv'
+     */
     initGDFPiezometry(){
       this.jsonService.getGDFPiezometry().then(data => {
         this.DataGDFPiezometry = data;
         //console.log(this.DataGDFPiezometry);
       });
     }
-  
+  /**
+   * 
+   * @param stationID 
+   * @returns 
+   */
 WaterShedMap_Leaflet(stationID:string){
     //si la carte existe, supprime (permet la maj pour la station selectionnée)
     if (this.WatershedMapLeaflet ) {
@@ -173,7 +198,11 @@ WaterShedMap_Leaflet(stationID:string){
     }); 
   }
 
-  
+  /**
+   * 
+   * @param stationID 
+   * @returns 
+   */
   WaterShedMap_Plotly(stationID:string){
     const figData: any[] = [];
     // rechercher le center et le Zoom de la carte 
