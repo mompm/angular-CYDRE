@@ -1,0 +1,18 @@
+<div class="custom-dialog" [ngStyle]="{'width': dialogWidth, 'height': dialogHeight}">
+    <h1 class="title">Documentation</h1>
+    <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="center" animationDuration="0ms" (selectedIndexChange)="updateDialogSize($event)">
+      <mat-tab label="Accueil">
+        <div>Content 1</div>
+      </mat-tab>
+      <mat-tab label="Guide d'utilisation">
+        <div>Content 2</div>
+      </mat-tab>
+      <mat-tab label="Méthodologie">
+        <div>Content 3</div>
+      </mat-tab>
+      <mat-tab label="Financement">
+        <div>Content 4</div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+  
