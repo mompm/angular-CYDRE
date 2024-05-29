@@ -1,0 +1,37 @@
+
+
+.custom-dialog {
+    position: fixed;
+    top: 20%;
+    left: 2%;
+    //transform: translate(-50%, -50%);
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    z-index: 1000; /* Assurez-vous qu'elle soit plus élevée que les autres éléments */
+    transition: width 0.3s ease, height 0.3s ease; /* Ajoutez des transitions pour un effet de changement de taille fluide */
+  }
+
+
+.title {
+    margin: 20px 0;
+    align-self: flex-start; 
+}
+
+
+.tabs-container {
+    flex-grow: 1; /* Permettre au conteneur de remplir tout l'espace restant */
+}
+
+
+.tab-style {
+    width: 100%; /* Remplir toute la largeur disponible */
+    border: none;
+    box-shadow: inset 0px -1px 0px 0px lightgrey;
+    background: white;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}

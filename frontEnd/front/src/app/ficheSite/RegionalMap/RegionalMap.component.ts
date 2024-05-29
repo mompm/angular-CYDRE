@@ -7,25 +7,25 @@ import dataGDFPiezometry from 'src/app/model/dataGDFPiezometry';
 import dataGDFWatersheds from 'src/app/model/dataGDFWatersheds';
 import dataGDFStation from 'src/app/model/dataGDFStation';
 
-
+/**
+ * Composant Angular pour afficher la carte Regional.
+ */
 @Component({
     selector: 'app-RegionalMap',
     templateUrl: './RegionalMap.component.html',
     styleUrls: ['./RegionalMap.component.scss']
   })
+
   export class RegionalMapComponent {
-    @Input() stationSelectionChange!: string;
-    @Output() markerClick: EventEmitter<string> = new EventEmitter<string>();
-    private RegionalMapLeaflet!: L.Map;
-    MapExecutee = false; 
-
-    DataGDFWatersheds: dataGDFWatersheds[]  = [];
-    DataGDFPiezometry : dataGDFPiezometry [] = [];
-    DataGDFStation: dataGDFStation[]  =[];
-
-
-
-  //permet d'avoir différents type de map avec Leaflet
+    @Input() stationSelectionChange!: string; // Prend en entrée la sélection de la station
+    @Output() markerClick: EventEmitter<string> = new EventEmitter<string>(); // Émetteur d'événement pour le clic sur un marqueur
+    private RegionalMapLeaflet!: L.Map; // Instance de la carte Leaflet
+    MapExecutee = false; // Indicateur si la carte a été initialisée
+    DataGDFWatersheds: dataGDFWatersheds[] = []; // Données des bassins versants
+    DataGDFPiezometry: dataGDFPiezometry[] = []; // Données des piézomètres
+    DataGDFStation: dataGDFStation[] = []; // Données des stations
+  
+  // Différents types de fonds de carte avec Leaflet
   //basemaps :
   //classic (openstreetmap ou positron)
   //satellite
@@ -49,41 +49,55 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
     })    
   };
 
+    /**
+   * Constructeur de la classe, injecte les services nécessaires
+   * @param dataService Service pour les données
+   * @param jsonService Service pour les opérations JSON
+   */
     constructor(private dataService: DataService,private jsonService: JsonService) {}
 
+    /**
+     * Méthode appelée à l'initialisation du composant
+     */
     ngOnInit() {
-
-      this.initGDFWatersheds();
-      this.initGDFPiezometry();
-      this.initGDFStations();
-      
+      this.initGDFWatersheds(); // Initialise les données des bassins versants
+      this.initGDFPiezometry(); // Initialise les données des piézomètres
+      this.initGDFStations(); // Initialise les données des stations
     }
 
+    /**
+     * Méthode appelée lorsque les valeurs des propriétés @Input changent
+     * @param changes Les changements des propriétés @Input
+     */
     ngOnChanges(changes: SimpleChanges) {
       // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
       // Vous pouvez y réagir en conséquence
       if (changes['stationSelectionChange']) {
         //console.log('La valeur de stationMap a changé :', changes['stationSelectionChange'].currentValue);
-        this.MapExecutee = false
-        
+        this.MapExecutee = false    
       }
     }
-       // fonction vérifiant en permanence si les conditions sont ok 
-       ngDoCheck() {      
-        // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
-        if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
-          this.RegionalMap_Plotly(this.stationSelectionChange);
-          //this.RegionalMap_Leaflet(this.stationSelectionChange);
-          //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
-          this.MapExecutee = true;
-        }
-      }
 
-    //récupère les données des gdf des stations
-    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-    //contenus dans geometry: coordinates et type  
-    //location du fichier origine :backend/data/stations.csv
+
+      /**
+       * Méthode appelée à chaque cycle de détection des changements
+       */
+      ngDoCheck() {      
+      // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
+      if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
+        this.RegionalMap_Plotly(this.stationSelectionChange);
+        //this.RegionalMap_Leaflet(this.stationSelectionChange);
+        //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
+        this.MapExecutee = true;
+      }
+    }
+    /**
+     * récupère les données des gdf des stations
+     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+     * contenus dans geometry: coordinates et type 
+     * location du fichier origine :backend/data/stations.csv
+     */
     initGDFStations() {
       this.jsonService.getGDFStations().then(data => {
         this.DataGDFStation = data;  
@@ -91,34 +105,36 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
       });
     }
 
-
-
-
-
-
-        //récupère les données des gdf des stations
-    //contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-    //contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-    //contenus dans geometry: coordinates et type  
-    //location du fichier origine :backend/data/stations.csv
+    /**
+     * récupère les données des gdf des stations
+     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+     * contenus dans geometry: coordinates et type 
+     * location du fichier origine :backend/data/stations.csv
+     */
     initGDFWatersheds() {
       this.jsonService.getGDFWatersheds().then(data => {
         this.DataGDFWatersheds = data;  
       });
     }
 
-    //récupère les données des gdf des piezometre
-    //contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
-    //format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
-     //contenus dans geometry: coordinates et type  
-    //location du fichier origine : backend/data/piezometry/stations.csv'
+    /**
+     * récupère les données des gdf des piezometre
+     * contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
+     * format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
+     * contenus dans geometry: coordinates et type 
+     * location du fichier origine : backend/data/piezometry/stations.csv'
+     */
     initGDFPiezometry(){
       this.jsonService.getGDFPiezometry().then(data => {
         this.DataGDFPiezometry = data;
       });
     }
 
-    // affiche la carte régional avec Leaflet (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
+    /**
+     * affiche la carte régional avec Leaflet (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
+     * @param stationID 
+     */
     RegionalMap_Leaflet(stationID: string) {
       //si la carte existe, supprime (permet la maj pour la station selectionnée)
       if (this.RegionalMapLeaflet) {
@@ -191,7 +207,13 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         markerpiezo.addTo(this.RegionalMapLeaflet);
       }
     }
-   // affiche la carte régional avec plotly (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
+
+
+    /**
+     * affiche la carte régional avec plotly (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
+     * @param stationID 
+     * @returns 
+     */
    RegionalMap_Plotly(stationID: string) {
       
     const figData: any[] = [];

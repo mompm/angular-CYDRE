@@ -1,10 +1,29 @@
 @import "src/assets/styles/font-color.scss";
-.banner-language{
-    color: $font-white;
-    text-align: center;
-    background-color: $font-black;
+
+.banner-language {
+  color: $font-white;
+  text-align: center;
+  background-color: $font-black;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px; 
 }
 
+.text-container {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.custom-btn {
+  background-color: $font-white;
+  border: solid 1px $font-black;
+  color: $font-black;
+  padding: 5px 10px; 
+  border-radius: 5px;
+  text-align: center;
+  display: inline-block;
+}
 
 .select-language{
     background-color: $font-white;
