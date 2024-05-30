@@ -1,9 +1,11 @@
 import { Component, ViewEncapsulation,Input } from '@angular/core';
-import {MatDialog} from '@angular/material/dialog';
-import { CommonModule } from '@angular/common';
-import { MatDialogModule } from '@angular/material/dialog';
-import { TranslateService } from '@ngx-translate/core';
+import {MatDialog,MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
 import {MatTabsModule} from '@angular/material/tabs';
+import { CommonModule } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+
+
 
 
 @Component({
@@ -40,10 +42,7 @@ export class SelecteurLangueComponent{
 
 
     openDialog() {
-      this.dialog.open(DocumentationPopup, {
-        width: '95%',
-        height: 'auto'
-      });
+      this.dialog.open(DocumentationPopup);
     }
   
   }
@@ -53,33 +52,12 @@ export class SelecteurLangueComponent{
       templateUrl: './documentationPopup.html',
       styleUrls: ['./documentationPopup.scss'],
       standalone: true,
-      imports: [MatTabsModule, CommonModule ],
+      imports: [MatTabsModule, CommonModule, MatButtonModule],
     })
     export class DocumentationPopup {
-      dialogWidth: string = '95%';
-      dialogHeight: string = '75%';
+      constructor(public dialogRef: MatDialogRef<DocumentationPopup>) {}
 
-  updateDialogSize(tabIndex: number) {
-    switch (tabIndex) {
-      case 0:
-        this.dialogWidth = '95%';
-        this.dialogHeight = '200px';
-        break;
-      case 1:
-        this.dialogWidth = '95%';
-        this.dialogHeight = '300px';
-        break;
-      case 2:
-        this.dialogWidth = '95%';
-        this.dialogHeight = '400px';
-        break;
-      case 3:
-        this.dialogWidth = '95%';
-        this.dialogHeight = '500px';
-        break;
-      default:
-        this.dialogWidth = '95%';
-        this.dialogHeight = '200px';
+      onClose(): void {
+        this.dialogRef.close();
+      }
     }
-  }
-}

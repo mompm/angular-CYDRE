@@ -676,6 +676,7 @@ class Graph():
         self.scenarios = cydre_app.scenarios_grouped
         self.simulation_date = cydre_app.date
         self.similarity_period = cydre_app.Similarity.user_similarity_period
+        self.similar_watersheds = cydre_app.Similarity.similar_watersheds
 
 
 
@@ -940,7 +941,8 @@ class Graph():
         'last_date': self.projection_period[-1].strftime("%d/%m/%Y"),
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'similarity_period' : self.similarity_period.strftime('%Y-%m-%d').tolist(),
-        'm10' : float(self.mod10)
+        'm10' : float(self.mod10),
+        'similar_watersheds' : self.similar_watersheds
         }
 
         return data

@@ -47,7 +47,9 @@ export class SimulationResultsComponent implements OnInit {
     m10: 0.0, 
     compute_matrix : false,
     corr_matrix: [],
-    task_id:""
+    task_id:"",
+    similar_watersheds: []
+
   };
 
   taskId: string = "";
@@ -98,6 +100,7 @@ export class SimulationResultsComponent implements OnInit {
     this.m10SliderValue = value;
     this.updateLayout();
     this.showPlot();
+    this.showTypologyMap();
   }
 
   updateResults() {
@@ -278,6 +281,51 @@ export class SimulationResultsComponent implements OnInit {
     Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
   }
 
+  showTypologyMap(){
+    const figData: any[] = [];
+    this.jsonService.getGDFStations().then(data => {
+      const filteredStations = data.filter(station => 
+        this.results.similar_watersheds.includes(station.index)
+      );
+
+      const x: any[] = [];
+      const y: any[] = [];
+      const text: any[] = []; 
+
+      for (let i = 0; i < filteredStations.length; i++) {
+          x.push(Number(filteredStations[i].x_outlet)); 
+          y.push(Number(filteredStations[i].y_outlet)); 
+          text.push(`${filteredStations[i].station_name}`);
+      }
+      figData.push({
+        type: 'scattermapbox',
+        lon: x,
+        lat: y,
+        mode: 'markers',
+        hoverinfo: 'text',
+        hovertext: text,
+        name: '',
+    });
+      const figlayout = {
+        mapbox: {
+          style: 'open-street-map',
+          center: { lat: 48.2141667, lon: -2.9424167 },
+          zoom: 6.8
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        margin: { l: 0, r: 0, t: 0, b: 0 }
+      };
+ 
+      Plotly.newPlot('map', figData, figlayout);
+
+      window.addEventListener('resize', () => {
+        const mapwidth = 0.40 * window.innerWidth;
+        Plotly.relayout('map', { width: mapwidth });
+      });
+    });
+  }
+
+
 
   ngAfterViewInit() {
     this.updateComponentsWithResults(this.results);
@@ -309,6 +357,7 @@ export class SimulationResultsComponent implements OnInit {
     this.updateGraphData();
     this.updateLayout();
     this.showPlot();
+    this.showTypologyMap();
   }
 
 }
