@@ -51,7 +51,6 @@ export class SelecteurLangueComponent{
       styleUrls: ['./documentationPopup.scss'],
       standalone: true,
       imports: [MatTabsModule, CommonModule, MatButtonModule],
-      imports: [MatTabsModule, CommonModule, MatButtonModule],
     })
     export class DocumentationPopup {
       constructor(public dialogRef: MatDialogRef<DocumentationPopup>) {}
