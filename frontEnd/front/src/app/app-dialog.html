@@ -1,22 +1,40 @@
 <div class="custom-dialog">
-    <h1 class="title">Documentation</h1>
+    <h1 class="title">DOCUMENTATION</h1>
     <button mat-button (click)="onClose()" class="close-button">
-        <img src="https://fonts.gstatic.com/s/i/materialicons/close/v8/24px.svg" alt="Fermer">
+      <img src="https://fonts.gstatic.com/s/i/materialicons/close/v8/24px.svg" alt="Fermer">
     </button>
     <div class="scrollable-content">
-        <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="center" animationDuration="0ms">
-            <mat-tab label="Accueil">
-                <div>content 1</div>
-            </mat-tab>
-            <mat-tab label="Guide d'utilisation">
-                <div>Content 2</div>
-            </mat-tab>
-            <mat-tab label="Méthodologie">
-                <div>Content 3</div>
-            </mat-tab>
-            <mat-tab label="Financement">
-                <div>content 4</div>
-            </mat-tab>
-        </mat-tab-group>
+      <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="center" animationDuration="0ms">
+        <mat-tab label="Accueil">
+          <div class="home-div">
+            <img src="https://www.hebergeur-image.fr/uploads/20240529/c82d48e0c69daa278de93bf09ed0ac3c0c77b04c.jpg" class="home-logo">
+            <p>L'objectif du projet CYDRE (Cycle hYdrologique, Disponibilité de la Ressource et Évolution) était de développer <strong>un outil opérationnel de prévision des débits de cours d’eau,</strong> facilement accessible, à destination des acteurs de l'eau de la région Bretagne.</p>
+            <p>Cet outil fournit des tendances de l’évolution des débits à une échéance de quelques semaines à quelques mois avec <u>une utilisation privilégiée sur la période d’étiage</u>. Le modèle de prévision est dit statistique, basé sur l’analyse des données historiques de climat (évapotranspiration, pluviométrie), de débits et de profondeur de nappe.</p>
+            <p>L’onglet « Méthodologie » précise la façon dont sont obtenues les prévisions saisonnières de débits. Un guide utilisateur est aussi intégré (onglet « Guide d’utilisation ») pour faciliter la prise en main.</p>
+            <p>Télécharger l'ensemble de la documentation au format pdf.</p>
+          </div>
+        </mat-tab>
+        <mat-tab label="Guide d'utilisation">
+          <div class="guide-div">
+            <p>Le site est organisé en deux compartiments : <strong>1) Une fiche de site </strong>sous la forme d’un tableau de bord des données utilisées pour la prévision; <strong>2) un simulateur </strong>pour générer des tendance saisonnières de débits à partir d’une station hydrologique sélectionnée.</p>
+            <img src="https://www.hebergeur-image.fr/uploads/20240529/79225fd8eae2c1085b54cc98faa5b56ea09cccd3.png" class="menu-logo">
+            <p>L’ensemble du projet est réalisé à l’échelle des bassins versants, délimités à partir des stations hydrologiques considérées comme leur exutoire. <u>La sélection d’une station hydrologique </u>va définir l’affichage de la fiche de site du bassin versant correspondant et va indiquer au simulateur le bassin versant pour lequel nous souhaitons générer des prévisions de débits.</p>
+            <p>Sélectionner une station hydrologique dans la <strong>liste déroulante </strong>en haut de l’écran. Il est <strong>également possible de sélectionner la station directement sur la carte </strong>à l'échelle régionale en cliquant sur les points correspondants aux stations hydrologiques. Chaque station est indiquée à partir de son identifiant et du nom réel de la station telles que ces informations sont indiquées sur <a href="https://hydro.eaufrance.fr/" target="_blank">la plateforme HydroPortail.</a></p>
+            <p>Dans la liste déroulante, les stations sont affichées de différentes façons :</p>
+            <ul>
+              <li><strong>Les stations indiquées en noir </strong>sont accessibles à la fois pour la visualisation des données sur la <u>fiche de site</u> ainsi que pour la <u>réalisation de prévisions saisonnières</u>. Ce sont des stations considérées comme non ou peu influencées selon les informations transmises par la plateforme HydroPortail. Elles ont aussi fait l'objet de travaux de modélisation pour qualifier le milieu souterrain et sa contribution au débit des cours d'eau.</li>
+              <li><strong class="red-text">Les stations indiquées en rouge </strong>ne sont accessibles que pour la visualisation sous forme de <u>fiche de site</u>. La prévision des débits n'est pas possible car ce sont soit des stations influencées par la présence en amont de barrage ou par des prélèvements trop importants; soit des stations qui n’ont pas encore fait l’objet de travaux de modélisation nécessaires pour la réalisation des prévisions saisonnières.</li>
+          </ul>
+          <img src="https://www.hebergeur-image.fr/uploads/20240529/b30cc9930c0a210372f723b987df28a3bb0fed17.png" class="station-selection">
+          </div>
+        </mat-tab>
+        <mat-tab label="Méthodologie">
+          <div>Content 3</div>
+        </mat-tab>
+        <mat-tab label="Financements">
+          <div>Content 4</div>
+        </mat-tab>
+      </mat-tab-group>
     </div>
-</div>
+  </div>
+  
