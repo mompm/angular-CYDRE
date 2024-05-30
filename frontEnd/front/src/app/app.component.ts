@@ -4,8 +4,12 @@
 
 
 
-import { Component} from '@angular/core';
+import { Component, OnInit} from '@angular/core';
 import {slideInAnimation} from "./animations/animations";
+import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
+import { CommonModule } from '@angular/common';
+import {MatTabsModule} from '@angular/material/tabs';
 
 @Component({
   selector: 'app-root',
@@ -15,7 +19,7 @@ import {slideInAnimation} from "./animations/animations";
     slideInAnimation
   ]
 })
-export class AppComponent{
+export class AppComponent implements OnInit{
   title = 'front';
 
 
@@ -26,4 +30,28 @@ export class AppComponent{
   public log(event: any) {
     this.listPositions.push(event.x+','+(event.y*-1));
   }
+  constructor(public dialog : MatDialog){}
+  ngOnInit(): void {
+    this.openDialog();
+  }
+  openDialog() {
+    this.dialog.open(Appdialog);
+  }
+
+}
+
+  @Component({
+    selector: 'app-dialog',
+    templateUrl: './app-dialog.html',
+    styleUrls: ['./app-dialog.scss'],
+    standalone: true,
+    imports: [MatTabsModule, CommonModule, MatButtonModule],
+  })
+  export class Appdialog {
+    constructor(public dialogRef: MatDialogRef<Appdialog>) {}
+
+    onClose(): void {
+      this.dialogRef.close();
+    }
+
 }

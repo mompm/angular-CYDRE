@@ -1,0 +1,47 @@
+.custom-dialog {
+    position: fixed;
+    top: 20%;
+    left: 2%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    z-index: 1000; 
+    width: 95%;
+    height: auto;
+    max-height: 80vh; /* Hauteur maximale du dialogue */
+    display: flex;
+    flex-direction: column;
+}
+
+.scrollable-content {
+    overflow-y: auto; /* Activer le défilement vertical */
+    max-height: 60vh; /* Hauteur maximale du contenu défilable */
+    padding-right: 10px; /* Optionnel : pour éviter que le contenu soit caché sous la barre de défilement */
+}
+
+.title {
+    margin: 20px 0;
+    align-self: flex-start; 
+}
+
+.tabs-container {
+    flex-grow: 1;
+}
+
+.tab-style {
+    width: 100%;
+    border: none;
+    box-shadow: inset 0px -1px 0px 0px lightgrey;
+    background: white;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+
+.close-button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }

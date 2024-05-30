@@ -121,18 +121,7 @@
           <div class="col-md-6">
             <h4>Bassins versants similaires</h4>
             <div>
-              <ngx-charts-bar-vertical
-                *ngIf="results.typologyDatasets && results.typologyLabels"
-                [results]="results.typologyDatasets"
-                [scheme]="colorScheme"
-                [xAxis]="true"
-                [yAxis]="true"
-                [legend]="true"
-                [showXAxisLabel]="true"
-                [showYAxisLabel]="true"
-                [xAxisLabel]="'Basin'"
-                [yAxisLabel]="'Similarity'">
-              </ngx-charts-bar-vertical>
+                <div id = 'map'></div>
             </div>
           </div>
         </div>
