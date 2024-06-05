@@ -17,3 +17,13 @@
   border : none;
   cursor: pointer;
 }
+
+.visu-align{
+  display: flex; 
+  align-items: center;
+}
+
+.pre-align{
+  position:absolute;
+  right: 8px;
+}

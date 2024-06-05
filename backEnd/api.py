@@ -677,8 +677,7 @@ class Graph():
         self.simulation_date = cydre_app.date
         self.similarity_period = cydre_app.Similarity.user_similarity_period
         self.similar_watersheds = cydre_app.Similarity.similar_watersheds
-
-
+        self.nbEvenements =  int(cydre_app.scenarios.count().sum())
 
     def _get_streamflow(self):
         
@@ -942,7 +941,8 @@ class Graph():
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'similarity_period' : self.similarity_period.strftime('%Y-%m-%d').tolist(),
         'm10' : float(self.mod10),
-        'similar_watersheds' : self.similar_watersheds
+        'similar_watersheds' : self.similar_watersheds,
+        'nombre_evenement' : self.nbEvenements
         }
 
         return data

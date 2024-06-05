@@ -1,4 +1,7 @@
 import { Options } from '@angular-slider/ngx-slider/options';
+import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -7,6 +10,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
 import { JsonService } from '../service/json.service';
 import { switchMap } from 'rxjs';
+import { AxisType } from 'plotly.js-dist';
 
 @Component({
   selector: 'app-simulation-results',
@@ -14,8 +18,9 @@ import { switchMap } from 'rxjs';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit {
+  on: boolean = false;
   
-  constructor(private jsonService: JsonService){}
+  constructor(private jsonService: JsonService, public dialog : MatDialog){}
   displayedColumns: string[] = ['Year', 'ID', 'Coeff'];
   dataSource : MatTableDataSource<any> | undefined;
 
@@ -46,7 +51,8 @@ export class SimulationResultsComponent implements OnInit {
     compute_matrix : false,
     corr_matrix: [],
     task_id:"",
-    similar_watersheds: []
+    similar_watersheds: [],
+    nombre_evenement: 0
 
   };
 
@@ -95,6 +101,10 @@ export class SimulationResultsComponent implements OnInit {
       }
     });
   }
+
+  onToggleChange() {
+    this.updateComponentsWithResults(this.results);
+}
   addIndicator() {
     this.indicators.push({type: '', color: '#Ff0000' , value: 0}); 
   }
@@ -174,20 +184,26 @@ export class SimulationResultsComponent implements OnInit {
       );
     }
   }
-
+  
   updateGraphData(): void {
+   
     if (this.showResults && this.results.graph && this.results.graph.data) {
       this.traces= [];
-      var q10Trace: Plotly.Data | undefined;
-      var q90Trace: Plotly.Data | undefined;
-      var observations: Plotly.Data | undefined;
+      var q10Data: { x: Date[], y: number[] } | null = null;
+      var q90Data: { x: Date[], y: number[] } | null = null;
+      let incertitudeX ;
+      let incertitudeY ;
+      let q50X ;
+      let q50Y ;
+      let observationsX ;
+      let observationsY ;
+     
 
       this.startDate = new Date(this.results.similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
-      
 
       this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
-          console.log('Processing line:', line);
+          //console.log('Processing line:', line);
           if (line.x && line.y && line.x.length === line.y.length) {
               var parsedDates = line.x.map(date => new Date(date));
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
@@ -206,64 +222,90 @@ export class SimulationResultsComponent implements OnInit {
             this.yMin = Math.min(...yValuesWithinObservedPeriod);
             this.yMin = Math.min(this.yMin, this.results.m10-1);
             this.yMax = Math.max(...yValuesWithinObservedPeriod);
-
-
-
-              var trace: Plotly.Data = {
-                  x: parsedDates,
-                  y: line.y,
-                  mode: 'lines',
-                  type: 'scatter',
-                  name: line.name,
-                  line: line.line,
-              };
-
-              if (line.name === 'Q10') {
-                  q10Trace = trace;
-              } else if (line.name === 'Q90') {
-                  if (line.x.length > 0) {
-                    this.simulationStartDate = parsedDates[0];
-                    this.simulationEndDate = parsedDates[parsedDates.length-1];
-                  }
-                  q90Trace = trace;
-              } else {
-                if(line.name.includes("Projection")){
-                  trace.showlegend = false;
-                  trace.hoverinfo = 'none'
-                  trace.line!.dash = 'dash';
-                  trace.line!.color = 'rgba(0, 0, 255, 0.1)';
-                }else if(line.name == 'Q50') {
-                  observations = trace;
-                }else{
-                trace.hoverinfo = 'all';
-                }
-                this.traces.push(trace);
+            
+            if(line.name == 'Q10'){
+              q10Data = { x: parsedDates, y: line.y };
+              incertitudeX = parsedDates; 
+            }
+            else if ( line.name == 'Q90'){
+              if (line.x.length > 0) {
+                this.simulationStartDate = parsedDates[0];
+                this.simulationEndDate = parsedDates[parsedDates.length-1];
               }
-          } else {
-              console.error('Data length mismatch or invalid data', line);
-          }
+              q90Data = { x: parsedDates, y: line.y };
+            }
+            else if ( line.name == 'Q50'){
+              q50X = parsedDates;
+              q50Y = line.y;
+            }
+            else if (line.name == 'observations'){
+              observationsX = parsedDates;
+              observationsY = line.y;
+            }else if (line.name.includes('Projection')){
+              var trace: Plotly.Data = {
+                x: parsedDates,
+                y: line.y,
+                showlegend : false,
+                hoverinfo :'none',
+                mode: 'lines',
+                type: 'scatter',
+                name: line.name,
+                line: { color: '#e3dcda', width: 1 , dash: 'dash' },
+              };
+              this.traces.push(trace);
+            }
+              if (q10Data && q90Data) {
+                incertitudeX = q10Data.x.concat(q90Data.x.slice().reverse());
+                incertitudeY = q10Data.y.concat(q90Data.y.slice().reverse());
+                this.endDate = (q90Data as any).x[(q90Data as any).x.length-1]
+              }
+            }
       });
-          if (q10Trace && q90Trace) {
-            (q90Trace as any).fill = null;
-            (q90Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-            (q90Trace as any).line = { color: '#407fbd', width: 1 };
-            (q90Trace as any).showlegend = false;
-            (q90Trace as any).hoverinfo = 'skip';
-
-            (q10Trace as any).fill = 'tonexty';
-            (q10Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-            (q10Trace as any).line = { color: '#407fbd', width: 1 };
-            (q10Trace as any).name = "zone d'incertitude";
-            (q10Trace as any).hoverinfo = 'skip';
-
-            this.traces.push(q90Trace);
-            this.traces.push(q10Trace);
-            this.traces.push(observations!);
-        }
-
-        this.updateSliderOptions();
+     
+      if (q10Data && q90Data){
+        var incertitudeTrace: Plotly.Data = {
+            x: incertitudeX,
+            y: incertitudeY,
+            mode: 'lines',
+            type: 'scatter',
+            name: "zone d'incertitude",
+            showlegend : true,
+            hoverinfo : 'none',
+            fill: 'toself', 
+            fillcolor: 'rgba(64, 127, 189, 0.3)', 
+            line: { color: '#407fbd', width: 1 }, 
+        };
+        this.traces.push(incertitudeTrace);
+      }
+      if(q50X && q50Y){
+        var q50Trace : Plotly.Data = {
+          x : q50X,
+          y : q50Y,
+          mode: 'lines',
+          type: 'scatter',
+          name: 'projection médiane',
+          showlegend : true,
+          line: { color: 'blue', width: 1 , dash: 'dot' }, 
+        };
+        this.traces.push(q50Trace);
+      }
+      if(observationsX && observationsY){
+        var observationsTrace : Plotly.Data = {
+          x : observationsX,
+          y : observationsY,
+          mode: 'lines',
+          type: 'scatter',
+          name: 'observation',
+          showlegend : true,
+          hoverinfo : 'none',
+          line: { color: 'black', width: 1 }, 
+        };
+        this.traces.push(observationsTrace); 
+      }
+      
+      this.updateSliderOptions();
+    
     }
-    this.endDate = (q90Trace as any).x[(q90Trace as any).x.length-1]
   }
 
   updateSliderOptions() {
@@ -277,31 +319,56 @@ export class SimulationResultsComponent implements OnInit {
     };
   }
 
-  
-  
-
   updateLayout() {
+    let range ;
+    let type ;
+    if (this.on) {
+      range = [this.yMin, this.yMax];
+      type = 'linear';
+  } else {
+      range = [Math.log10(0.01), Math.log10(this.yMax)];
+      type = 'log';
+  }
     this.layout = {
-      title: 'Prévisions pour ' + this.watershedName,
+      hovermode: "x unified",
+      title: {
+        text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
+        font: {size: 17},
+      },
+      legend: {
+        orientation: 'h',
+        font: {size: 12},
+        x: 0.5,
+        xanchor: 'center',
+        y: 1.2,
+        yanchor: 'top',
+      },
       xaxis: {
         title: 'Date',
         showgrid: false,
         zeroline: false,
         tickformat: '%d-%m-%Y',
         tickmode: 'auto' as 'auto',
+        tickangle: 45,
+        ticks: 'inside',
+        titlefont: {size: 12},
         nticks: 10,
         range: [this.startDate, this.endDate]
       },
       yaxis: {
         title: 'Débit (m3/s)',
+        titlefont: {size: 12},
         showline: false,
-        range: [this.yMin, this.yMax]
+        ticks: 'inside',
+        type: type as AxisType,
+        rangemode: 'tozero',
+        range: range
       },
       shapes: this.simulationStartDate && this.simulationEndDate ? [{
         type: 'line',
         x0: this.simulationStartDate,
         x1: this.simulationStartDate,
-        y0: this.yMin,
+        y0: 0.001,
         y1: this.yMax,
         line: { 
           color: 'gray',
@@ -310,6 +377,8 @@ export class SimulationResultsComponent implements OnInit {
         }
       }, {
         type: 'line',
+        showlegend : true,
+        name :"1/10 du module",
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
         y0: this.m10SliderValue,
@@ -320,20 +389,24 @@ export class SimulationResultsComponent implements OnInit {
         }
       }] : [],
     };
-  }
+}
+  
+  
+
 
   showPlot() {
     Plotly.newPlot('previsions', this.traces, this.layout);
     const annotation: Partial<Plotly.Annotations> = {
       text: "Date de la simulation",
-      xref: 'paper', yref: 'paper',
-      x: 0.5, y: 1.1,
+      xref: 'x', yref: 'paper',
+      x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
+      y: 1,
       showarrow: false,
       font: { size: 14 }
     };
-
     Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
   }
+
 
   showTypologyMap(){
     const figData: any[] = [];
@@ -408,10 +481,32 @@ export class SimulationResultsComponent implements OnInit {
     this.dataSource.sort = this.sort;
   
     // Mise à jour des autres éléments
-    this.updateGraphData();
-    this.updateLayout();
-    this.showPlot();
-    this.showTypologyMap();
+
+      this.updateGraphData();
+      this.updateLayout();
+      this.showPlot();
+      this.showTypologyMap();
+
+  }
+
+  openDialog() {
+    this.dialog.open(Dialogsimulationresults);
+  }
+
+}
+
+@Component({
+  selector: 'dialog-simulation-results',
+  templateUrl: './dialog-simulation-results.html',
+  styleUrls: ['./dialog-simulation-results.scss'],
+  standalone: true,
+  imports: [CommonModule, MatButtonModule],
+})
+export class Dialogsimulationresults {
+  constructor(public dialogRef: MatDialogRef<Dialogsimulationresults>) {}
+
+  onClose(): void {
+    this.dialogRef.close();
   }
 
 }

@@ -96,7 +96,7 @@ export class hydrographGlobal {
             xaxis: { title: "Date" },
             yaxis: { 
                 title: yLabel,
-                type: this.on ? 'log' as AxisType : undefined // Utilise une échelle logarithmique si 'on' est true
+                type: this.on ? 'log' as AxisType : undefined 
             },
             font: { size: 14 },
             plot_bgcolor: "rgba(0,0,0,0)",
