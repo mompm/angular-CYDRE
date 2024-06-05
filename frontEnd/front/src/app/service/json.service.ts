@@ -75,57 +75,56 @@ private baseUrl = 'http://localhost:5000';
 		  tap(() => console.log('Fetching results...'))
 		);
 	  }
-	  runSpatialSimilarity(): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity`,{}).pipe(
+	  runSpatialSimilarity(simulation_id:string): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity/${simulation_id}`,{simulation_id:simulation_id}).pipe(
 		  tap(() => console.log('Running spatial similaritiy'))
 		);
 	  }
-	  runTimeseriesSimilarity(): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity`,{}).pipe(
+	  runTimeseriesSimilarity(simulation_id:string): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity/${simulation_id}`,{simulation_id:simulation_id}).pipe(
 		  tap(() => console.log('Running timeseries similaritiy'))
 		);
 	  }
-	  runScenarios(): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/select_scenarios`,{}).pipe(
+	  runScenarios(simulation_id:string): Observable<any> {
+		return this.http.post(`${this.baseUrl}/api/select_scenarios/${simulation_id}`,{simulation_id:simulation_id}).pipe(
 		  tap(() => console.log('Running scenarios'))
 		);
 	  }
 	  
 	
 	  runSimulation(params : any ,progressCallback: (message: string, progress: number) => void): Observable<any> {
-		let taskId: string;
+		// let taskId: string;
+		let simulation_id :string;
 	
 		progressCallback('Initialisation de la simulation...', 0);
 		return this.getRunCydre(params).pipe(
 		  tap(response => {
-			taskId = response.task_id;
-			console.log(taskId)
-			console.log(`${this.baseUrl}/api/simulateur/getGraph/`+taskId)
+			// taskId = response.task_id;
+			simulation_id = response.SimulationID;
+			// console.log(taskId)
+			// console.log(`${this.baseUrl}/api/simulateur/getGraph/`+taskId)
 			progressCallback('Cydre app lancée.',10);
 		  }),
-		  switchMap(() => this.runSpatialSimilarity().pipe(
+		  switchMap(() => this.runSpatialSimilarity(simulation_id).pipe(
 			tap(() => progressCallback('Similarités spatiales exécutées.',20))
 		  )),
-		  switchMap(() => this.runTimeseriesSimilarity().pipe(
+		  switchMap(() => this.runTimeseriesSimilarity(simulation_id).pipe(
 			tap(() => progressCallback('Similarités temporelles exécutées',50))
 		  )),
-		  switchMap(() => this.runScenarios().pipe(
+		  switchMap(() => this.runScenarios(simulation_id).pipe(
 			tap(() => progressCallback('Scenarios exécutés.',60))
 		  )),
-		  switchMap(() => this.getGraph(taskId).pipe(
+		  switchMap(() => this.getGraph(simulation_id).pipe(
 			tap(() => progressCallback('Graphe généré.',75))
 		  )),
-		  switchMap(() => this.getM10Values(taskId).pipe(
-			tap(() => progressCallback('Valeurs M10 récupérées.',80))
-		  )),
-		  switchMap(() => this.getCorrMatrix(taskId).pipe(
+		  switchMap(() => this.getCorrMatrix(simulation_id).pipe(
 			tap(() => progressCallback('Matrice de corrélation récupérée.',85))
 		  )),
-		  switchMap(() => this.getResults(taskId).pipe(
+		  switchMap(() => this.getResults(simulation_id).pipe(
 			tap(() => progressCallback('Résultats récupérés.',100))
 		  )),
 		  catchError(error => {
-			progressCallback('Erreur lors de la simulation.',0);
+			progressCallback('Erreur lors de la simulation :'+ error,0);
 			return of(null);
 		  })
 		);

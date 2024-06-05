@@ -94,9 +94,11 @@ export class SimulateurCydreComponent implements OnInit {
   
   onStartSimulation() {
     const params = {
-      watershed: this.selectedStation,
+      Parameters :{watershed: this.selectedStation,
       slider: this.sliderValue,
       date: this.simulationDate
+      },
+      UserID : localStorage.getItem("UserID")
     };
 
     this.progressMessages = [];

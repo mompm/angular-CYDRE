@@ -5,6 +5,7 @@ Created on Wed Jun 14 15:20:32 2023
 @author: Nicolas Cornette
 """
 
+from flask import jsonify
 import pandas as pd
 
 
@@ -32,6 +33,9 @@ class UserConfiguration():
         self.params = params
         self.user_watershed_id = self.params.getparam("user_watershed_id").getvalue()
         self.user_horizon = self.params.getparam("user_horizon").getvalue()
+
+    def serialize_params(self):
+        return jsonify({"user_watershed_id":self.user_watershed_id,"user_horizon":self.user_horizon})
                 
         
     def select_user_watershed(self, watersheds):

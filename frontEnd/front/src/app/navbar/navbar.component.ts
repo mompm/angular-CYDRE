@@ -18,17 +18,25 @@ export class NavbarComponent {
 
   }
   ngOnInit(){
-    console.log(this.authService.getUser());
+    this.authService.isLoggedIn.subscribe((status) => {
+      this.isLoggedIn = status;
+    });
   }
 
-
+  
 
   change(){
     // this.authService.isLogging = false;
   }
   logout(){
-    this.authService.logout();
-    console.log("User logged out");
+    this.authService.logout().subscribe({
+      next: response => {
+        console.log("Déconnexion réussie", response);
+      },
+      error: err => {
+        console.error("Erreur lors de la déconnexion", err);
+      }
+    });
   }
   login(){
     // this.authService.isLogging = true;

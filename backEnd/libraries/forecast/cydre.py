@@ -52,13 +52,14 @@ class Cydre():
             self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id)
     
             
-    def run_timeseries_similarity(self):
+    def run_timeseries_similarity(self,similar_watersheds):
         self.Similarity.timeseries_similarity(user_watershed = self.UserConfiguration.user_watershed,
                                               watersheds = self.watersheds,
-                                              version = self.version)
+                                              version = self.version,
+                                              similar_watersheds=similar_watersheds)
     
         
-    def select_scenarios(self, spatial=False):
+    def select_scenarios(self, spatial=False,corr_matrix={}):
         """
         Extract hydroclimatic events closest to the event to be forecast
 
@@ -80,7 +81,7 @@ class Cydre():
         self.selected_scenarios = {}
         
         # Loop on timeseries variable
-        for variable, correlation_matrix in self.Similarity.correlation_matrix.items():
+        for variable, correlation_matrix in corr_matrix.items():
             
             # Get selection parameters
             selection_params = self.Similarity.params.getgroup(variable).getgroup("Calculation")
@@ -101,10 +102,11 @@ class Cydre():
         
         # Group all scenarios in one dataframe
         self.scenarios_grouped = Selection.group_scenarios(self.scenarios)
+        return self.scenarios_grouped
     
     
     def streamflow_forecast(self):
-        
+
         # Create an instance of the Forecast class
         forecast_params = self.params.getgroup("UserConfig")
         self.Forecast = forecast.Forecast(forecast_params, self.date)
@@ -129,5 +131,5 @@ class Cydre():
             self.df_station_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_station_forecast, weight=False)
         except: 
             raise ValueError("There are no past events with a correlation coefficient above the defined threshold")
-        
+        print(self.scenarios_grouped)
         return self.df_streamflow_forecast, self.df_storage_forecast
