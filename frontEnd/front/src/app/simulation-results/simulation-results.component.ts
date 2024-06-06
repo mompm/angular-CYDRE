@@ -2,9 +2,6 @@ import { Options } from '@angular-slider/ngx-slider/options';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
-import {MatButtonModule} from '@angular/material/button';
-import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -23,9 +20,7 @@ import * as Papa from 'papaparse';
 })
 export class SimulationResultsComponent implements OnInit {
   on: boolean = false;
-  on: boolean = false;
   
-  constructor(private jsonService: JsonService, public dialog : MatDialog){}
   constructor(private jsonService: JsonService, public dialog : MatDialog){}
   displayedColumns: string[] = ['Year', 'ID', 'Coeff'];
   dataSource : MatTableDataSource<any> | undefined;
@@ -57,8 +52,6 @@ export class SimulationResultsComponent implements OnInit {
     compute_matrix : false,
     corr_matrix: [],
     task_id:"",
-    similar_watersheds: [],
-    nombre_evenement: 0
     similar_watersheds: [],
     nombre_evenement: 0
 
@@ -108,11 +101,6 @@ export class SimulationResultsComponent implements OnInit {
         
       }
     });
-  }
-
-  onToggleChange() {
-    this.updateComponentsWithResults(this.results);
-}
   }
 
   onToggleChange() {
@@ -175,6 +163,10 @@ export class SimulationResultsComponent implements OnInit {
     this.updateLayout();
     this.showPlot();
     this.showTypologyMap();
+    this.m10SliderValue = value;
+    this.updateLayout();
+    this.showPlot();
+    this.showTypologyMap();
   }
 
   updateResults() {
@@ -198,21 +190,10 @@ export class SimulationResultsComponent implements OnInit {
     }
   }
   
-  
   updateGraphData(): void {
-   
    
     if (this.showResults && this.results.graph && this.results.graph.data) {
       this.traces= [];
-      var q10Data: { x: Date[], y: number[] } | null = null;
-      var q90Data: { x: Date[], y: number[] } | null = null;
-      let incertitudeX ;
-      let incertitudeY ;
-      let q50X ;
-      let q50Y ;
-      let observationsX ;
-      let observationsY ;
-     
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;
       let incertitudeX ;
@@ -227,7 +208,6 @@ export class SimulationResultsComponent implements OnInit {
       var yValuesWithinObservedPeriod: number[] = [];
 
       this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
-          //console.log('Processing line:', line);
           //console.log('Processing line:', line);
           if (line.x && line.y && line.x.length === line.y.length) {
               var parsedDates = line.x.map(date => new Date(date));
@@ -267,26 +247,6 @@ export class SimulationResultsComponent implements OnInit {
               observationsX = parsedDates;
               observationsY = line.y;
             }else if (line.name.includes('Projection')){
-            
-            if(line.name == 'Q10'){
-              q10Data = { x: parsedDates, y: line.y };
-              incertitudeX = parsedDates; 
-            }
-            else if ( line.name == 'Q90'){
-              if (line.x.length > 0) {
-                this.simulationStartDate = parsedDates[0];
-                this.simulationEndDate = parsedDates[parsedDates.length-1];
-              }
-              q90Data = { x: parsedDates, y: line.y };
-            }
-            else if ( line.name == 'Q50'){
-              q50X = parsedDates;
-              q50Y = line.y;
-            }
-            else if (line.name == 'observations'){
-              observationsX = parsedDates;
-              observationsY = line.y;
-            }else if (line.name.includes('Projection')){
               var trace: Plotly.Data = {
                 x: parsedDates,
                 y: line.y,
@@ -296,68 +256,7 @@ export class SimulationResultsComponent implements OnInit {
                 type: 'scatter',
                 name: line.name,
                 line: { color: '#e3dcda', width: 1 , dash: 'dash' },
-                x: parsedDates,
-                y: line.y,
-                showlegend : false,
-                hoverinfo :'none',
-                mode: 'lines',
-                type: 'scatter',
-                name: line.name,
-                line: { color: '#e3dcda', width: 1 , dash: 'dash' },
               };
-              this.traces.push(trace);
-            }
-              if (q10Data && q90Data) {
-                incertitudeX = q10Data.x.concat(q90Data.x.slice().reverse());
-                incertitudeY = q10Data.y.concat(q90Data.y.slice().reverse());
-                this.endDate = (q90Data as any).x[(q90Data as any).x.length-1]
-              }
-            }
-      });
-     
-      if (q10Data && q90Data){
-        var incertitudeTrace: Plotly.Data = {
-            x: incertitudeX,
-            y: incertitudeY,
-            mode: 'lines',
-            type: 'scatter',
-            name: "zone d'incertitude",
-            showlegend : true,
-            hoverinfo : 'none',
-            fill: 'toself', 
-            fillcolor: 'rgba(64, 127, 189, 0.3)', 
-            line: { color: '#407fbd', width: 1 }, 
-        };
-        this.traces.push(incertitudeTrace);
-      }
-      if(q50X && q50Y){
-        var q50Trace : Plotly.Data = {
-          x : q50X,
-          y : q50Y,
-          mode: 'lines',
-          type: 'scatter',
-          name: 'projection médiane',
-          showlegend : true,
-          line: { color: 'blue', width: 1 , dash: 'dot' }, 
-        };
-        this.traces.push(q50Trace);
-      }
-      if(observationsX && observationsY){
-        var observationsTrace : Plotly.Data = {
-          x : observationsX,
-          y : observationsY,
-          mode: 'lines',
-          type: 'scatter',
-          name: 'observation',
-          showlegend : true,
-          hoverinfo : 'none',
-          line: { color: 'black', width: 1 }, 
-        };
-        this.traces.push(observationsTrace); 
-      }
-      
-      this.updateSliderOptions();
-    
               this.traces.push(trace);
             }
               if (q10Data && q90Data) {
@@ -435,29 +334,7 @@ export class SimulationResultsComponent implements OnInit {
       range = [Math.log10(0.01), Math.log10(this.yMax)];
       type = 'log';
   }
-    let range ;
-    let type ;
-    if (this.on) {
-      range = [this.yMin, this.yMax];
-      type = 'linear';
-  } else {
-      range = [Math.log10(0.01), Math.log10(this.yMax)];
-      type = 'log';
-  }
     this.layout = {
-      hovermode: "x unified",
-      title: {
-        text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
-        font: {size: 17},
-      },
-      legend: {
-        orientation: 'h',
-        font: {size: 12},
-        x: 0.5,
-        xanchor: 'center',
-        y: 1.2,
-        yanchor: 'top',
-      },
       hovermode: "x unified",
       title: {
         text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
@@ -480,21 +357,13 @@ export class SimulationResultsComponent implements OnInit {
         tickangle: 45,
         ticks: 'inside',
         titlefont: {size: 12},
-        tickangle: 45,
-        ticks: 'inside',
-        titlefont: {size: 12},
         nticks: 10,
         range: [this.startDate, this.endDate]
       },
       yaxis: {
         title: 'Débit (m3/s)',
         titlefont: {size: 12},
-        titlefont: {size: 12},
         showline: false,
-        ticks: 'inside',
-        type: type as AxisType,
-        rangemode: 'tozero',
-        range: range
         ticks: 'inside',
         type: type as AxisType,
         rangemode: 'tozero',
@@ -505,7 +374,6 @@ export class SimulationResultsComponent implements OnInit {
         x0: this.simulationStartDate,
         x1: this.simulationStartDate,
         y0: 0.001,
-        y0: 0.001,
         y1: this.yMax,
         line: { 
           color: 'gray',
@@ -514,8 +382,6 @@ export class SimulationResultsComponent implements OnInit {
         }
       }, {
         type: 'line',
-        showlegend : true,
-        name :"1/10 du module",
         showlegend : true,
         name :"1/10 du module",
         x0: this.simulationStartDate,
@@ -532,10 +398,6 @@ export class SimulationResultsComponent implements OnInit {
   
   
 
-}
-  
-  
-
 
   showPlot() {
     Plotly.newPlot('previsions', this.traces, this.layout);
@@ -544,15 +406,11 @@ export class SimulationResultsComponent implements OnInit {
       xref: 'x', yref: 'paper',
       x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
       y: 1,
-      xref: 'x', yref: 'paper',
-      x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
-      y: 1,
       showarrow: false,
       font: { size: 14 }
     };
     Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
   }
-
 
 
   showTypologyMap(){
