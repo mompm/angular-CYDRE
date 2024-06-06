@@ -55,7 +55,7 @@ export class SimulationResultsComponent implements OnInit {
   @Input() simulation_id: string | undefined;
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
-  startDate: Date = new Date("2024-05-24");
+  startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
   maxPredictedValue : number[] = [];
@@ -105,6 +105,7 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   fillIndicators(){
+    this.indicators=[]
     for (const key in this.results.indicators) {
       if (this.results.indicators.hasOwnProperty(key)) {
           const indicator = this.results.indicators[key];
@@ -112,7 +113,7 @@ export class SimulationResultsComponent implements OnInit {
           let fixedValue = key === "mod10";  // Exemple: fixe si c'est mod10
 
           this.indicators.push({
-              type: key,
+              type: key=="mod10" ?"1/10 du module":key,
               value: indicator.value,
               color: "#Ff0000",  // couleur par défaut si non spécifié
               fixed: fixedValue
@@ -195,9 +196,9 @@ export class SimulationResultsComponent implements OnInit {
     if(this.simulation_id){
       console.log("updating results for ", this.simulation_id)  
       //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
-      this.jsonService.updateIndicatorsValue(this.simulation_id,this.indicators.filter(indicator => indicator.type !== 'mod10')).subscribe(
+      this.jsonService.updateIndicatorsValue(this.simulation_id,this.indicators.filter(indicator => indicator.type !== '1/10 du module')).subscribe(
         (data) => {this.results.indicators = data;
-          console.log(this.results.indicators)
+          this.fillIndicators()
         }
       );
     }
@@ -352,7 +353,7 @@ export class SimulationResultsComponent implements OnInit {
     this.layout = {
       hovermode: "x unified",
       title: {
-        text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
+        text: this.watershedName + " - "+ Object.keys(this.results.results.similarity.selected_scenarios).length + " événements",
         font: {size: 17},
       },
       legend: {

@@ -55,7 +55,8 @@
     <div *ngFor="let key of keys(results.indicators)">
       <div class="card my-4 ">
         <div class="card-header">
-          <h3>{{key}}</h3>
+          <h3 *ngIf="key == 'mod10'">1/10 du module</h3>
+          <h3 *ngIf="key != 'mod10'">{{key}}</h3>
         </div>
         <div class="card-body">
           <div class="row text-center">

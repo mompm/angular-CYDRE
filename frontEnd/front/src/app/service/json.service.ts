@@ -21,9 +21,6 @@ private baseUrl = 'http://localhost:5000';
 
   constructor(private http: HttpClient){}
 
-
-
-
 	getGDFWatersheds(): Promise<Array<dataGDFWatersheds>> {
 		return lastValueFrom(this.http.get<Array<dataGDFWatersheds>>("osur/GetGDFWatersheds"));
 	  }
@@ -58,13 +55,20 @@ private baseUrl = 'http://localhost:5000';
 		  tap(() => console.log('Fetching M10 values...'))
 		);
 	  }	
-	  updateIndicatorsValue(simulation_id: string, indicators: any): Observable<any> {
-		// Créer un tableau d'Observables pour les requêtes POST
-		const updateRequests = indicators.map((indicator: { type: string; value: number }) => {
-			console.log("updating indicator ", indicator.type);
-			// Retourner l'Observable de la requête POST sans s'y abonner ici
-			return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/` + simulation_id, indicator);
-		});
+	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Observable<any> {
+        // Création d'un tableau temporaire pour ne pas modifier le tableau original
+        const tempIndicators = indicators.map(indicator => ({
+            ...indicator,
+            type: indicator.type === "1/10 du module" ? "mod10" : indicator.type
+        }));
+
+        // Création des requêtes HTTP à partir du tableau temporaire
+        const updateRequests = tempIndicators.map(indicator => {
+            console.log("Updating indicator:", indicator.type);
+            return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator);
+        });
+
+        // Utilisation de forkJoin pour attendre la complétion de toutes les requêtes
 	
 		// Utiliser forkJoin pour exécuter toutes les requêtes POST en parallèle et attendre que toutes soient terminées
 		return forkJoin(updateRequests).pipe(
