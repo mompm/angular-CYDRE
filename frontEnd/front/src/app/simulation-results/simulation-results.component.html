@@ -1,9 +1,24 @@
 <div >
   <div >
-    <h4>Visualisation des prévisions saisonnières</h4>
+    <div class="visu-align" >    
+      <h4>Visualisation des prévisions saisonnières</h4>
+      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+    </div>
+    <div class="visu-align" >    
+      <h4>Visualisation des prévisions saisonnières</h4>
+      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+    </div>
     <div>
-      
-      <div id="previsions"></div>
+      <div style="text-align: center;">
+        <p>échelle logarithmique | échelle linéaire</p>
+        <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()" ></mat-slide-toggle>
+      </div>
+      <div style="position: relative;">
+        <div id="previsions" ></div>
+        <button id="download-button" mat-button (click)="downloadFile()">
+          <mat-icon>download</mat-icon>
+        </button>
+      </div>
       <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
     </div>
     <div class="card my-4">
@@ -121,18 +136,7 @@
           <div class="col-md-6">
             <h4>Bassins versants similaires</h4>
             <div>
-              <ngx-charts-bar-vertical
-                *ngIf="results.typologyDatasets && results.typologyLabels"
-                [results]="results.typologyDatasets"
-                [scheme]="colorScheme"
-                [xAxis]="true"
-                [yAxis]="true"
-                [legend]="true"
-                [showXAxisLabel]="true"
-                [showYAxisLabel]="true"
-                [xAxisLabel]="'Basin'"
-                [yAxisLabel]="'Similarity'">
-              </ngx-charts-bar-vertical>
+                <div id = 'map'></div>
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { Component, ViewEncapsulation,Input } from '@angular/core';
 import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
-import { MatDialogModule } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import {MatTabsModule} from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';

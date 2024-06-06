@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit , ViewChild, ElementRef} from '@angular/core';
 import { Options } from '@angular-slider/ngx-slider';
 import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
@@ -17,6 +17,10 @@ import { DataService } from '../service/data.service';
 export class SimulateurCydreComponent implements OnInit {
 
   constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService) { }
+  @ViewChild('fileInput')
+  fileInput!: ElementRef<HTMLInputElement>;
+  selectedFile: File | null = null;
+
   myControl = new FormControl();
   filteredOptions!: Observable<{ index: string, station_name: string }[]>;
   progressMessages: string[] = [];
@@ -145,5 +149,7 @@ export class SimulateurCydreComponent implements OnInit {
   displayFn(option: { index: string, station_name: string }): string {
     return option ? `${option.index} - ${option.station_name}` : '';
   }
+
+
 
 }

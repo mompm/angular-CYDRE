@@ -10,7 +10,7 @@
   
         <div class="collapse navbar-collapse col-6 text-right " id="collapseNavbar">
           <ul class="navbar-nav mr-auto nav-nav">
-            <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li>
+            
             <li><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite"  routerLinkActive="active" translate (click)="login()">ficheSiteTitle</a></li>
             <li><a class="navbar-underline-onglet menu-item" routerLink="/simulator" routerLinkActive="active" translate (click)="data()">simulatorTitle</a></li>
             <li *ngIf="!authService.getIsLoggedIn()"><a class="navbar-underline-onglet menu-item" routerLink="/login"  routerLinkActive="active" translate (click)="login()">login</a></li>

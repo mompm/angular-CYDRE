@@ -17,3 +17,14 @@
   border : none;
   cursor: pointer;
 }
+
+.visu-align{
+  display: flex; 
+  align-items: center;
+}
+
+#download-button {
+  position: absolute;
+  bottom: 5px;  
+  right: 10px;  
+}
