@@ -37,40 +37,33 @@ export class SimulationResultsComponent implements OnInit {
   sort!: MatSort;
 
   @Input() results: any = {
-    proj_values: { Q50: 0, Q10: 0, Q90: 0 },
-    ndays_before_alert_Q50: { Q50: 0, Q90: 0, Q10: 0 },
-    ndays_below_alert: { Q50: 0, Q90: 0, Q10: 0 },
-    prop_alert_all_series: 0,
-    volume50: 0,
-    volume10: 0,
-    last_date: '',
-    first_date: '',
-    scale: false,
-    graph: false,
-    similarity_period: [],
-    m10: 0.0, 
-    compute_matrix : false,
-    corr_matrix: [],
-    task_id:"",
-    similar_watersheds: [],
-    nombre_evenement: 0
-
-  };
+    indicators:{},
+    results:{
+      corr_matrix:"",
+      data:"",
+      similarity:{
+        corr_matrix: {
+        recharge:"",
+        specific_discharge:""
+      },
+      selected_scenarios:"",
+      similar_watersheds:"",
+      user_similarity_period:""
+    },
+  }};
 
   taskId: string = "";
-
-  @Input() corr_matrix: any[] = [];
+  @Input() simulation_id: string | undefined;
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
-  
-  @Input() m10SliderValue = this.results.m10 || 0.0;
-  startDate: Date = new Date(this.results.similarity_period[0]);
+  startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
   maxPredictedValue : number[] = [];
 
-  indicators: Array<{type: string, value: number, color: string, fixed?: boolean}> = [
-  ];
+  
+  indicators: Array<Indicator> = [];
+
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -88,11 +81,20 @@ export class SimulationResultsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort; 
-    this.indicators.push({type: 'mod10', value: this.m10SliderValue, color:'#Ff0000', fixed: true} )
-    console.log("showresults", this.showResults);
+    console.log(this.results)
+
+    if(this.results.results.corr_matrix){//création de la matrice de corrélation
+      this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;     
+    }else{
+      console.log("Problème lors du chargement de la matrice de corrélation")
+    }
+    if(this.results.indicators){//création du tableau contenant les indicateurs
+      this.fillIndicators();
+    }else{
+      console.log("Problème lors du chargement des indicateurs")
+    }
 
     window.addEventListener('resize', () => {
       const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
@@ -103,30 +105,56 @@ export class SimulationResultsComponent implements OnInit {
     });
   }
 
+  fillIndicators(){
+    this.indicators=[]
+    for (const key in this.results.indicators) {
+      if (this.results.indicators.hasOwnProperty(key)) {
+          const indicator = this.results.indicators[key];
+          // Ajoutez une logique ici pour déterminer si 'fixed' doit être true ou false
+          let fixedValue = key === "mod10";  // Exemple: fixe si c'est mod10
+
+          this.indicators.push({
+              type: key=="mod10" ?"1/10 du module":key,
+              value: indicator.value,
+              color: "#Ff0000",  // couleur par défaut si non spécifié
+              fixed: fixedValue
+          });
+      }
+  }
+  }
+
   onToggleChange() {
     this.updateComponentsWithResults(this.results);
 }
   addIndicator() {
-    this.indicators.push({type: '', color: '#Ff0000' , value: 0}); 
+    this.indicators.push({
+      type: "",
+      value: 0,
+      color: "#Ff0000",  // couleur par défaut si non spécifié
+      fixed: false
+  })
+  console.log(this.indicators)
+
   }
 
   removeIndicator(index: number) {
-    if (!this.indicators[index].fixed) { // Assurez-vous que l'indicateur n'est pas fixe avant de le supprimer
-      this.indicators.splice(index, 1);
+    this.indicators.splice(index,1)
+    console.log(this.indicators)
+    return this.indicators
+  }
+  onIndicatorTextChange(text : string, index : number){
+    //changer le type de l'indicateur concerné
+      this.indicators[index].type = text ?text:"";
       this.updateIndicatorShapes();
-    }
+      return this.indicators[index]
   }
   onIndicatorValueChange(value: number, index: number) {
-    if(value){
-      if(this.indicators[index].type=='mod10'){
-        this.onM10Change(value);
-      }else {
-        this.indicators[index].value = value;
-        this.updateIndicatorShapes(); // Met à jour le graphe après un changement de valeur
-      }
+      //changer la valeur de l'indicateur concerné
+      this.indicators[index].value = value ?value:0;
+      this.updateIndicatorShapes();
+      return this.indicators[index]
   }
 
-  }
 
   updateColorStyle(indicator : any){
     return { 'background-color': indicator.color };
@@ -159,56 +187,45 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   onM10Change(value: number) {
-    this.m10SliderValue = value;
-    this.updateLayout();
-    this.showPlot();
-    this.showTypologyMap();
-    this.m10SliderValue = value;
+    // this.m10SliderValue = value;
     this.updateLayout();
     this.showPlot();
     this.showTypologyMap();
   }
 
   updateResults() {
-    if(this.results.task_id != ""){
-      this.jsonService.updateM10Value({ "m10": this.m10SliderValue }).pipe(
-        switchMap(() => this.jsonService.getM10Values(this.results.task_id)) // Utilisez le task ID ici
-      ).subscribe(
-        (data) => {
-          this.results.ndays_below_alert = data.ndays_below_alert;
-          this.results.ndays_before_alert = data.ndays_before_alert;
-          this.results.prop_alert_all_series = data.prop_alert_all_series;
-          this.results.volume10 = data.volume10;
-          this.results.volume50 = data.volume50;
-          this.results.volume90 = data.volume90;
-          console.log('Updated results:', data);
-        },
-        (error) => {
-          console.error('Error updating results:', error);
+    if(this.simulation_id){
+      console.log("updating results for ", this.simulation_id)  
+      //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
+      this.jsonService.updateIndicatorsValue(this.simulation_id,this.indicators.filter(indicator => indicator.type !== '1/10 du module')).subscribe(
+        (data) => {this.results.indicators = data;
+          this.fillIndicators()
         }
       );
     }
+    
   }
   
   updateGraphData(): void {
    
-    if (this.showResults && this.results.graph && this.results.graph.data) {
+    if (this.showResults && this.results.results.data.graph) {
+      console.log("mise à jour du graphe")
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;
-      let incertitudeX ;
-      let incertitudeY ;
+      let incertitudeX;
+      let incertitudeY;
       let q50X ;
       let q50Y ;
       let observationsX ;
       let observationsY ;
-     
+      console.log(this.results.results.similarity.user_similarity_period);
 
-      this.startDate = new Date(this.results.similarity_period[0]);
+      this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
 
-      this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
-          //console.log('Processing line:', line);
+      this.results.results.data.graph.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
+          // console.log('Processing line:', line);
           if (line.x && line.y && line.x.length === line.y.length) {
               var parsedDates = line.x.map(date => new Date(date));
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
@@ -337,7 +354,7 @@ export class SimulationResultsComponent implements OnInit {
     this.layout = {
       hovermode: "x unified",
       title: {
-        text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
+        text: this.watershedName + " - "+ Object.keys(this.results.results.similarity.selected_scenarios).length + " événements",
         font: {size: 17},
       },
       legend: {
@@ -386,8 +403,8 @@ export class SimulationResultsComponent implements OnInit {
         name :"1/10 du module",
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
-        y0: this.m10SliderValue,
-        y1: this.m10SliderValue,
+        y0: this.results.indicators.mod10.value,
+        y1: this.results.indicators.mod10.value,
         line: {
           color: 'red',
           width: 2,
@@ -417,7 +434,7 @@ export class SimulationResultsComponent implements OnInit {
     const figData: any[] = [];
     this.jsonService.getGDFStations().then(data => {
       const filteredStations = data.filter(station => 
-        this.results.similar_watersheds.includes(station.index)
+        this.results.results.similarity.similar_watersheds.includes(station.index)
       );
 
       const x: any[] = [];
@@ -481,7 +498,7 @@ export class SimulationResultsComponent implements OnInit {
   private updateComponentsWithResults(results: any): void {
     // Mise à jour des résultats et de la matrice de corrélation
     this.results = results;
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
+    this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   
@@ -498,98 +515,21 @@ export class SimulationResultsComponent implements OnInit {
     this.dialog.open(Dialogsimulationresults);
   }
 
-  downloadFile(): void {
-    // Vérifiez si les dates de début et de fin sont définies
-    if (!this.startDate || !this.endDate) {
-        console.error("Start date and end date must be defined.");
-        return;
-    }
+  keys(obj: any) {//fonction pour retourner les clés d'un json 
+    return Object.keys(obj);
+  }
 
-    const startDate = new Date(this.startDate);
-    const endDate = new Date(this.endDate);
+  // Renvoie la valeur maximale
+  max(v1: number, v2: number): number {
+    return Math.max(v1, v2);
+  }
 
-    // Filtrer les données pour exclure les lignes ayant "Projection" dans le nom
-    const filteredData = this.results.graph.data.filter((line: { name: string }) => {
-        return !line.name.includes('Projection');
-    });
+  // Renvoie la valeur minimale
+  min(v1: number, v2: number): number {
+    return Math.min(v1, v2);
+  }
+  }
 
-    // Extraction des dates uniques (x) dans l'intervalle [startDate, endDate]
-    const dates = new Set<string>();
-    filteredData.forEach((line: { x: string[]; y: number[] }) => {
-        line.x.forEach(date => {
-            const currentDate = new Date(date);
-            if (currentDate >= startDate && currentDate <= endDate) {
-                dates.add(date);
-            }
-        });
-    });
-
-    // Tri des dates pour avoir un ordre chronologique
-    const sortedDates = Array.from(dates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-    sortedDates.reverse();
-    
-    // Préparer l'objet pour stocker les données en colonnes avec dates
-    const columnData: { [date: string]: { [columnName: string]: any } } = {};
-    sortedDates.forEach(date => {
-        columnData[date] = {
-            Q90: '',
-            Q50: '',
-            Q10: '',
-            observation: ''
-        };
-    });
-
-    // Boucler sur les données filtrées pour regrouper les valeurs par date
-    filteredData.forEach((line: { name: string; x: string[]; y: number[] }) => {
-        line.x.forEach((date, index) => {
-            if (columnData[date]) {
-                columnData[date][line.name] = line.y[index];
-            }
-        });
-    });
-
-    // Construire le CSV avec en-têtes
-    let csv = 'Date,Q90,Q50,Q10,observations\n';
-    sortedDates.forEach(date => {
-        // Reformater la date au format souhaité (ISO 8601 : YYYY-MM-DD)
-        const formattedDate = new Date(date).toISOString().split('T')[0];
-        csv += `${formattedDate},${columnData[date]['Q90']},${columnData[date]['Q50']},${columnData[date]['Q10']},${columnData[date]['observations']}\n`;
-    });
-
-    // Créer le Blob à partir du CSV
-    const blob = new Blob([csv], { type: 'text/csv' });
-
-    // Créer l'URL du Blob
-    const url = window.URL.createObjectURL(blob);
-
-    const formattedStartDate = startDate.toISOString().split('T')[0];
-    const formattedEndDate = endDate.toISOString().split('T')[0];
-    const fileName = `prévision_${this.watershedName}_[${formattedStartDate}-${formattedEndDate}].csv`;
-
-    // Créer un élément <a> pour le téléchargement du fichier
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-
-    // Ajouter l'élément <a> au corps du document
-    document.body.appendChild(a);
-
-    // Simuler un clic sur le lien pour déclencher le téléchargement
-    a.click();
-
-    // Supprimer l'élément <a> du corps du document
-    document.body.removeChild(a);
-
-    // Révoquer l'URL du Blob pour libérer la mémoire
-    window.URL.revokeObjectURL(url);
-}
-
-
-  
-  
-  
-
-}
 
 @Component({
   selector: 'dialog-simulation-results',
@@ -606,3 +546,11 @@ export class Dialogsimulationresults {
   }
 
 }
+
+interface Indicator {
+  type: string;
+  value: number;
+  color: string;
+  fixed?: boolean;
+}
+

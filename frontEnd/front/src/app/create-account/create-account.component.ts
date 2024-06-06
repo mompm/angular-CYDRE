@@ -55,7 +55,7 @@ export class CreateAccountComponent {
 
     
     // this.router.navigateByUrl("");
-    if(this.authService.getIsLoggedIn()) console.log("User logged in");
+    if(this.authService.isLoggedIn) console.log("User logged in");
   }
 
   addUser( username : string , password:string) {

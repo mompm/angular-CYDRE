@@ -32,6 +32,7 @@ export class SimulateurCydreComponent implements OnInit {
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
+  simulation_id = ""
   
   list_of_disabled_options: string[] = [
     'J0121510', 'J0323010', 'J1004520', 'J2233010', 'J2233020', 'J2605410', 'J3601810',
@@ -60,7 +61,7 @@ export class SimulateurCydreComponent implements OnInit {
   ngOnInit() {
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
-    this.selectedStationName =this.sharedService.getSelectedValueBSS();
+    this.selectedStationName =this.sharedService.getSelectedStationName();
     console.log('Selected Value:', this.selectedStation, this.selectedStationName);
   }
 
@@ -95,12 +96,28 @@ export class SimulateurCydreComponent implements OnInit {
       )
       .map(station => ({ index: station.index, station_name: station.station_name }));
   }
-  
+  deepParseJson(obj: any): any {
+    if (typeof obj === 'object' && obj !== null) {
+        for (const key in obj) {
+            obj[key] = this.deepParseJson(obj[key]);  // Appel récursif pour chaque propriété
+        }
+    } else if (typeof obj === 'string') {
+        try {
+            return JSON.parse(obj);  // Tente de parser la chaîne en JSON
+        } catch (e) {
+            // Si ce n'est pas du JSON, retourne simplement la chaîne
+        }
+    }
+    return obj;
+}
   onStartSimulation() {
     const params = {
-      watershed: this.selectedStation,
-      slider: this.sliderValue,
-      date: this.simulationDate
+      Parameters :{
+        watershed: this.selectedStation,
+        slider: this.sliderValue,
+        date: this.simulationDate
+      },
+      UserID : localStorage.getItem("UserID")
     };
 
     this.progressMessages = [];
@@ -111,10 +128,11 @@ export class SimulateurCydreComponent implements OnInit {
     this.jsonService.runSimulation(params, this.updateProgress.bind(this)).subscribe(
       (data) => {
         if (data) {
-          this.results = data;
-          this.taskId = data.task_id;
+          this.simulation_id = data.simulation_id;
+          this.results = this.deepParseJson(data.results);
           this.progressMessages.push('Simulation terminée avec succès.');
           this.showResults = true;
+          console.log(this.results)
         }
       },
       (error) => {

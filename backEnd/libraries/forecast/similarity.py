@@ -115,10 +115,10 @@ class Similarity:
     def get_similar_watersheds(self, user_watershed_id):
         
         user_watershed_typology = int(self.clusters.loc[user_watershed_id].typology)        
-        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)        
-        
+        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)    
+        print(self.similar_watersheds)
     
-    def timeseries_similarity(self, user_watershed, watersheds, version):
+    def timeseries_similarity(self, user_watershed, watersheds, version, similar_watersheds):
         
         """
         Calculate temporal similarity between the user-selected watershed and regional historical watersheds.
@@ -126,7 +126,7 @@ class Similarity:
                 
         # Keep only watersheds that share the same typology
         try:
-            watersheds = {key: value for key, value in watersheds.items() if key in self.similar_watersheds}
+            watersheds = {key: value for key, value in watersheds.items() if key in similar_watersheds}
         except:
             pass
          
