@@ -1,0 +1,38 @@
+.custom-dialog {
+    position: fixed;
+    top: 20%;
+    left: 2%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    z-index: 1000; /* Assurez-vous qu'elle soit plus élevée que les autres éléments */
+    width: 95%;
+    height: auto;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+.scrollable-content {
+    overflow-y: auto;
+    max-height: 60vh;
+    padding-right: 10px;
+}
+
+.title {
+    margin: 20px 0;
+    align-self: flex-start;
+    font-size: 22px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    color: 'black',
+}
+
+.close-button {
+    position:absolute;
+    top: 8px;
+    right: 8px;
+}

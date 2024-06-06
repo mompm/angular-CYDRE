@@ -1,4 +1,7 @@
 import { Options } from '@angular-slider/ngx-slider/options';
+import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
+import {MatButtonModule} from '@angular/material/button';
+import { CommonModule } from '@angular/common';
 import { Component, Input, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -7,6 +10,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
 import { JsonService } from '../service/json.service';
 import { switchMap } from 'rxjs';
+import { AxisType } from 'plotly.js-dist';
 
 @Component({
   selector: 'app-simulation-results',
@@ -14,8 +18,9 @@ import { switchMap } from 'rxjs';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit {
+  on: boolean = false;
   
-  constructor(private jsonService: JsonService){}
+  constructor(private jsonService: JsonService, public dialog : MatDialog){}
   displayedColumns: string[] = ['Year', 'ID', 'Coeff'];
   dataSource : MatTableDataSource<any> | undefined;
 
@@ -31,37 +36,33 @@ export class SimulationResultsComponent implements OnInit {
   sort!: MatSort;
 
   @Input() results: any = {
-    proj_values: { Q50: 0, Q10: 0, Q90: 0 },
-    ndays_before_alert_Q50: { Q50: 0, Q90: 0, Q10: 0 },
-    ndays_below_alert: { Q50: 0, Q90: 0, Q10: 0 },
-    prop_alert_all_series: 0,
-    volume50: 0,
-    volume10: 0,
-    last_date: '',
-    first_date: '',
-    scale: false,
-    graph: false,
-    similarity_period: [],
-    m10: 0.0, 
-    compute_matrix : false,
-    corr_matrix: [],
-    task_id:""
-  };
+    indicators:{},
+    results:{
+      corr_matrix:"",
+      data:"",
+      similarity:{
+        corr_matrix: {
+        recharge:"",
+        specific_discharge:""
+      },
+      selected_scenarios:"",
+      similar_watersheds:"",
+      user_similarity_period:""
+    },
+  }};
 
   taskId: string = "";
-
-  @Input() corr_matrix: any[] = [];
+  @Input() simulation_id: string | undefined;
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
-  
-  @Input() m10SliderValue = this.results.m10 || 0.0;
-  startDate: Date = new Date(this.results.similarity_period[0]);
+  startDate: Date = new Date("2024-05-24");
   yMin = 0;
   yMax = 0;
   maxPredictedValue : number[] = [];
 
-  indicators: Array<{type: string, value: number, color: string, fixed?: boolean}> = [
-  ];
+  
+  indicators: Array<Indicator> = [];
+
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -79,11 +80,20 @@ export class SimulationResultsComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
-    this.dataSource.paginator = this.paginator;
-    this.dataSource.sort = this.sort; 
-    this.indicators.push({type: 'mod10', value: this.m10SliderValue, color:'#Ff0000', fixed: true} )
-    console.log("showresults", this.showResults);
+    console.log(this.results)
+
+    if(this.results.results.corr_matrix){//création de la matrice de corrélation
+      this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;     
+    }else{
+      console.log("Problème lors du chargement de la matrice de corrélation")
+    }
+    if(this.results.indicators){//création du tableau contenant les indicateurs
+      this.fillIndicators();
+    }else{
+      console.log("Problème lors du chargement des indicateurs")
+    }
 
     window.addEventListener('resize', () => {
       const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
@@ -93,27 +103,56 @@ export class SimulationResultsComponent implements OnInit {
       }
     });
   }
+
+  fillIndicators(){
+    for (const key in this.results.indicators) {
+      if (this.results.indicators.hasOwnProperty(key)) {
+          const indicator = this.results.indicators[key];
+          // Ajoutez une logique ici pour déterminer si 'fixed' doit être true ou false
+          let fixedValue = key === "mod10";  // Exemple: fixe si c'est mod10
+
+          this.indicators.push({
+              type: key,
+              value: indicator.value,
+              color: "#Ff0000",  // couleur par défaut si non spécifié
+              fixed: fixedValue
+          });
+      }
+  }
+  }
+
+  onToggleChange() {
+    this.updateComponentsWithResults(this.results);
+}
   addIndicator() {
-    this.indicators.push({type: '', color: '#Ff0000' , value: 0}); 
+    this.indicators.push({
+      type: "",
+      value: 0,
+      color: "#Ff0000",  // couleur par défaut si non spécifié
+      fixed: false
+  })
+  console.log(this.indicators)
+
   }
 
   removeIndicator(index: number) {
-    if (!this.indicators[index].fixed) { // Assurez-vous que l'indicateur n'est pas fixe avant de le supprimer
-      this.indicators.splice(index, 1);
+    this.indicators.splice(index,1)
+    console.log(this.indicators)
+    return this.indicators
+  }
+  onIndicatorTextChange(text : string, index : number){
+    //changer le type de l'indicateur concerné
+      this.indicators[index].type = text ?text:"";
       this.updateIndicatorShapes();
-    }
+      return this.indicators[index]
   }
   onIndicatorValueChange(value: number, index: number) {
-    if(value){
-      if(this.indicators[index].type=='mod10'){
-        this.onM10Change(value);
-      }else {
-        this.indicators[index].value = value;
-        this.updateIndicatorShapes(); // Met à jour le graphe après un changement de valeur
-      }
+      //changer la valeur de l'indicateur concerné
+      this.indicators[index].value = value ?value:0;
+      this.updateIndicatorShapes();
+      return this.indicators[index]
   }
 
-  }
 
   updateColorStyle(indicator : any){
     return { 'background-color': indicator.color };
@@ -146,47 +185,45 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   onM10Change(value: number) {
-    if(value){
-      this.m10SliderValue = value;
-      this.updateLayout();
-      this.showPlot();
-    }
+    // this.m10SliderValue = value;
+    this.updateLayout();
+    this.showPlot();
+    this.showTypologyMap();
   }
 
   updateResults() {
-    if(this.results.task_id != ""){
-      this.jsonService.updateM10Value({ "m10": this.m10SliderValue }).pipe(
-        switchMap(() => this.jsonService.getM10Values(this.results.task_id)) // Utilisez le task ID ici
-      ).subscribe(
-        (data) => {
-          this.results.ndays_below_alert = data.ndays_below_alert;
-          this.results.ndays_before_alert = data.ndays_before_alert;
-          this.results.prop_alert_all_series = data.prop_alert_all_series;
-          this.results.volume10 = data.volume10;
-          this.results.volume50 = data.volume50;
-          this.results.volume90 = data.volume90;
-          console.log('Updated results:', data);
-        },
-        (error) => {
-          console.error('Error updating results:', error);
+    if(this.simulation_id){
+      console.log("updating results for ", this.simulation_id)  
+      //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
+      this.jsonService.updateIndicatorsValue(this.simulation_id,this.indicators.filter(indicator => indicator.type !== 'mod10')).subscribe(
+        (data) => {this.results.indicators = data;
+          console.log(this.results.indicators)
         }
       );
     }
+    
   }
-
+  
   updateGraphData(): void {
-    if (this.showResults && this.results.graph && this.results.graph.data) {
+   
+    if (this.showResults && this.results.results.data.graph) {
+      console.log("mise à jour du graphe")
       this.traces= [];
-      var q10Trace: Plotly.Data | undefined;
-      var q90Trace: Plotly.Data | undefined;
-      var observations: Plotly.Data | undefined;
+      var q10Data: { x: Date[], y: number[] } | null = null;
+      var q90Data: { x: Date[], y: number[] } | null = null;
+      let incertitudeX;
+      let incertitudeY;
+      let q50X ;
+      let q50Y ;
+      let observationsX ;
+      let observationsY ;
+      console.log(this.results.results.similarity.user_similarity_period);
 
-      this.startDate = new Date(this.results.similarity_period[0]);
+      this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
-      
 
-      this.results.graph.data.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
-          console.log('Processing line:', line);
+      this.results.results.data.graph.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
+          // console.log('Processing line:', line);
           if (line.x && line.y && line.x.length === line.y.length) {
               var parsedDates = line.x.map(date => new Date(date));
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
@@ -205,64 +242,90 @@ export class SimulationResultsComponent implements OnInit {
             this.yMin = Math.min(...yValuesWithinObservedPeriod);
             this.yMin = Math.min(this.yMin, this.results.m10-1);
             this.yMax = Math.max(...yValuesWithinObservedPeriod);
-
-
-
-              var trace: Plotly.Data = {
-                  x: parsedDates,
-                  y: line.y,
-                  mode: 'lines',
-                  type: 'scatter',
-                  name: line.name,
-                  line: line.line,
-              };
-
-              if (line.name === 'Q10') {
-                  q10Trace = trace;
-              } else if (line.name === 'Q90') {
-                  if (line.x.length > 0) {
-                    this.simulationStartDate = parsedDates[0];
-                    this.simulationEndDate = parsedDates[parsedDates.length-1];
-                  }
-                  q90Trace = trace;
-              } else {
-                if(line.name.includes("Projection")){
-                  trace.showlegend = false;
-                  trace.hoverinfo = 'none'
-                  trace.line!.dash = 'dash';
-                  trace.line!.color = 'rgba(0, 0, 255, 0.1)';
-                }else if(line.name == 'Q50') {
-                  observations = trace;
-                }else{
-                trace.hoverinfo = 'all';
-                }
-                this.traces.push(trace);
+            
+            if(line.name == 'Q10'){
+              q10Data = { x: parsedDates, y: line.y };
+              incertitudeX = parsedDates; 
+            }
+            else if ( line.name == 'Q90'){
+              if (line.x.length > 0) {
+                this.simulationStartDate = parsedDates[0];
+                this.simulationEndDate = parsedDates[parsedDates.length-1];
               }
-          } else {
-              console.error('Data length mismatch or invalid data', line);
-          }
+              q90Data = { x: parsedDates, y: line.y };
+            }
+            else if ( line.name == 'Q50'){
+              q50X = parsedDates;
+              q50Y = line.y;
+            }
+            else if (line.name == 'observations'){
+              observationsX = parsedDates;
+              observationsY = line.y;
+            }else if (line.name.includes('Projection')){
+              var trace: Plotly.Data = {
+                x: parsedDates,
+                y: line.y,
+                showlegend : false,
+                hoverinfo :'none',
+                mode: 'lines',
+                type: 'scatter',
+                name: line.name,
+                line: { color: '#e3dcda', width: 1 , dash: 'dash' },
+              };
+              this.traces.push(trace);
+            }
+              if (q10Data && q90Data) {
+                incertitudeX = q10Data.x.concat(q90Data.x.slice().reverse());
+                incertitudeY = q10Data.y.concat(q90Data.y.slice().reverse());
+                this.endDate = (q90Data as any).x[(q90Data as any).x.length-1]
+              }
+            }
       });
-          if (q10Trace && q90Trace) {
-            (q90Trace as any).fill = null;
-            (q90Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-            (q90Trace as any).line = { color: '#407fbd', width: 1 };
-            (q90Trace as any).showlegend = false;
-            (q90Trace as any).hoverinfo = 'skip';
-
-            (q10Trace as any).fill = 'tonexty';
-            (q10Trace as any).fillcolor = 'rgba(64, 127, 189, 0.3)';
-            (q10Trace as any).line = { color: '#407fbd', width: 1 };
-            (q10Trace as any).name = "zone d'incertitude";
-            (q10Trace as any).hoverinfo = 'skip';
-
-            this.traces.push(q90Trace);
-            this.traces.push(q10Trace);
-            this.traces.push(observations!);
-        }
-
-        this.updateSliderOptions();
+     
+      if (q10Data && q90Data){
+        var incertitudeTrace: Plotly.Data = {
+            x: incertitudeX,
+            y: incertitudeY,
+            mode: 'lines',
+            type: 'scatter',
+            name: "zone d'incertitude",
+            showlegend : true,
+            hoverinfo : 'none',
+            fill: 'toself', 
+            fillcolor: 'rgba(64, 127, 189, 0.3)', 
+            line: { color: '#407fbd', width: 1 }, 
+        };
+        this.traces.push(incertitudeTrace);
+      }
+      if(q50X && q50Y){
+        var q50Trace : Plotly.Data = {
+          x : q50X,
+          y : q50Y,
+          mode: 'lines',
+          type: 'scatter',
+          name: 'projection médiane',
+          showlegend : true,
+          line: { color: 'blue', width: 1 , dash: 'dot' }, 
+        };
+        this.traces.push(q50Trace);
+      }
+      if(observationsX && observationsY){
+        var observationsTrace : Plotly.Data = {
+          x : observationsX,
+          y : observationsY,
+          mode: 'lines',
+          type: 'scatter',
+          name: 'observation',
+          showlegend : true,
+          hoverinfo : 'none',
+          line: { color: 'black', width: 1 }, 
+        };
+        this.traces.push(observationsTrace); 
+      }
+      
+      this.updateSliderOptions();
+    
     }
-    this.endDate = (q90Trace as any).x[(q90Trace as any).x.length-1]
   }
 
   updateSliderOptions() {
@@ -276,31 +339,56 @@ export class SimulationResultsComponent implements OnInit {
     };
   }
 
-  
-  
-
   updateLayout() {
+    let range ;
+    let type ;
+    if (this.on) {
+      range = [this.yMin, this.yMax];
+      type = 'linear';
+  } else {
+      range = [Math.log10(0.01), Math.log10(this.yMax)];
+      type = 'log';
+  }
     this.layout = {
-      title: 'Prévisions pour ' + this.watershedName,
+      hovermode: "x unified",
+      title: {
+        text: this.watershedName + " - "+ this.results.nombre_evenement + " événements",
+        font: {size: 17},
+      },
+      legend: {
+        orientation: 'h',
+        font: {size: 12},
+        x: 0.5,
+        xanchor: 'center',
+        y: 1.2,
+        yanchor: 'top',
+      },
       xaxis: {
         title: 'Date',
         showgrid: false,
         zeroline: false,
         tickformat: '%d-%m-%Y',
         tickmode: 'auto' as 'auto',
+        tickangle: 45,
+        ticks: 'inside',
+        titlefont: {size: 12},
         nticks: 10,
         range: [this.startDate, this.endDate]
       },
       yaxis: {
         title: 'Débit (m3/s)',
+        titlefont: {size: 12},
         showline: false,
-        range: [this.yMin, this.yMax]
+        ticks: 'inside',
+        type: type as AxisType,
+        rangemode: 'tozero',
+        range: range
       },
       shapes: this.simulationStartDate && this.simulationEndDate ? [{
         type: 'line',
         x0: this.simulationStartDate,
         x1: this.simulationStartDate,
-        y0: this.yMin,
+        y0: 0.001,
         y1: this.yMax,
         line: { 
           color: 'gray',
@@ -309,30 +397,81 @@ export class SimulationResultsComponent implements OnInit {
         }
       }, {
         type: 'line',
+        showlegend : true,
+        name :"1/10 du module",
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
-        y0: this.m10SliderValue,
-        y1: this.m10SliderValue,
+        y0: this.results.indicators.mod10.value,
+        y1: this.results.indicators.mod10.value,
         line: {
           color: 'red',
           width: 2,
         }
       }] : [],
     };
-  }
+}
+  
+  
+
 
   showPlot() {
     Plotly.newPlot('previsions', this.traces, this.layout);
     const annotation: Partial<Plotly.Annotations> = {
       text: "Date de la simulation",
-      xref: 'paper', yref: 'paper',
-      x: 0.5, y: 1.1,
+      xref: 'x', yref: 'paper',
+      x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
+      y: 1,
       showarrow: false,
       font: { size: 14 }
     };
-
     Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
   }
+
+
+  showTypologyMap(){
+    const figData: any[] = [];
+    this.jsonService.getGDFStations().then(data => {
+      const filteredStations = data.filter(station => 
+        this.results.results.similarity.similar_watersheds.includes(station.index)
+      );
+
+      const x: any[] = [];
+      const y: any[] = [];
+      const text: any[] = []; 
+
+      for (let i = 0; i < filteredStations.length; i++) {
+          x.push(Number(filteredStations[i].x_outlet)); 
+          y.push(Number(filteredStations[i].y_outlet)); 
+          text.push(`${filteredStations[i].station_name}`);
+      }
+      figData.push({
+        type: 'scattermapbox',
+        lon: x,
+        lat: y,
+        mode: 'markers',
+        hoverinfo: 'text',
+        hovertext: text,
+        name: '',
+    });
+      const figlayout = {
+        mapbox: {
+          style: 'open-street-map',
+          center: { lat: 48.2141667, lon: -2.9424167 },
+          zoom: 6.8
+        },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        margin: { l: 0, r: 0, t: 0, b: 0 }
+      };
+ 
+      Plotly.newPlot('map', figData, figlayout);
+
+      window.addEventListener('resize', () => {
+        const mapwidth = 0.40 * window.innerWidth;
+        Plotly.relayout('map', { width: mapwidth });
+      });
+    });
+  }
+
 
 
   ngAfterViewInit() {
@@ -357,14 +496,59 @@ export class SimulationResultsComponent implements OnInit {
   private updateComponentsWithResults(results: any): void {
     // Mise à jour des résultats et de la matrice de corrélation
     this.results = results;
-    this.dataSource = new MatTableDataSource(this.results.corr_matrix);
+    this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
   
     // Mise à jour des autres éléments
-    this.updateGraphData();
-    this.updateLayout();
-    this.showPlot();
+
+      this.updateGraphData();
+      this.updateLayout();
+      this.showPlot();
+      this.showTypologyMap();
+
+  }
+
+  openDialog() {
+    this.dialog.open(Dialogsimulationresults);
+  }
+
+  keys(obj: any) {//fonction pour retourner les clés d'un json 
+    return Object.keys(obj);
+  }
+
+  // Renvoie la valeur maximale
+  max(v1: number, v2: number): number {
+    return Math.max(v1, v2);
+  }
+
+  // Renvoie la valeur minimale
+  min(v1: number, v2: number): number {
+    return Math.min(v1, v2);
+  }
+  }
+
+
+@Component({
+  selector: 'dialog-simulation-results',
+  templateUrl: './dialog-simulation-results.html',
+  styleUrls: ['./dialog-simulation-results.scss'],
+  standalone: true,
+  imports: [CommonModule, MatButtonModule],
+})
+export class Dialogsimulationresults {
+  constructor(public dialogRef: MatDialogRef<Dialogsimulationresults>) {}
+
+  onClose(): void {
+    this.dialogRef.close();
   }
 
 }
+
+interface Indicator {
+  type: string;
+  value: number;
+  color: string;
+  fixed?: boolean;
+}
+

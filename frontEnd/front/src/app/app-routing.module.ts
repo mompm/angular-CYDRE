@@ -13,7 +13,6 @@ import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.co
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
-  { path: 'home', component: HomeComponent },
   { path: 'ficheSite', component: FicheSiteComponent },
   { path: 'modeling',
     component: ModelingComponent,
@@ -27,7 +26,7 @@ const routes: Routes = [ //indicate which component to load depending on the pat
   { path: 'create-account', component: CreateAccountComponent, canActivate: [AuthGuard] },
   { path: 'simulator', component: SimulateurCydreComponent},
   { path: 'analysis', component:AnalyseDeSensibiliteComponent },
-  { path: '**', redirectTo: '/home', pathMatch: 'full'}
+  { path: '**', redirectTo: '/ficheSite', pathMatch: 'full'}
 ];
 
 @NgModule({

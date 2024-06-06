@@ -13,6 +13,10 @@ export class SharedWatershedService {
     return this.selectedValue;
   }
 
+  getSelectedStationName(): string | null{
+    return "Nançon" // à changer par la logique de récupération du nom de la station
+  }
+
   setSelectedValue(value: string | null): void {
     this.selectedValue = value;
   }

@@ -637,7 +637,7 @@ def run_timeseries_similarity(simulation_id):
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_similar_period, cydre_app.Similarity.user_similarity_period)})
+            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_similar_period, json.dumps(cydre_app.Similarity.user_similarity_period.strftime('%Y-%m-%d').tolist()))})
         )
         db.session.execute(stmt)
         db.session.commit()
@@ -802,7 +802,7 @@ def getGraph(simulation_id):
 def update_indicator(simulation_id):
     try:
         data = request.get_json()
-        if not data or 'indicator_name' not in data or 'value' not in data:
+        if not data or 'type' not in data or 'value' not in data:
             return jsonify({'Error': 'Missing data for indicator or value'}), 400
 
         simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
@@ -810,7 +810,7 @@ def update_indicator(simulation_id):
             return jsonify({'Error': 'Simulation not found'}), 404
 
         # Assuming Indicators is already properly initialized to an empty JSON object if null
-        indicator_path = f"$.{data['indicator_name']}"
+        indicator_path = f"$.{data['type']}"
         new_value = data['value']
 
         cydre_app, simulation = start_simulation_cydre_app(simulation_id)
@@ -882,7 +882,7 @@ def get_indicators_value(simulation_id):
     if not simulation:
         return jsonify({'Error': 'Simulation not found'}), 404
     
-    cydre_app, simulation = start_simulation_cydre_app(simulation_id)
+    # cydre_app, simulation = start_simulation_cydre_app(simulation_id)
 
     indicators = simulation.Indicators
     return indicators, 200

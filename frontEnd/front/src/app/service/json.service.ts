@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, Subject, catchError, lastValueFrom, of, switchMap, takeWhile, tap, timer } from 'rxjs';
+import {Observable, Subject, catchError, forkJoin, lastValueFrom, map, of, switchMap, takeWhile, tap, timer } from 'rxjs';
 import dataGDFWatersheds from '../model/dataGDFWatersheds';
 import dataGDFPiezometry from '../model/dataGDFPiezometry';
 import dataDischarge from '../model/dataDischarge';
@@ -8,6 +8,7 @@ import dataGDFStation from '../model/dataGDFStation';
 import dataTemperature from '../model/dataTemperature';
 import dataDepth from '../model/dataDepth';
 import dataPrecipitation from '../model/dataPrecipitation';
+import { forEach } from 'mathjs';
 
 
 
@@ -52,11 +53,26 @@ private baseUrl = 'http://localhost:5000';
 		);
 	  }
 	
-	  getM10Values(taskId: string): Observable<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/get_m10_values/`+taskId).pipe(
+	  get_indicators_value(simulation_id: string): Observable<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/`+simulation_id).pipe(
 		  tap(() => console.log('Fetching M10 values...'))
 		);
-	  }
+	  }	
+	  updateIndicatorsValue(simulation_id: string, indicators: any): Observable<any> {
+		// Créer un tableau d'Observables pour les requêtes POST
+		const updateRequests = indicators.map((indicator: { type: string; value: number }) => {
+			console.log("updating indicator ", indicator.type);
+			// Retourner l'Observable de la requête POST sans s'y abonner ici
+			return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/` + simulation_id, indicator);
+		});
+	
+		// Utiliser forkJoin pour exécuter toutes les requêtes POST en parallèle et attendre que toutes soient terminées
+		return forkJoin(updateRequests).pipe(
+			tap(() => console.log('All indicators updated')),
+			// Une fois toutes les requêtes terminées, obtenir les valeurs des indicateurs
+			switchMap(() => this.get_indicators_value(simulation_id))
+		);
+	}
 
 	  updateM10Value(params: any): Observable<any> {
 		return this.http.post(`${this.baseUrl}/api/update_indicator`, params).pipe(
@@ -99,10 +115,7 @@ private baseUrl = 'http://localhost:5000';
 		progressCallback('Initialisation de la simulation...', 0);
 		return this.getRunCydre(params).pipe(
 		  tap(response => {
-			// taskId = response.task_id;
 			simulation_id = response.SimulationID;
-			// console.log(taskId)
-			// console.log(`${this.baseUrl}/api/simulateur/getGraph/`+taskId)
 			progressCallback('Cydre app lancée.',10);
 		  }),
 		  switchMap(() => this.runSpatialSimilarity(simulation_id).pipe(
@@ -121,7 +134,8 @@ private baseUrl = 'http://localhost:5000';
 			tap(() => progressCallback('Matrice de corrélation récupérée.',85))
 		  )),
 		  switchMap(() => this.getResults(simulation_id).pipe(
-			tap(() => progressCallback('Résultats récupérés.',100))
+			tap(() => progressCallback('Résultats récupérés.',100)),
+			map(results => ({ simulation_id, results }))
 		  )),
 		  catchError(error => {
 			progressCallback('Erreur lors de la simulation :'+ error,0);

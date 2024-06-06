@@ -1,5 +1,9 @@
 import { Component, ViewEncapsulation,Input } from '@angular/core';
+import {MatDialog, MatDialogRef} from '@angular/material/dialog';
+import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import {MatTabsModule} from '@angular/material/tabs';
+import { MatButtonModule } from '@angular/material/button';
 
 
 @Component({
@@ -14,7 +18,7 @@ export class SelecteurLangueComponent{
     selectLang:string="";
     transLang : string[] =[];
   
-    constructor(public translate: TranslateService){
+    constructor(public translate: TranslateService, public dialog : MatDialog){
       translate.setDefaultLang('FR');
       translate.addLangs(['EN', 'FR']);
       translate.use('FR');
@@ -33,4 +37,25 @@ export class SelecteurLangueComponent{
       this.getTransLanguage();
     }
 
+
+
+    openDialog() {
+      this.dialog.open(DocumentationPopup, {});
+    }
+  
   }
+
+    @Component({
+      selector: 'documentationPopup',
+      templateUrl: './documentationPopup.html',
+      styleUrls: ['./documentationPopup.scss'],
+      standalone: true,
+      imports: [MatTabsModule, CommonModule, MatButtonModule],
+    })
+    export class DocumentationPopup {
+      constructor(public dialogRef: MatDialogRef<DocumentationPopup>) {}
+
+      onClose(): void {
+        this.dialogRef.close();
+      }
+}

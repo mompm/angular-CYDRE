@@ -2,35 +2,73 @@ import { Component, Input, SimpleChanges} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
-import * as chr from 'chroma-js';
 import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataTemperature from 'src/app/model/dataTemperature';
 
+/**
+ * Génère une palette de couleurs distinctes.
+ * La fonction crée un tableau de couleurs en utilisant le modèle de couleur HSL (teinte, saturation, luminosité).
+ * Les couleurs sont réparties uniformément sur le cercle chromatique en fonction du nombre de couleurs demandé.
+ * 
+ * @param numColors Le nombre de couleurs à générer.
+ * @returns Un tableau de chaînes de caractères représentant les couleurs en format HSL.
+ */
+function generateColors(numColors: number): string[] {
+  const colors: string[] = []; // Tableau pour stocker les couleurs générées
+  const hueStep = 360 / numColors; // Calcul de l'intervalle de teinte pour chaque couleur
 
+  for (let i = 0; i < numColors; i++) {
+    const hue = i * hueStep; // Calcul de la teinte pour la couleur actuelle
+    colors.push(`hsl(${hue}, 100%, 50%)`); // Ajout de la couleur au format HSL dans le tableau
+  }
+
+  return colors; // Retourne le tableau de couleurs générées
+}
+
+/**
+ * Déclare un composant Angular pour afficher les températures saisonnières.
+ */
 @Component({
     selector: 'app-temperatureSeasonal',
     templateUrl: './temperatureSeasonal.component.html',
     styleUrls: ['./temperatureSeasonal.component.scss']
   })
 
-  export class temperatureSeasonal {
-    @Input() stationSelectionChange!: string;
-    @Input() yearSelectionChange!: number[];
-    DataTemperature: dataTemperature[] = [];
-    fig: any;
-    months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
-    tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
-    ticktext: string[] = this.months.map(month => month);
 
+  export class temperatureSeasonal {
+    @Input() stationSelectionChange!: string; // Identifiant de la station sélectionnée, modifiable par l'utilisateur
+    @Input() yearSelectionChange!: number[]; // Liste des années sélectionnées, modifiable par l'utilisateur
+    DataTemperature: dataTemperature[] = []; // Tableau pour stocker les données de température
+    fig: any; // Variable pour stocker la figure Plotly
+    months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]; // Mois de l'année
+    tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`); // Valeurs des ticks pour l'axe x
+    ticktext: string[] = this.months.map(month => month); // Texte des ticks pour l'axe x
+
+
+    /**
+     * Constructeur de la classe.
+     * 
+     * @param dataService Service de gestion des données
+     * @param jsonService Service de gestion des JSON
+     */
     constructor(private dataService: DataService,private jsonService: JsonService) {}
 
+    /**
+     * Initialisation du composant.
+     * Cette méthode est appelée une fois que les propriétés @Input ont été initialisées.
+     */
     ngOnInit() {
         this.initStationTemperature(this.stationSelectionChange);
       }
 
+  /**
+   * Méthode appelée à chaque changement des valeurs des propriétés @Input.
+   * 
+   * @param changes Objet contenant les valeurs changées
+   */ 
     ngOnChanges(changes: SimpleChanges) {
         // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
         if (changes['stationSelectionChange']) {
@@ -41,22 +79,28 @@ import dataTemperature from 'src/app/model/dataTemperature';
         }
       }
 
-
+    /**
+     * Initialise les données de température pour une station donnée.
+     * @param stationID Identifiant de la station sélectionnée
+     */
     initStationTemperature(stationID: string){
         this.jsonService.getTemperature(stationID).then(station => {
             this.DataTemperature = station; 
             this.temperature_Seasonal();  
         });
       }
-
-
-    temperature_Seasonal() {
+    /**
+     * Traite les données de température et les structure pour une utilisation ultérieure.
+     * 
+     * @returns Un objet contenant les données de temperature journalières et annuelles ainsi que la dernière date de mise à jour
+     */
+    processedTemperature(): { TabTemperatureByDaily: any[], YearTabTemperatureByDaily: any[], lastUpdate: any } {
         const targetYears: number[] = this.yearSelectionChange;
-        const processedData: any[] = [];
-        const linesByYear = [];
+        const TabTemperatureByDaily: any[] = [];
+        const YearTabTemperatureByDaily: any[] = [];
         let lastUpdate = null;
-        // Vérification si this.dischargeStation est défini et non vide
-        if (this.DataTemperature && this.DataTemperature.length > 0) {
+         // Vérification si this.dischargeStation est défini et non vide
+         if (this.DataTemperature && this.DataTemperature.length > 0) {
           for (const entry of this.DataTemperature) {
             const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
             const month = new Date(entry.t).getMonth() + 1; // Récupérer le mois de la date
@@ -79,59 +123,76 @@ import dataTemperature from 'src/app/model/dataTemperature';
       
             // Ajouter cet objet au tableau de données traitées
             if (!isNaN(parseFloat(entry.Q))) {
-              processedData.push(newDataEntry);
+              TabTemperatureByDaily.push(newDataEntry);
             }
   
             if (targetYears.includes(year)) {
-              linesByYear.push(newDataEntry);
+              YearTabTemperatureByDaily.push(newDataEntry);
             }
           }
-        } else {
-          console.error("No data available in this.dischargeStation.");
-        }
-  
+        } 
+        return{TabTemperatureByDaily, YearTabTemperatureByDaily, lastUpdate}
+      }
 
-  
-        const resultArray: { key: string; values: number[]; q10?: number;q50?: number;q90?: number; }[] = [];
-        let q10: any;
-        let q50: any;
-        let q90: any;
-        from(processedData)
-          .pipe(
-            filter(entry => !isNaN(parseFloat(entry.Q))),
-            groupBy(
-              processedData => processedData.daily,
-              p => p.Q
-            ),
-            mergeMap(group => zip(of(group.key), group.pipe(toArray())))
-          )
-          .subscribe({
-            //pour chaque daily 
-            next: ([key, values]) => {
-              const numericValues: number[] = values.map(value => parseFloat(value));
-              // Calcule les quantiles et médiane
-              q10 = (math.quantileSeq(numericValues, 0.1));
-              //arrondi 4 chiffres après la virgule
-              q10 =parseFloat(q10.toFixed(4));
-              q50 = median(numericValues);
-              q50 = parseFloat(q50.toFixed(4));
-              q90 = math.quantileSeq(numericValues, 0.9);
-              q90 = parseFloat(q90.toFixed(4));
-              //push dans le tableau
-              const entry = { key, values: numericValues, q10, q50, q90 };
-              resultArray.push(entry);
-            }
-          });
-  
-          resultArray.sort((a, b) => {
-            const [aMonth, aDay] = a.key.split('-').map(Number);
-            const [bMonth, bDay] = b.key.split('-').map(Number);
-            if (aMonth !== bMonth) {
-              return aMonth - bMonth;
-            } else {
-              return aDay - bDay;
-            }
-          });
+        /**
+   * Calcule les quantiles (10%, 50%, 90%) des précipitations journalières cumulées.
+   * 
+   * @param  TabTemperatureByDaily Tableau des températures journalières cumulées
+   * @returns Un objet contenant les quantiles calculés pour chaque jour et les quantiles globaux
+   */
+  calculateQuantiles(TabTemperatureByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
+    const resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = [];
+    let q10: any;
+    let q50: any;
+    let q90: any;
+
+    from(TabTemperatureByDaily)
+    .pipe(
+      filter(entry => !isNaN(parseFloat(entry.Q))),
+      groupBy(
+        TabTemperatureByDaily => TabTemperatureByDaily.daily,
+        p => p.Q
+      ),
+      mergeMap(group => zip(of(group.key), group.pipe(toArray())))
+    )
+    .subscribe({
+      //pour chaque daily 
+      next: ([key, values]) => {
+        const numericValues: number[] = values.map(value => parseFloat(value));
+        // Calcule les quantiles et médiane
+        q10 = (math.quantileSeq(numericValues, 0.1));
+        //arrondi 4 chiffres après la virgule
+        q10 =parseFloat(q10.toFixed(4));
+        q50 = median(numericValues);
+        q50 = parseFloat(q50.toFixed(4));
+        q90 = math.quantileSeq(numericValues, 0.9);
+        q90 = parseFloat(q90.toFixed(4));
+        //push dans le tableau
+        const entry = { key, values: numericValues, q10, q50, q90 };
+        resultArray.push(entry);
+      }
+    });
+
+    resultArray.sort((a, b) => {
+      const [aMonth, aDay] = a.key.split('-').map(Number);
+      const [bMonth, bDay] = b.key.split('-').map(Number);
+      if (aMonth !== bMonth) {
+        return aMonth - bMonth;
+      } else {
+        return aDay - bDay;
+      }
+    });
+
+    return { resultArray, q10, q50, q90 };
+  }
+  /**
+   * Met à jour l'affichage des températures saisonnières en utilisant Plotly.
+   */
+    temperature_Seasonal() {
+        const targetYears: number[] = this.yearSelectionChange;
+        const  {TabTemperatureByDaily, YearTabTemperatureByDaily, lastUpdate} = this.processedTemperature();
+        const {resultArray, q10, q50, q90 } = this.calculateQuantiles(TabTemperatureByDaily);
+
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
         const resultArrayq10 = resultArray.map(entry => entry.q10);
@@ -157,8 +218,8 @@ import dataTemperature from 'src/app/model/dataTemperature';
             legend: { orientation: "h", yanchor: "top", y: 1.1, xanchor: "right", x: 1 }
         }
     };
-        const startYear = processedData.length > 0 ? processedData[1].years : 'N/A';
-        const endYear = processedData.length > 0 ? processedData[processedData.length - 1].years : 'N/A';
+        const startYear = TabTemperatureByDaily.length > 0 ? TabTemperatureByDaily[1].years : 'N/A';
+        const endYear = TabTemperatureByDaily.length > 0 ? TabTemperatureByDaily[TabTemperatureByDaily.length - 1].years : 'N/A';
         // Construction du libellé pour la moyenne
         const labelmedian = `moyenne [${startYear} - ${endYear}]`;
         const labelinvariant = `variabilité [${startYear} - ${endYear}]`;
@@ -184,11 +245,11 @@ import dataTemperature from 'src/app/model/dataTemperature';
           hoverinfo: 'none' 
         });
         const lengthYear = targetYears.length;
-        const chromaColors = chr.scale('Set1').colors(lengthYear);
+        const colors = generateColors(lengthYear);
             // Boucle sur les événements
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
-        const df_event = linesByYear.filter(item => item.years === year);
+        const df_event = YearTabTemperatureByDaily.filter(item => item.years === year);
         if (df_event) {
           const trace = {
             x: df_event.map(item => item.daily),
@@ -196,7 +257,7 @@ import dataTemperature from 'src/app/model/dataTemperature';
             mode: 'lines',
             name: String(year),
             line: {
-              color: chromaColors[i], // Utilisation des couleurs générées par Chroma.js
+              color: colors[i], 
               width: 1.5
             }
           };

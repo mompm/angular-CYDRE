@@ -10,13 +10,18 @@ import dataGDFStation from '../model/dataGDFStation';
 import {MatDialog} from '@angular/material/dialog';
 
 
-
+/**
+ * 
+ */
 @Component({
     selector: 'app-fiche-site',
     templateUrl: './ficheSite.component.html',
     styleUrls: ['./ficheSite.component.scss']
   })
 
+  /**
+   * 
+   */
   export class FicheSiteComponent {
     correspondance: boolean = true;
     currentYear: number = new Date().getFullYear();
@@ -35,9 +40,17 @@ import {MatDialog} from '@angular/material/dialog';
       'J3631810', 'J3821810', 'J3821820', 'J4313010', 'J4614010', 'J4623020', 'J4742010', 'J4902010', 'J5224010', 'J5402120',
       'J5412110', 'J7083110', 'J7114010', 'J7824010', 'J7833010', 'J7973010', 'J8202310', 'J8363110', 'J8443010', 'J8502310', 'J8813010'
     ];
-  
+    /**
+     * 
+     * @param dataService 
+     * @param jsonService 
+     * @param sharedService 
+     * @param dialog 
+     */
     constructor(private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
-  
+    /**
+     * 
+     */
     ngOnInit() {
       this.initGDFStations();
       const ID =  this.sharedService.getSelectedValue();
@@ -49,7 +62,10 @@ import {MatDialog} from '@angular/material/dialog';
         this.selectedWatershedBSS = BSS
       }
     }
-
+    /**
+     * 
+     * @param id 
+     */
     handleMarkerClick(id: string): void {
       console.log(`ID du marker dans le composant parent : ${id}`);
       const selectedOption = this.DataGDFStation.find(station => station.index === id);
@@ -68,11 +84,15 @@ import {MatDialog} from '@angular/material/dialog';
         }
       
     }
-
+    /**
+     * 
+     */
     openDialog() {
       this.dialog.open(PopupDialogFicheSite);
     }
-  
+    /**
+     * 
+     */
     initGDFStations() {
       this.jsonService.getGDFStations().then(data => {
         this.DataGDFStation = data;
@@ -92,7 +112,11 @@ import {MatDialog} from '@angular/material/dialog';
         }
       });
     }
-  
+    /**
+     * 
+     * @param value 
+     * @returns 
+     */
     private _filter(value: string): { index: string, station_name: string }[] {
       value = value.toString()
       const filterValue = value.toLowerCase();
@@ -104,7 +128,10 @@ import {MatDialog} from '@angular/material/dialog';
         )
         .map(station => ({ index: station.index, station_name: station.station_name }));
     }
-  
+    /**
+     * 
+     * @param event 
+     */
     onOptionSelected(event: any) {
       const selectedOption = event.option.value;
       this.sharedService.setSelectedValue(selectedOption.index);
@@ -123,15 +150,26 @@ import {MatDialog} from '@angular/material/dialog';
       //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
     }
   
+    /**
+     * 
+     * @param option 
+     * @returns 
+     */
     isOptionDisabled(option: { index: string, station_name: string }): boolean {
       return this.list_of_disabled_options.includes(option.index);
     }
-  
+    /**
+     * 
+     * @param option 
+     * @returns 
+     */
     displayFn(option: { index: string, station_name: string }): string {
       return option ? `${option.index} - ${option.station_name}` : '';
     }
   }
-
+  /**
+   * 
+   */
   @Component({
     selector: 'popupDialogFicheSite',
     templateUrl: './popupDialogFicheSite.html',
