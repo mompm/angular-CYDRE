@@ -1,12 +1,9 @@
 <div >
-  <div >
+  <div>
     <div class="visu-align" >    
       <h4>Visualisation des prévisions saisonnières</h4>
-      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
-    </div>
-    <div class="visu-align" >    
-      <h4>Visualisation des prévisions saisonnières</h4>
-      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+      <button mat-button (click)="downloadFile()"><mat-icon>file_download</mat-icon></button>
+      <button mat-button (click)="openDialog()"><mat-icon>info</mat-icon></button>
     </div>
     <div>
       <div style="text-align: center;">
@@ -14,9 +11,6 @@
         <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle>
       </div>
       <div id="previsions"></div>
-      <div class="pre-align">
-        <button mat-button ><mat-icon>download</mat-icon></button>
-      </div>
       <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
     </div>
     <div class="card my-4">

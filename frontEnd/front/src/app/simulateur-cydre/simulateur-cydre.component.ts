@@ -29,6 +29,7 @@ export class SimulateurCydreComponent implements OnInit {
   stations: any[] = [];
   selectedStation: string | null | undefined;
   selectedStationName: string | null | undefined;
+  selectedStattionBSS: string | null | undefined;
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
@@ -62,6 +63,7 @@ export class SimulateurCydreComponent implements OnInit {
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
+    this.selectedStattionBSS = this.sharedService.getSelectedValueBSS();
     console.log('Selected Value:', this.selectedStation, this.selectedStationName);
   }
 
@@ -152,12 +154,17 @@ export class SimulateurCydreComponent implements OnInit {
     const selectedOption = event.option.value;
     this.sharedService.setSelectedValue(selectedOption.index);
     this.selectedStation = selectedOption.index;
+    const test = this.stations.find(station => station.index === selectedOption.index)?.name;
     const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
     if (select){
-      this.selectedStationName = select;
+      this.selectedStattionBSS = select;
       this.sharedService.setSelectedValueBSS(select);
     }
-    console.log('Selected Value:', this.selectedStation, this.selectedStationName);
+    if (test){
+      this.selectedStationName = test;
+      this.sharedService.setSelectedStationName(test);
+    }
+    console.log('Selected Value:', this.selectedStation, this.selectedStattionBSS, test);
   }
 
   isOptionDisabled(option: { index: string, station_name: string }): boolean {

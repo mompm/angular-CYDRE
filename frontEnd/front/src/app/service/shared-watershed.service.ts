@@ -6,6 +6,7 @@ import { Injectable } from '@angular/core';
 export class SharedWatershedService {
   selectedValue: string | null = 'J0014010';
   selectedValueBSS: string | null = 'BSS000TRGE';
+  selectedValueName: string | null = 'Nançon';
 
   constructor() { }
 
@@ -14,7 +15,12 @@ export class SharedWatershedService {
   }
 
   getSelectedStationName(): string | null{
-    return "Nançon" // à changer par la logique de récupération du nom de la station
+    //return "Nançon" // à changer par la logique de récupération du nom de la station
+    return this.selectedValueName;
+  }
+
+  setSelectedStationName(value: string | null): void {
+    this.selectedValueName = value;
   }
 
   setSelectedValue(value: string | null): void {

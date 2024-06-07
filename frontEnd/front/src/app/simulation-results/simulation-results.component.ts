@@ -528,6 +528,93 @@ export class SimulationResultsComponent implements OnInit {
   min(v1: number, v2: number): number {
     return Math.min(v1, v2);
   }
+
+  downloadFile(): void {
+          // Vérifiez si les dates de début et de fin sont définies
+          if (!this.startDate || !this.endDate) {
+              console.error("Start date and end date must be defined.");
+              return;
+          }
+
+          const startDate = new Date(this.startDate);
+          const endDate = new Date(this.endDate);
+
+          // Filtrer les données pour exclure les lignes ayant "Projection" dans le nom
+          const filteredData = this.results.results.data.graph.filter((line: { name: string }) => {
+              return !line.name.includes('Projection');
+          });
+
+          // Extraction des dates uniques (x) dans l'intervalle [startDate, endDate]
+          const dates = new Set<string>();
+          filteredData.forEach((line: { x: string[]; y: number[] }) => {
+              line.x.forEach(date => {
+                  const currentDate = new Date(date);
+                  if (currentDate >= startDate && currentDate <= endDate) {
+                      dates.add(date);
+                  }
+              });
+          });
+
+          // Tri des dates pour avoir un ordre chronologique
+          const sortedDates = Array.from(dates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+          sortedDates.reverse();
+          
+          // Préparer l'objet pour stocker les données en colonnes avec dates
+          const columnData: { [date: string]: { [columnName: string]: any } } = {};
+          sortedDates.forEach(date => {
+              columnData[date] = {
+                  Q90: '',
+                  Q50: '',
+                  Q10: '',
+                  observation: ''
+              };
+          });
+
+          // Boucler sur les données filtrées pour regrouper les valeurs par date
+          filteredData.forEach((line: { name: string; x: string[]; y: number[] }) => {
+              line.x.forEach((date, index) => {
+                  if (columnData[date]) {
+                      columnData[date][line.name] = line.y[index];
+                  }
+              });
+          });
+
+          // Construire le CSV avec en-têtes
+          let csv = 'Date,Q90,Q50,Q10,observations\n';
+          sortedDates.forEach(date => {
+              // Reformater la date au format souhaité (ISO 8601 : YYYY-MM-DD)
+              const formattedDate = new Date(date).toISOString().split('T')[0];
+              csv += `${formattedDate},${columnData[date]['Q90']},${columnData[date]['Q50']},${columnData[date]['Q10']},${columnData[date]['observations']}\n`;
+          });
+
+          // Créer le Blob à partir du CSV
+          const blob = new Blob([csv], { type: 'text/csv' });
+
+          // Créer l'URL du Blob
+          const url = window.URL.createObjectURL(blob);
+
+          const formattedStartDate = startDate.toISOString().split('T')[0];
+          const formattedEndDate = endDate.toISOString().split('T')[0];
+          const fileName = `prévision_${this.watershedName}_[${formattedStartDate}-${formattedEndDate}].csv`;
+
+          // Créer un élément <a> pour le téléchargement du fichier
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+
+          // Ajouter l'élément <a> au corps du document
+          document.body.appendChild(a);
+
+          // Simuler un clic sur le lien pour déclencher le téléchargement
+          a.click();
+
+          // Supprimer l'élément <a> du corps du document
+          document.body.removeChild(a);
+
+          // Révoquer l'URL du Blob pour libérer la mémoire
+          window.URL.revokeObjectURL(url);
+      }
+
   }
 
 
