@@ -6,7 +6,8 @@ import { SharedWatershedService } from '../service/shared-watershed.service';
 import { FormControl } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
 import { DataService } from '../service/data.service';
-
+import {MatDialog} from '@angular/material/dialog';
+import { error } from 'console';
 
 
 @Component({
@@ -16,7 +17,7 @@ import { DataService } from '../service/data.service';
 })
 export class SimulateurCydreComponent implements OnInit {
 
-  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService) { }
+  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, public dialog : MatDialog) { }
   @ViewChild('fileInput')
   fileInput!: ElementRef<HTMLInputElement>;
   selectedFile: File | null = null;
@@ -30,6 +31,7 @@ export class SimulateurCydreComponent implements OnInit {
   selectedStation: string | null | undefined;
   selectedStationName: string | null | undefined;
   selectedStattionBSS: string | null | undefined;
+  selectedStationDisabled: boolean | undefined;
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
@@ -113,6 +115,12 @@ export class SimulateurCydreComponent implements OnInit {
     return obj;
 }
   onStartSimulation() {
+    //affiche le poppup error si la station selection est dans list_of_disabled_options
+    if (this.sharedService.isWatersheddisabled(this.selectedStation)){
+      this.dialog.open(ErrorDialog);
+    }
+    //sinon start simulation 
+    else{
     const params = {
       Parameters :{
         watershed: this.selectedStation,
@@ -142,6 +150,7 @@ export class SimulateurCydreComponent implements OnInit {
         console.error(error);
       }
     );
+    }
   }
   
   updateProgress(message: string, progress: number) {
@@ -175,6 +184,28 @@ export class SimulateurCydreComponent implements OnInit {
     return option ? `${option.index} - ${option.station_name}` : '';
   }
 
+  openDialog() {
+    this.dialog.open(PopupDialogSimulateur);
+  }
 
 
 }
+  /**
+   * 
+   */
+  @Component({
+    selector: 'popupDialogSimulateur',
+    templateUrl: './popupDialogSimulateur.html',
+  })
+  export class PopupDialogSimulateur {}
+
+
+    /**
+   * 
+   */
+    @Component({
+      selector: 'errorDialog',
+      templateUrl: './errorDialog.html',
+    })
+    export class ErrorDialog {}
+  
