@@ -21,7 +21,7 @@
       </div>
       <div class="card-body">
         <div class="input-group mt-2" *ngFor="let indicator of indicators; let i = index">
-          <input type="color" [(ngModel)]="indicator.color" class="color-selector">
+          <input type="color" [(ngModel)]="indicator.color" class="color-selector" (ngModelChange)="updateColorStyle($event,i)">
           <input type="text" class="form-control" [(ngModel)]="indicator.type" [readonly]="indicator.fixed"
             [placeholder]="indicator.type" (ngModelChange)="onIndicatorTextChange($event, i)">
           <input type="number" [(ngModel)]="indicator.value" class="form-control" [readonly]="indicator.fixed"

@@ -11,7 +11,7 @@ import * as Plotly from 'plotly.js-dist';
 import { JsonService } from '../service/json.service';
 import { switchMap } from 'rxjs';
 import { AxisType } from 'plotly.js-dist';
-import { string } from 'mathjs';
+import { index, string } from 'mathjs';
 
 @Component({
   selector: 'app-simulation-results',
@@ -99,9 +99,9 @@ export class SimulationResultsComponent implements OnInit {
     window.addEventListener('resize', () => {
       const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
       if (document.getElementById('previsions' )&& this.showResults) {
-        Plotly.relayout('previsions', { width: previsionGraphWidth });
-        
+        Plotly.relayout('previsions', {width : previsionGraphWidth});
       }
+        
     });
   }
 
@@ -120,6 +120,7 @@ export class SimulationResultsComponent implements OnInit {
             });
     console.log(this.indicators)
     this.updateIndicatorShapes();  // Mettre à jour les représentations visuelles des indicateurs
+    this.showPlot();
 }
 
   onToggleChange() {
@@ -137,9 +138,11 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   removeIndicator(index: number, type : string) {
-    this.indicators.splice(index,1)
+    this.indicators.splice(index,1);
+    this.layout?.shapes!.splice(index,1);
     this.jsonService.removeIndicator(this.simulation_id!, type).subscribe({
       next: (response) => {
+        this.results.indicators = response;
         console.log('Indicator removed successfully', response);
         // Handle additional logic after successful removal, like refreshing data
       },
@@ -147,6 +150,7 @@ export class SimulationResultsComponent implements OnInit {
         console.error('Failed to remove indicator', error);
       }
     });
+    this.updateIndicatorShapes();
     console.log(this.indicators)
     return this.indicators
   }
@@ -164,18 +168,22 @@ export class SimulationResultsComponent implements OnInit {
   }
 
 
-  updateColorStyle(indicator : any){
-    return { 'background-color': indicator.color };
+  updateColorStyle(color : string ,index : number){
+    this.indicators[index].color = color;
+    this.updateIndicatorShapes();
+    return this.indicators[index];
   }
 
   updateIndicatorShapes() {
     // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
-    this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'SimulationPeriod') || [];
+    this.layout!.shapes = [];
   
     this.indicators.forEach(indicator => {
       // Crée une nouvelle shape pour chaque indicateur
       this.layout!.shapes!.push({
         type: 'line',
+        showlegend : true,
+        name :indicator.type,
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
         y0: indicator.value,
@@ -406,18 +414,6 @@ export class SimulationResultsComponent implements OnInit {
           width: 2,
           dash: 'dot'
         }
-      }, {
-        type: 'line',
-        showlegend : true,
-        name :"1/10 du module",
-        x0: this.simulationStartDate,
-        x1: this.simulationEndDate,
-        y0: this.results.indicators[0].value,
-        y1: this.results.indicators[0].value,
-        line: {
-          color: 'red',
-          width: 2,
-        }
       }] : [],
     };
 }
@@ -516,6 +512,7 @@ export class SimulationResultsComponent implements OnInit {
       this.updateGraphData();
       this.updateLayout();
       this.showPlot();
+      this.updateIndicatorShapes();
       this.showTypologyMap();
 
   }

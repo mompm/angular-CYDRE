@@ -859,7 +859,7 @@ def update_indicator(simulation_id):
         
         #Calculer les nouvelles projections
         new_projections = results.new_projections(data.get('value'))
-        new_indicator = {"type": data['type'], "value": data['value'], "color" : "#Ff0000","results":new_projections}
+        new_indicator = {"type": data['type'], "value": data['value'], "color" : data.get("color"),"results":new_projections}
 
         if not simulation.Indicators:
             simulation.Indicators = []
@@ -924,7 +924,7 @@ def remove_indicator(simulation_id):
         # Sauvegarder les changements
         db.session.commit()
 
-        return jsonify({'Success': 'Indicator removed successfully'}), 200
+        return simulation.Indicators, 200
 
     except Exception as e:
         app.logger.error(f"Error removing indicator: {str(e)}")
