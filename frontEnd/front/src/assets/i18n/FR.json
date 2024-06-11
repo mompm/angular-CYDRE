@@ -57,5 +57,6 @@
     "selectOption": "Choisir une option",
     "limitBassin": "Afficher les limites du bassin",
     "simulatorTitle": "Simulateur Cydre",
-    "analysisTitle": "Analyse de Sensibilité"
+    "analysisTitle": "Analyse de Sensibilité",
+    "historyTitle": "Mes simulations"
 }

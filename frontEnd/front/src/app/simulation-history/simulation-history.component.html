@@ -1,0 +1,30 @@
+<div class="table-container">
+    <h1>Historique des Simulations</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Station</th>
+                <th>Durée de prévisions (j)</th>
+                <th>Date de la simulation</th>
+                <th>Date de création</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let simulation of simulations">
+                <td>{{ simulation.parameters.watershed_name }}</td>
+                <td>{{ simulation.parameters.slider }}</td>
+                <td>{{ simulation.parameters.date }}</td>
+                <td>{{ simulation.creation_date }}</td>
+                <td>
+                    <button (click)="goToSimulation(simulation.SimulationID)" class="view-btn">View</button>
+                    <button (click)="deleteSimulation(simulation.SimulationID)" class="delete-btn">Delete</button>
+                </td>
+            </tr>
+            <!-- Condition pour afficher un message si la liste est vide -->
+            <tr *ngIf="simulations.length === 0">
+                <td colspan="5">Aucune simulation enregistrée</td>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -1,4 +1,4 @@
-<div>
+<div *ngIf = "simulation_id!=null">
   <div>
     <div class="visu-align">
       <h4>Visualisation des prévisions saisonnières</h4>
@@ -26,7 +26,7 @@
             [placeholder]="indicator.type" (ngModelChange)="onIndicatorTextChange($event, i)">
           <input type="number" [(ngModel)]="indicator.value" class="form-control" [readonly]="indicator.fixed"
             placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)">
-          <button *ngIf="i !== 0" (click)="removeIndicator(i)" class="btn btn-danger">-</button>
+          <button *ngIf="i !== 0" (click)="removeIndicator(i,indicator.type)" class="btn btn-danger">-</button>
         </div>
 
         <button (click)="addIndicator()" class="btn btn-primary mt-2">+</button>
@@ -52,53 +52,52 @@
           indicateur</button>
       </div>
     </div>
-    <div *ngFor="let key of keys(results.indicators)">
+    <div *ngFor="let indicator of results.indicators">
       <div class="card my-4 ">
         <div class="card-header">
-          <h3 *ngIf="key == 'mod10'">1/10 du module</h3>
-          <h3 *ngIf="key != 'mod10'">{{key}}</h3>
+          <h3>{{indicator.type}}</h3>
         </div>
         <div class="card-body">
           <div class="row text-center">
-            <div class="col text-center" *ngIf="key == 'mod10'">
-              <h4 *ngIf="results.indicators['mod10'].results.proj_values ">{{
-                results.indicators['mod10'].results.proj_values.Q50 | number: '1.2-2' }}</h4>
-              <p *ngIf="results.indicators['mod10'].results.proj_values ">
-                [{{ min(results.indicators['mod10'].results.proj_values.Q10,results.indicators['mod10'].results.proj_values.Q10) | number: '1.3-3' }} - {{
-                max(results.indicators['mod10'].results.proj_values.Q10,results.indicators['mod10'].results.proj_values.Q90) | number: '1.3-3' }}]
+            <div class="col text-center" *ngIf="indicator.type == '1/10 du module'">
+              <h4 *ngIf="indicator.type =='1/10 du module'">{{
+                indicator.results.proj_values.Q50 | number: '1.2-2' }}</h4>
+              <p *ngIf="indicator.results.proj_values ">
+                [{{ min(indicator.results.proj_values.Q10,indicator.results.proj_values.Q10) | number: '1.3-3' }} - {{
+                max(indicator.results.proj_values.Q10,indicator.results.proj_values.Q90) | number: '1.3-3' }}]
               </p>
               <p *ngIf="results.results.data.last_date ">
                 Valeur du débit au {{ results.results.data.last_date }} en m3/s. Cela représente une évolution de {{
-                results.indicators['mod10'].results.proj_values.Q50 | number: '1.1-1' }} %
+                indicator.results.proj_values.Q50 | number: '1.1-1' }} %
               </p>
             </div>
             <div class="col text-center">
-              <h4 *ngIf="results.indicators[key].results.ndays_before_alert">{{
-                results.indicators[key].results.ndays_before_alert['Q50'] }}</h4>
-              <p *ngIf="results.indicators[key].results.ndays_before_alert">
-                [{{ min(results.indicators[key].results.ndays_before_alert.Q10, results.indicators[key].results.ndays_before_alert.Q90)  }} - 
-                {{ max(results.indicators[key].results.ndays_before_alert.Q10, results.indicators[key].results.ndays_before_alert.Q90)  }}]
+              <h4 *ngIf="indicator.results.ndays_before_alert">{{
+                indicator.results.ndays_before_alert['Q50'] }}</h4>
+              <p *ngIf="indicator.results.ndays_before_alert">
+                [{{ min(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }} - 
+                {{ max(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }}]
               </p>
               <p>Nombre de jours avant que le seuil soit atteint.</p>
             </div>
             <div class="col text-center">
-              <h4 *ngIf="results.indicators[key].results.ndays_below_alert">{{
-                results.indicators[key].results.ndays_below_alert.Q50 }}</h4>
-              <p *ngIf="results.indicators[key].results.ndays_below_alert">
-                [{{ min(results.indicators[key].results.ndays_below_alert.Q10, results.indicators[key].results.ndays_below_alert.Q90) }} - 
-                {{ max(results.indicators[key].results.ndays_below_alert.Q10, results.indicators[key].results.ndays_below_alert.Q90)  }}]
+              <h4 *ngIf="indicator.results.ndays_below_alert">{{
+                indicator.results.ndays_below_alert.Q50 }}</h4>
+              <p *ngIf="indicator.results.ndays_below_alert">
+                [{{ min(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90) }} - 
+                {{ max(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90)  }}]
               </p>
               <p>Nombre de jours cumulés sous le seuil</p>
             </div>
             <div class="col text-center">
-              <h4>{{ (results.indicators[key].results.prop_alert_all_series || 0) * 100 | number: '1.1-1' }} %</h4>
+              <h4>{{ (indicator.results.prop_alert_all_series || 0) * 100 | number: '1.1-1' }} %</h4>
               <p>-</p>
               <p>Proportion d'événements où le seuil est atteint dans les prochains mois</p>
             </div>
             <div class="col text-center">
-              <h4>{{ (results.indicators[key].results.volume50 || 0) | number: '1.2-2' }} m3</h4>
-              <p>{{ (min(results.indicators[key].results.volume10,results.indicators[key].results.volume90) || 0) | number: '1.3-3' }} - {{
-                (max(results.indicators[key].results.volume10,results.indicators[key].results.volume90) || 0) | number: '1.3-3' }}</p>
+              <h4>{{ (indicator.results.volume50 || 0) | number: '1.2-2' }} m3</h4>
+              <p>{{ (min(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.3-3' }} - {{
+                (max(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.3-3' }}</p>
               <p>Volume manquant pour compenser le dépassement du seuil</p>
             </div>
           </div>

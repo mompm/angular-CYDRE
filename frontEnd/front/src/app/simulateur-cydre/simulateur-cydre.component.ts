@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Options } from '@angular-slider/ngx-slider';
 import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,7 @@ import { SharedWatershedService } from '../service/shared-watershed.service';
 import { FormControl } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
 import { DataService } from '../service/data.service';
+import { AuthService } from '../service/auth.service';
 
 
 
@@ -16,7 +17,7 @@ import { DataService } from '../service/data.service';
 })
 export class SimulateurCydreComponent implements OnInit {
 
-  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService) { }
+  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService) { }
   myControl = new FormControl();
   filteredOptions!: Observable<{ index: string, station_name: string }[]>;
   progressMessages: string[] = [];
@@ -55,10 +56,52 @@ export class SimulateurCydreComponent implements OnInit {
 };
 
   ngOnInit() {
+    
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
-    console.log('Selected Value:', this.selectedStation, this.selectedStationName);
+
+    //récupérer les données de la simulation choisie si on vient de l'historique
+    if(localStorage.getItem('showLastSimul')=="true"){
+      if(localStorage.getItem('lastSimulationId')){
+        console.log(localStorage.getItem('lastSimulationId'))
+        this.jsonService.getResults(localStorage.getItem('lastSimulationId')!).subscribe(
+          (data) => {
+            if (data) {
+              this.simulation_id = data.simulation_id;
+              this.results = this.deepParseJson(data);
+              this.progressMessages.push('Simulation chargée avec succès.');
+              this.showResults = true;
+              console.log(this.results)
+            }
+          },
+          (error) => {
+            this.progressMessages.push('Erreur lors du chargement la simulation.');
+            console.error(error);
+          }
+        );
+      }
+      localStorage.removeItem("showLastSimul");
+      console.log('Selected Value:', this.selectedStation, this.selectedStationName);
+      console.log(this.authService.isLoggedIn)
+    }
+}
+
+  ngOnDestroy() {
+    console.log("On quitte le composant");
+    this.authService.isLoggedIn.subscribe(isLoggedIn => {
+        if (!isLoggedIn) {
+            this.deleteSimulation(this.simulation_id);
+            this.results = {}
+        }
+    }).unsubscribe();  // Important de désabonner pour éviter les fuites de mémoire
+}
+
+  private deleteSimulation(simulation_id:string) {
+    this.http.post(`http://localhost:5000/api/delete_simulation/${simulation_id}`, {}).subscribe({
+      next: (response) => console.log('Simulation deleted successfully'),
+      error: (error) => console.error('Failed to delete simulation', error)
+    });
   }
 
   initGDFStations() {
@@ -92,6 +135,8 @@ export class SimulateurCydreComponent implements OnInit {
       )
       .map(station => ({ index: station.index, station_name: station.station_name }));
   }
+
+
   deepParseJson(obj: any): any {
     if (typeof obj === 'object' && obj !== null) {
         for (const key in obj) {
@@ -115,6 +160,7 @@ export class SimulateurCydreComponent implements OnInit {
       },
       UserID : localStorage.getItem("UserID")
     };
+    console.log("localStorage UserID" , localStorage.getItem("UserID"))
 
     this.progressMessages = [];
     this.progressValue = 0;
@@ -127,6 +173,7 @@ export class SimulateurCydreComponent implements OnInit {
           this.simulation_id = data.simulation_id;
           this.results = this.deepParseJson(data.results);
           this.progressMessages.push('Simulation terminée avec succès.');
+          this.saveSimulationId(this.simulation_id);
           this.showResults = true;
           console.log(this.results)
         }
@@ -136,6 +183,10 @@ export class SimulateurCydreComponent implements OnInit {
         console.error(error);
       }
     );
+  }
+
+  saveSimulationId(simulationId: string) {
+    localStorage.setItem('lastSimulationId', simulationId);
   }
   
   updateProgress(message: string, progress: number) {

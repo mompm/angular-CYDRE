@@ -16,6 +16,7 @@ import { forEach } from 'mathjs';
   providedIn: 'root'
 })
 export class JsonService {
+  
 private baseUrl = 'http://localhost:5000';
 
 
@@ -54,21 +55,22 @@ private baseUrl = 'http://localhost:5000';
 		return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/`+simulation_id).pipe(
 		  tap(() => console.log('Fetching M10 values...'))
 		);
-	  }	
+	  }
+
+	  removeIndicator(simulationId: string, indicatorType: string): Observable<any> {
+		const url = `${this.baseUrl}/api/simulateur/remove_indicator/${simulationId}`;
+		return this.http.post(url, { type: indicatorType });
+	  }  
+	  
 	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Observable<any> {
         // Création d'un tableau temporaire pour ne pas modifier le tableau original
-        const tempIndicators = indicators.map(indicator => ({
-            ...indicator,
-            type: indicator.type === "1/10 du module" ? "mod10" : indicator.type
-        }));
+        const tempIndicators = indicators;
 
         // Création des requêtes HTTP à partir du tableau temporaire
         const updateRequests = tempIndicators.map(indicator => {
             console.log("Updating indicator:", indicator.type);
             return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator);
         });
-
-        // Utilisation de forkJoin pour attendre la complétion de toutes les requêtes
 	
 		// Utiliser forkJoin pour exécuter toutes les requêtes POST en parallèle et attendre que toutes soient terminées
 		return forkJoin(updateRequests).pipe(
@@ -161,5 +163,9 @@ private baseUrl = 'http://localhost:5000';
 		const url = `/osur/stationPrecipitation/${id}`;
 		return lastValueFrom(this.http.get<Array<dataPrecipitation>>(url));
 	}
+
+	getUserSimulations(): Observable<any[]> {
+		return this.http.get<any[]>(`${this.baseUrl}/api/simulations`,{ withCredentials: true });
+	  }
 
 }

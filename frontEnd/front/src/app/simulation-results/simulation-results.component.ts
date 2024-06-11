@@ -11,6 +11,7 @@ import * as Plotly from 'plotly.js-dist';
 import { JsonService } from '../service/json.service';
 import { switchMap } from 'rxjs';
 import { AxisType } from 'plotly.js-dist';
+import { string } from 'mathjs';
 
 @Component({
   selector: 'app-simulation-results',
@@ -36,8 +37,8 @@ export class SimulationResultsComponent implements OnInit {
   sort!: MatSort;
 
   @Input() results: any = {
-    indicators:{},
-    results:{
+    indicators:[],
+    results:{ 
       corr_matrix:"",
       data:"",
       similarity:{
@@ -52,7 +53,7 @@ export class SimulationResultsComponent implements OnInit {
   }};
 
   taskId: string = "";
-  @Input() simulation_id: string | undefined;
+  @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
@@ -81,7 +82,7 @@ export class SimulationResultsComponent implements OnInit {
 
   ngOnInit(): void {
     console.log(this.results)
-
+    this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
     if(this.results.results.corr_matrix){//création de la matrice de corrélation
       this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
       this.dataSource.paginator = this.paginator;
@@ -104,23 +105,22 @@ export class SimulationResultsComponent implements OnInit {
     });
   }
 
-  fillIndicators(){
-    this.indicators=[]
-    for (const key in this.results.indicators) {
-      if (this.results.indicators.hasOwnProperty(key)) {
-          const indicator = this.results.indicators[key];
-          // Ajoutez une logique ici pour déterminer si 'fixed' doit être true ou false
-          let fixedValue = key === "mod10";  // Exemple: fixe si c'est mod10
-
-          this.indicators.push({
-              type: key=="mod10" ?"1/10 du module":key,
-              value: indicator.value,
-              color: "#Ff0000",  // couleur par défaut si non spécifié
-              fixed: fixedValue
-          });
-      }
-  }
-  }
+  fillIndicators() {
+    this.indicators = [];  // Réinitialiser le tableau des indicateurs
+    // Supposons que `this.simulationData` contient le tableau des indicateurs
+    this.results.indicators.forEach((indicator: { type: string; value : number; results: any; color :string})=> {
+        // `data` est un objet avec `results`, `type`, et `value`
+        let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
+                this.indicators.push({
+                    type: indicator.type,  // Ajouter la désignation du quantile au type
+                    value: indicator.value,
+                    color: indicator.color,  // Couleur par défaut, peut-être modifiée selon des règles spécifiques
+                    fixed: fixedValue
+                });
+            });
+    console.log(this.indicators)
+    this.updateIndicatorShapes();  // Mettre à jour les représentations visuelles des indicateurs
+}
 
   onToggleChange() {
     this.updateComponentsWithResults(this.results);
@@ -136,8 +136,17 @@ export class SimulationResultsComponent implements OnInit {
 
   }
 
-  removeIndicator(index: number) {
+  removeIndicator(index: number, type : string) {
     this.indicators.splice(index,1)
+    this.jsonService.removeIndicator(this.simulation_id!, type).subscribe({
+      next: (response) => {
+        console.log('Indicator removed successfully', response);
+        // Handle additional logic after successful removal, like refreshing data
+      },
+      error: (error) => {
+        console.error('Failed to remove indicator', error);
+      }
+    });
     console.log(this.indicators)
     return this.indicators
   }
@@ -193,10 +202,11 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   updateResults() {
-    if(this.simulation_id){
-      console.log("updating results for ", this.simulation_id)  
+    console.log("simulation_id:", this.simulation_id)
+    if(localStorage.getItem('lastSimulationId')){
+      console.log("updating results for ", localStorage.getItem('lastSimulationId'))  
       //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
-      this.jsonService.updateIndicatorsValue(this.simulation_id,this.indicators.filter(indicator => indicator.type !== '1/10 du module')).subscribe(
+      this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.type !== '1/10 du module')).subscribe(
         (data) => {this.results.indicators = data;
           this.fillIndicators()
         }
@@ -402,8 +412,8 @@ export class SimulationResultsComponent implements OnInit {
         name :"1/10 du module",
         x0: this.simulationStartDate,
         x1: this.simulationEndDate,
-        y0: this.results.indicators.mod10.value,
-        y1: this.results.indicators.mod10.value,
+        y0: this.results.indicators[0].value,
+        y1: this.results.indicators[0].value,
         line: {
           color: 'red',
           width: 2,
@@ -514,7 +524,7 @@ export class SimulationResultsComponent implements OnInit {
     this.dialog.open(Dialogsimulationresults);
   }
 
-  keys(obj: any) {//fonction pour retourner les clés d'un json 
+  keys(obj: any) {//fonction pour retourner les clés d'un json
     return Object.keys(obj);
   }
 

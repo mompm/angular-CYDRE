@@ -4,7 +4,9 @@ import flask
 from flask import jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
+from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
+from sqlalchemy.orm.attributes import flag_modified
+
 import numpy as np
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -133,18 +135,29 @@ class Simulation(db.Model):
     UserID = db.Column(db.Integer, nullable=False)
     Parameters = db.Column(db.JSON, nullable=True)
     SimulationDate = db.Column(DateTime, default=func.now())
-    Indicators = db.Column(db.JSON, nullable = True)
+    Indicators = db.Column(db.JSON, default= [])
     Results = db.Column(db.JSON, nullable = True, default = {})
 
-class UserConfigurations(Base):
-    __tablename__ = 'UserConfigurations'
 
-    ConfigID = Column(String(36), primary_key=True)
-    UserID = Column(Integer, index=True)
-    SimulationConfig = Column(JSON)
+@app.route('/api/simulations', methods=['GET'])
+@login_required
+def get_simulations():
+    # Assurez-vous que l'utilisateur est connecté et récupérez son ID
+    user_id = current_user.id
 
-    def __repr__(self):
-        return f"<UserConfigurations(ConfigID={self.ConfigID}, UserID={self.UserID})>"
+    # Récupérer les simulations correspondant à cet utilisateur
+    simulations = Simulation.query.filter_by(UserID=user_id).all()
+
+    # Préparer les données pour la réponse
+    results = [
+        {'SimulationID': simulation.SimulationID,
+         'parameters': simulation.Parameters,
+         'creation_date': simulation.SimulationDate.strftime("%Y-%m-%d %H:%M:%S")}  # Formatage de la date
+        for simulation in simulations
+    ]
+
+    # Renvoyer les données sous forme de JSON
+    return jsonify(results)
 
 @app.route('/osur/getxmlnames', methods=['GET'])
 @cross_origin()
@@ -463,37 +476,27 @@ def get_water_table_depth(id):
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
-def save_config(user_id,config_id):
-    new_config = UserConfigurations(
-        UserID = user_id,
-        ConfigID = config_id,
-        SimulationConfig = {}
-    )
-    db.session.add(new_config)
-    db.session.commit()
-
-def save_config_field(config_id, name, value):
+@app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
+def delete_simulation(simulation_id):
     try:
-        # Construction du chemin JSON pour la mise à jour
-        json_path = f'$.{name}'
+         # Recherche de la simulation à supprimer
+        simulation = Simulation.query.get(simulation_id)
+        if not simulation:
+            return jsonify({"Error": "Simulation not found"}), 404
         
-        # Préparation de la mise à jour
-        stmt = (
-            update(UserConfigurations)
-            .where(UserConfigurations.ConfigID == config_id)
-            .values({UserConfigurations.SimulationConfig: func.json_set(UserConfigurations.SimulationConfig, json_path, value)})
-        )
-        
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
+        # Supprimer la simulation correspondante
+        db.session.delete(simulation)
         db.session.commit()
+        return jsonify({"Succes":"Simulation deleted succesfully"}),200
     except Exception as e:
-        print("Error saving config field : ", str(e))
+        return jsonify({"Error":str(e)}),500
+
 
 def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
-        init = INI.Initialization(app_root)  # Assurez-vous que `app_root` est correctement défini
+        # Initialiser l'app cydre
+        init = INI.Initialization(app_root)  
         cydre_app = init.cydre_initialization()
         
         # Mettre à jour les paramètres de l'application en fonction des entrées
@@ -526,7 +529,7 @@ def run_cydre():
             SimulationID=simulation_id,
             UserID=data['UserID'],
             Parameters=data['Parameters'],
-            Indicators = {},
+            Indicators = [],
             Results = {"similarity": {"clusters":{},
                            "similar_watersheds": [],
                            "selected_scenarios":{},
@@ -558,21 +561,18 @@ def run_spatial_similarity(simulation_id):
         return jsonify({'error': 'Simulation not found'}), 404
     
     try:
+        # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
-        # params = simulation.Parameters
-        # Initialisation et création de cydre_app
-        # cydre_app = create_cydre_app(params)
+        # Lancer le calcul des similarités spatiales
         cydre_app.run_spatial_similarity(spatial=True)
-        # Convertir le DataFrame en JSON
+        # Convertir les données nécessaires aux étapes suivantes ou au résulats en JSON
         clusters_json = cydre_app.Similarity.clusters.to_json()
-        # print(params.get('watershed'))
         similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
-        print(similar_watersheds_json)
         # Chemin JSON pour la mise à jour
         json_path_clusters = '$.similarity.clusters'
         json_path_similar_watersheds = '$.similarity.similar_watersheds'
 
-        # Préparation de la mise à jour
+        # Préparation de la mise à jour pour stocker les données
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
@@ -592,26 +592,27 @@ def run_spatial_similarity(simulation_id):
     except Exception as e:
         app.logger.error('Error running spatial similarity": %s', str(e))
         return jsonify({'error': str(e)}), 500
-    # return jsonify({"Succes":"Ran spatial similarity"}), 200
-    simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
-
-    return simulation.Results, 200
+    
+    return {"Success":"Ran spatial similarity"}, 200
 
 
 @app.route('/api/run_timeseries_similarity/<simulation_id>', methods=['POST'])
 def run_timeseries_similarity(simulation_id):
     
     try:
+        # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
+        # Lancer le calcul des similarités temporelles, en s'appuyant sur les résultats des similarités spatiales
         cydre_app.run_timeseries_similarity(json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
-        
+        # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
+        # La transformer en JSON pour la stocker
         for key,value in corr_matrix.items():
             if key=="specific_discharge":
                 specific_discharge = value.to_json(orient='split')
             elif key=="recharge":
                 recharge = value.to_json(orient='split')
-        # Chemin JSON pour la mise à jour
+        # Chemins JSON pour les mises à jour
         json_path_specific_discharge = '$.similarity.corr_matrix.specific_discharge'
         json_path_recharge = '$.similarity.corr_matrix.recharge'
         json_path_similar_period = '$.similarity.user_similarity_period'
@@ -649,24 +650,20 @@ def run_timeseries_similarity(simulation_id):
 @app.route('/api/select_scenarios/<simulation_id>', methods=['POST'])
 def select_scenarios(simulation_id):
     try:
+        # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
-
+        # Récuperer les éléments nécesssaires
         specific_discharge = simulation.Results.get("similarity").get("corr_matrix").get("specific_discharge")
         recharge = simulation.Results.get("similarity").get("corr_matrix").get("recharge")
-        print("Recharge : ",recharge)
-        # Conversion des chaînes JSON en DataFrame
+        # Reconversion des chaînes JSON en DataFrame pour leur utilisation
         if specific_discharge:
             specific_discharge_df = pd.read_json(specific_discharge, orient='split')
         if recharge:
             recharge_df = pd.read_json(recharge, orient='split')
 
-        print({"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-        # Création de l'instance cydre_app (ou récupération si déjà existante)
-        # cydre_app = create_cydre_app(simulation.Parameters)
-
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
         selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-
+        # Chemin JSON de la mise à jour
         selected_scenarios_path = '$.similarity.selected_scenarios'
         # Préparation de la requête SQL pour la mise à jour
         stmt = (
@@ -685,18 +682,20 @@ def select_scenarios(simulation_id):
     
 
 def start_simulation_cydre_app(simulation_id):
+    # Retrouver dans la base de données la simulation correspondante
     simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
 
     if not simulation:
         return jsonify({'error': 'Simulation not found'}), 404
     
     try:
+        # Récupérer les paramètres
         params = simulation.Parameters
-        print(params)
 
         # Initialisation et création de cydre_app
         cydre_app = create_cydre_app(params)
         watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+        # Stocker le nom de la station dans les paramètres
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
@@ -713,8 +712,11 @@ def start_simulation_cydre_app(simulation_id):
     
 @app.route('/api/simulateur/getGraph/<simulation_id>', methods=['GET'])
 def getGraph(simulation_id):
+    # Recréer l'app correspondant à l'id de simulation
     cydre_app,simulation = start_simulation_cydre_app(simulation_id)
+
     try:
+        # Récuperer et re-transformer les éléments nécessaire à la création du graphe
         scenarios_grouped =  db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
@@ -747,15 +749,15 @@ def getGraph(simulation_id):
 
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
 
-        # print("streamflow executed\n")
-        # print("user_similarity_period :",user_similarity_period,"\n")
-        # print("similar_watersheds :",similar_watersheds,"\n")
-
+        #Créer le graphe 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
         app.logger.info('Cydre app and Graph results are initialized and stored')
+
+        # Calculer les projections
         graph_results = results.plot_streamflow_projections(module=True)
+        # Transformer les résultats en JSON pour les stocker
         json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],"last_date":graph_results['last_date']})
         # Mise à jour de chaque champ
         stmt = (
@@ -768,8 +770,8 @@ def getGraph(simulation_id):
                 )
             })
         )
-
-        mod10_string = json.dumps({"value":graph_results['m10'],"results":{
+        # Enregistrer les résultats liés au 1/10 du module dans la colonne Indicators
+        mod10_string = {"type":"1/10 du module","value":graph_results['m10'], "color" : "#Ff0000", "results":{
         'proj_values': graph_results['proj_values'],
         'ndays_before_alert':graph_results['ndays_before_alert'],
         'ndays_below_alert': graph_results['ndays_below_alert'],
@@ -777,20 +779,23 @@ def getGraph(simulation_id):
         'volume50': graph_results['volume50'],
         'volume10': graph_results['volume10'],
         'volume90': graph_results['volume90'],
-        }})
+        }}
+
+        # Trouver l'indicateur existant ou ajouter un nouvel indicateur
+        found = False
+        if simulation.Indicators:
+            for indicator in simulation.Indicators:
+                if indicator['type'] == "1/10 du module":
+                    indicator.update(mod10_string)
+                    found = True
+                    break
+
+        if not found:
+            if not simulation.Indicators:
+                simulation.Indicators = []
+            simulation.Indicators.append(mod10_string)
         # Exécution de la mise à jour
         db.session.execute(stmt)
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({
-                Simulation.Indicators: func.json_set(
-                    Simulation.Indicators,text("'$.mod10'"),text(f"CAST(:m10_string AS JSON)")
-                                                                    
-                )
-            })
-         )
-        db.session.execute(stmt,{'m10_string': mod10_string})
         db.session.commit()
 
         return jsonify({'success':'Graph has been returned and stored'}), 200
@@ -803,18 +808,17 @@ def update_indicator(simulation_id):
     try:
         data = request.get_json()
         if not data or 'type' not in data or 'value' not in data:
-            return jsonify({'Error': 'Missing data for indicator or value'}), 400
+            return jsonify({'Error': 'Missing data for indicator name or value'}), 400
 
         simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
         if not simulation:
             return jsonify({'Error': 'Simulation not found'}), 404
 
-        # Assuming Indicators is already properly initialized to an empty JSON object if null
-        indicator_path = f"$.{data['type']}"
-        new_value = data['value']
-
+        
+        # Recréer l'app correspondant à l'id de simulation
         cydre_app, simulation = start_simulation_cydre_app(simulation_id)
 
+        #Récuperer les scénarios de la simulation
         scenarios_grouped =  db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
@@ -833,9 +837,11 @@ def update_indicator(simulation_id):
         series = pd.Series(data_values, index=index)
         cydre_app.scenarios_grouped = series
 
+        # Récupérer les autres paramètres de la simulation nécessaires au calcul des prédictions liées à l'indicateur
         watershed_name =  db.session.query(
             func.json_extract(Simulation.Parameters, '$.watershed_name')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
+        
         user_similarity_period =db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.user_similarity_period')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
@@ -848,25 +854,26 @@ def update_indicator(simulation_id):
 
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
 
-        # print("streamflow executed\n")
-        # print("user_similarity_period :",user_similarity_period,"\n")
-        # print("similar_watersheds :",similar_watersheds,"\n")
-
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
-        new_projections = results.new_projections(new_value)
-        indicator_result_json = json.dumps({"value":new_value, "results":new_projections})
-        # Make sure the JSON path and value are correctly passed to json_set
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({
-                Simulation.Indicators: func.json_set(
-                    Simulation.Indicators, text("'" + indicator_path + "'"), text(f"CAST(:indicator_result_json AS JSON)"))}
-                )
-            )
-        db.session.execute(stmt,{'indicator_result_json': indicator_result_json})
+        #Calculer les nouvelles projections
+        new_projections = results.new_projections(data.get('value'))
+        new_indicator = {"type": data['type'], "value": data['value'], "color" : "#Ff0000","results":new_projections}
+
+        if not simulation.Indicators:
+            simulation.Indicators = []
+        found =False
+        for indicator in simulation.Indicators:
+            if indicator['type'] == data['type']:
+                indicator.update(new_indicator)
+                found = True
+                break
+
+        if not found:
+            print("ADDING INDICATOR TO DATABASE")
+            simulation.Indicators.append(new_indicator)   
+        flag_modified(simulation, "Indicators")
         db.session.commit()
         return jsonify({"Success": "Indicator updated or added successfully"}), 200
 
@@ -877,19 +884,57 @@ def update_indicator(simulation_id):
 
 @app.route('/api/simulateur/get_indicators_value/<simulation_id>', methods=['GET'])
 def get_indicators_value(simulation_id):
-
+    #Récuperer la simulation concernée
     simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
     if not simulation:
         return jsonify({'Error': 'Simulation not found'}), 404
     
-    # cydre_app, simulation = start_simulation_cydre_app(simulation_id)
-
+    #Récupérer ses indicateurs
     indicators = simulation.Indicators
     return indicators, 200
 
+@app.route('/api/simulateur/remove_indicator/<simulation_id>', methods=['POST'])
+def remove_indicator(simulation_id):
+    try:
+        # Récupérer les données envoyées avec la requête, supposons que l'indicateur à supprimer soit identifié par son 'type'
+        data = request.get_json()
+        indicator_type = data.get('type')
+
+        if not indicator_type:
+            return jsonify({'Error': 'Missing indicator type'}), 400
+
+        # Trouver la simulation correspondante
+        simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
+        if not simulation:
+            return jsonify({'Error': 'Simulation not found'}), 404
+
+        # Vérifier que la simulation a des indicateurs
+        if not simulation.Indicators:
+            return jsonify({'Error': 'No indicators to remove'}), 404
+
+        # Filtrer pour enlever l'indicateur
+        original_count = len(simulation.Indicators)
+        simulation.Indicators = [indicator for indicator in simulation.Indicators if indicator.get('type') != indicator_type]
+        if len(simulation.Indicators) == original_count:
+            return jsonify({'Message': 'No indicator found with the specified type'}), 404
+
+        # Marquer les indicateurs comme modifiés
+        flag_modified(simulation, "Indicators")
+
+        # Sauvegarder les changements
+        db.session.commit()
+
+        return jsonify({'Success': 'Indicator removed successfully'}), 200
+
+    except Exception as e:
+        app.logger.error(f"Error removing indicator: {str(e)}")
+        return jsonify({'Error': str(e)}), 500
+
 @app.route('/api/simulateur/getCorrMatrix/<simulation_id>', methods=['GET'])
 def getCorrMatrix(simulation_id):
+    # Recréer l'app correspondant à l'id de simulation
     cydre_app, simulation = start_simulation_cydre_app(simulation_id)
+
     scenarios_grouped =  db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
@@ -938,40 +983,12 @@ def get_results(simulation_id):
             return jsonify({"Error":"No simulation ID given"}),500
     except Exception as e :
         return jsonify({"Error loading results ":str(e)})
-# @app.route('/api/simulateur/get_indicator_values/<simulation_id>/', methods=['GET'])
-# def get_indicator_values(simulation_id): #returns all the values computed with each indicator
-#     cydre_app,simulation = start_simulation_cydre_app(simulation_id)
-#     try:
-        
-#         if cydre_app is None:
-#             app.logger.error('Cydre app is not initialized')
-#             return jsonify({'error': 'Cydre app is not initialized'}), 500
-        
-#         indicators = simulation.Indicators or {}
-#         # if()
-
-#         # # Update the indicator and get new projections
-#         # new_results = graph_results.new_projections(app.config.get('m10_indicator'))
-
-#         # results_storage[task_id]['ndays_before_alert'] = new_results['ndays_before_alert']
-#         # results_storage[task_id]['ndays_below_alert'] = new_results['ndays_below_alert']
-#         # results_storage[task_id]['volume10'] = new_results['volume10']
-#         # results_storage[task_id]['volume50'] = new_results['volume50']
-#         # results_storage[task_id]['volume90'] = new_results['volume90']
-#         # results_storage[task_id]['prop_alert_all_series'] = new_results['prop_alert_all_series']
 
 
-#         # results_storage[task_id]['ndays_below_alert'] = new_results['ndays_below_alert']
-
-#         return jsonify(new_results), 200
-#     except Exception as e:
-#         app.logger.error('Error getting updated m10 values %s', str(e))
-#         return jsonify({'error': str(e)}), 500
-
-    
+#reprise de la classe Outputs permettant de générer le graphe
 class Graph():
     def __init__(self,cydre_app,watershed_name, stations, selected_date,scenarios_grouped,user_similarity_period,similar_watersheds,
-                    log=True, module=True, baseflow=False, options='viz_plotly',):
+                    log=True, module=True, baseflow=False, options='viz_plotly'):
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
         self.streamflow_proj = cydre_app.df_streamflow_forecast
         self.watershed_name = watershed_name

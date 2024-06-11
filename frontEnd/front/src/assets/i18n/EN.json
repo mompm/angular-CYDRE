@@ -57,5 +57,6 @@
     "selectOption": "Select an option",
     "limitBassin": "Show basin boundaries",
     "simulatorTitle": "Cydre Simulator",
-    "analysisTitle": "Sensibility Analysis"
+    "analysisTitle": "Sensibility Analysis",
+    "historyTitle": "My simulations"
 }

@@ -11,6 +11,7 @@ import { CreateAccountComponent } from './create-account/create-account.componen
 import { AuthGuard } from './service/auth.guard';
 import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component';
+import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
   { path: 'ficheSite', component: FicheSiteComponent },
@@ -23,9 +24,10 @@ const routes: Routes = [ //indicate which component to load depending on the pat
   },
   { path: 'settings', component: SettingsComponent },
   { path: 'login', component: LoginComponent},
-  { path: 'create-account', component: CreateAccountComponent, canActivate: [AuthGuard] },
+  { path: 'create-account', component: CreateAccountComponent, canActivate: [AuthGuard], data: {checkType : 'dev'} },
   { path: 'simulator', component: SimulateurCydreComponent},
-  { path: 'analysis', component:AnalyseDeSensibiliteComponent },
+  { path: 'simulationHistory', component: SimulationHistoryComponent,canActivate: [AuthGuard], data: {checkType : 'log'}},
+  { path: 'analysis', component:AnalyseDeSensibiliteComponent, canActivate: [AuthGuard], data: {checkType : 'sci'} },
   { path: '**', redirectTo: '/ficheSite', pathMatch: 'full'}
 ];
 

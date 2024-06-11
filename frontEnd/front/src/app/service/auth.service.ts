@@ -22,6 +22,7 @@ export class AuthService {
           localStorage.setItem('username', response.username);
           localStorage.setItem('role', response.role);
           localStorage.setItem('UserID', response.UserID)
+          localStorage.removeItem('lastSimulationId');
         }
       })
     );
@@ -40,6 +41,8 @@ export class AuthService {
   private clearClientSession(): void {
     localStorage.removeItem('username');
     localStorage.removeItem('role');
+    localStorage.removeItem('UserID');
+    localStorage.removeItem('lastSimulationId');
     this.loggedIn.next(false);
     this.router.navigate(['/login']);
   }
