@@ -1,12 +1,46 @@
 @import "src/assets/styles/font-color.scss";
 
+.navbar {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  background-color: #1a1a1a;
+  padding: 10px 20px;
+}
+
+.navbar-brand img {
+  height: 50px;
+}
+
+.navbar-nav .nav-item {
+  margin-left: 20px;
+}
+
+.navbar-nav .menu-item {
+  color: $font-white;
+  text-decoration: none;
+  padding: 10px 15px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.navbar-nav .menu-item:hover {
+  background-color: #333333;
+  border-radius: 5px;
+}
+
+.navbar-toggler-icon {
+  color: #ffffff;
+}
+
+.navbar-logo {
+  height: 80px; /* Ajustez cette hauteur selon vos besoins */
+  margin-left: 10px;
+}
+
 .navbar-underline-onglet {
-    display: inline-block;
-    position: relative;
-    color: $font-white;
-  }
-
-
+  display: inline-block;
+  position: relative;
+  color: $font-white;
+}
 
 .navbar-underline-onglet::after {
   content: '';
@@ -26,28 +60,24 @@
   transform-origin: bottom left;
 }
 
-//ne pas changer ce nom il s'agit du style de l'élèment <li><a> dans le html
-li a{
+li a {
   margin-right: 20px;
 }
 
-//ne pas changer ce nom il s'agit du style de l'élèment <a> dans le html
-a{
+a {
   text-decoration: none;
   color: $font-white;
   font-weight: 500;
   font-size: 1.25rem;
   text-align: center;
-
 }
-a:hover{
+
+a:hover {
   color: $font-white;
 }
 
-//ne pas change ce nom il s'agit du style de l'élèment <img> dans le html
-img{
+img {
   margin-right: 1%;
-
 }
 
 .menu-button {
@@ -71,10 +101,11 @@ img{
   text-decoration: none;
   color: black; /* Change the color as needed */
 }
-.logo{
+
+.logo {
   display: flex;
 }
 
-.cydre-logo{
+.cydre-logo {
   margin-left: 5em;
 }
