@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, Subject, catchError, forkJoin, lastValueFrom, map, of, switchMap, takeWhile, tap, timer } from 'rxjs';
+import {Observable, Subject, catchError, concatMap, forkJoin, from, lastValueFrom, map, of, switchMap, takeWhile, tap, timer, toArray } from 'rxjs';
 import dataGDFWatersheds from '../model/dataGDFWatersheds';
 import dataGDFPiezometry from '../model/dataGDFPiezometry';
 import dataDischarge from '../model/dataDischarge';
@@ -63,19 +63,16 @@ private baseUrl = 'http://localhost:5000';
 	  }  
 	  
 	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Observable<any> {
-        // Création d'un tableau temporaire pour ne pas modifier le tableau original
-        const tempIndicators = indicators;
-
-        // Création des requêtes HTTP à partir du tableau temporaire
-        const updateRequests = tempIndicators.map(indicator => {
-            console.log("Updating indicator:", indicator.type);
-            return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator);
-        });
+		const updateRequests = from(indicators).pipe(
+			concatMap(indicator => {
+				console.log("Updating indicator:", indicator.type);
+				return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator);
+			}),
+			toArray()  // Regroupe toutes les réponses en un seul tableau
+		);
 	
-		// Utiliser forkJoin pour exécuter toutes les requêtes POST en parallèle et attendre que toutes soient terminées
-		return forkJoin(updateRequests).pipe(
+		return updateRequests.pipe(
 			tap(() => console.log('All indicators updated')),
-			// Une fois toutes les requêtes terminées, obtenir les valeurs des indicateurs
 			switchMap(() => this.get_indicators_value(simulation_id))
 		);
 	}

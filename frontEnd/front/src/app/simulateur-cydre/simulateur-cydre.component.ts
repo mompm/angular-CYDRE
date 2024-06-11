@@ -17,7 +17,7 @@ import { AuthService } from '../service/auth.service';
   templateUrl: './simulateur-cydre.component.html',
   styleUrls: ['./simulateur-cydre.component.scss']
 })
-export class SimulateurCydreComponent implements OnInit {
+export class SimulateurCydreComponent implements OnInit, OnDestroy {
 
   constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog) { }
   @ViewChild('fileInput')

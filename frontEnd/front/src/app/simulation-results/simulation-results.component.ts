@@ -2,7 +2,7 @@ import { Options } from '@angular-slider/ngx-slider/options';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
@@ -19,10 +19,22 @@ import { index, string } from 'mathjs';
   templateUrl: './simulation-results.component.html',
   styleUrls: ['./simulation-results.component.scss']
 })
-export class SimulationResultsComponent implements OnInit {
+export class SimulationResultsComponent implements OnInit, OnDestroy {
   on: boolean = false;
-  
-  constructor(private jsonService: JsonService, public dialog : MatDialog){}
+  private resizeListener : ()=> void;
+
+  constructor(private jsonService: JsonService, public dialog : MatDialog){
+    this.resizeListener = () => {
+      console.log("resizing")
+      const mapwidth = 0.40 * window.innerWidth;
+      const mapHeight = document.getElementById("matrice")!.clientHeight ;
+      Plotly.relayout('map', { width: mapwidth, height: mapHeight});
+
+      const previsionGraphWidth = window.innerWidth * 0.90;
+      Plotly.relayout('previsions', { width: previsionGraphWidth });
+    };
+  }
+
   displayedColumns: string[] = ['Year', 'ID', 'Coeff'];
   dataSource : MatTableDataSource<any> | undefined;
 
@@ -84,6 +96,7 @@ export class SimulationResultsComponent implements OnInit {
   ngOnInit(): void {
     console.log(this.results)
     this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
+
     if(this.results.results.corr_matrix){//création de la matrice de corrélation
       this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
       this.dataSource.paginator = this.paginator;
@@ -97,13 +110,11 @@ export class SimulationResultsComponent implements OnInit {
       console.log("Problème lors du chargement des indicateurs")
     }
 
-    window.addEventListener('resize', () => {
-      const previsionGraphWidth = document.getElementById('previsions')!.clientWidth*0.90;
-      if (document.getElementById('previsions' )&& this.showResults) {
-        Plotly.relayout('previsions', {width : previsionGraphWidth});
-      }
-        
-    });
+    window.addEventListener('resize', this.resizeListener);
+  }
+
+  ngOnDestroy(){
+    window.removeEventListener('resize', this.resizeListener);
   }
 
   fillIndicators() {
@@ -116,12 +127,14 @@ export class SimulationResultsComponent implements OnInit {
                     type: indicator.type,  // Ajouter la désignation du quantile au type
                     value: indicator.value,
                     color: indicator.color,  // Couleur par défaut, peut-être modifiée selon des règles spécifiques
-                    fixed: fixedValue
+                    fixed: fixedValue,
+                    modified:false
                 });
             });
     console.log(this.indicators)
-    this.updateIndicatorShapes();  // Mettre à jour les représentations visuelles des indicateurs
     this.showPlot();
+    this.updateIndicatorShapes(); // Mettre à jour les représentations visuelles des indicateurs
+
 }
 
   onToggleChange() {
@@ -132,7 +145,8 @@ export class SimulationResultsComponent implements OnInit {
       type: "",
       value: 0,
       color: "#Ff0000",  // couleur par défaut si non spécifié
-      fixed: false
+      fixed: false,
+      modified:true
   })
   console.log(this.indicators)
 
@@ -158,64 +172,71 @@ export class SimulationResultsComponent implements OnInit {
   onIndicatorTextChange(text : string, index : number){
     //changer le type de l'indicateur concerné
       this.indicators[index].type = text ?text:"";
+      this.indicators[index].modified = true;
       this.updateIndicatorShapes();
       return this.indicators[index]
   }
   onIndicatorValueChange(value: number, index: number) {
       //changer la valeur de l'indicateur concerné
       this.indicators[index].value = value ?value:0;
+      this.indicators[index].modified = true;
       this.updateIndicatorShapes();
       return this.indicators[index]
   }
 
 
   updateColorStyle(color : string ,index : number){
+    if(index!=0){
     this.indicators[index].color = color;
+    this.indicators[index].modified = true;
     this.updateIndicatorShapes();
+    }
     return this.indicators[index];
   }
 
   updateIndicatorShapes() {
-    // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
-    this.layout!.shapes = [];
-  
-    this.indicators.forEach(indicator => {
-      // Crée une nouvelle shape pour chaque indicateur
-      this.layout!.shapes!.push({
-        type: 'line',
-        showlegend : true,
-        name :indicator.type,
-        x0: this.simulationStartDate,
-        x1: this.simulationEndDate,
-        y0: indicator.value,
-        y1: indicator.value,
-        line: {
-          color: indicator.color,
-          width: 2,
-          dash: 'solid'
-        },
-        xref: 'x',
-        yref: 'y'
+    if(document.getElementById('previsions')){
+      // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
+      this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'date de simulation') || [];
+    
+      this.indicators.forEach(indicator => {
+        // Crée une nouvelle shape pour chaque indicateur
+        this.layout!.shapes!.push({
+          type: 'line',
+          showlegend : true,
+          name :indicator.type,
+          x0: this.simulationStartDate,
+          x1: this.simulationEndDate,
+          y0: indicator.value,
+          y1: indicator.value,
+          line: {
+            color: indicator.color,
+            width: 2,
+            dash: 'solid'
+          },
+          xref: 'x',
+          yref: 'y'
+        });
       });
-    });
-  
-    // Met à jour le graphe avec les nouvelles shapes
-    Plotly.relayout('previsions', { shapes: this.layout!.shapes });
+    
+      // Met à jour le graphe avec les nouvelles shapes
+      Plotly.relayout('previsions', { shapes: this.layout!.shapes });
+    }
   }
 
-  onM10Change(value: number) {
-    // this.m10SliderValue = value;
-    this.updateLayout();
-    this.showPlot();
-    this.showTypologyMap();
-  }
+  // onM10Change(value: number) {
+  //   // this.m10SliderValue = value;
+  //   this.updateLayout();
+  //   this.showPlot();
+  //   this.showTypologyMap();
+  // }
 
   updateResults() {
     console.log("simulation_id:", this.simulation_id)
     if(localStorage.getItem('lastSimulationId')){
       console.log("updating results for ", localStorage.getItem('lastSimulationId'))  
       //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
-      this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.type !== '1/10 du module')).subscribe(
+      this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true)).subscribe(
         (data) => {this.results.indicators = data;
           this.fillIndicators()
         }
@@ -406,6 +427,7 @@ export class SimulationResultsComponent implements OnInit {
       },
       shapes: this.simulationStartDate && this.simulationEndDate ? [{
         type: 'line',
+        name:'date de simulation',
         x0: this.simulationStartDate,
         x1: this.simulationStartDate,
         y0: 0.001,
@@ -423,17 +445,19 @@ export class SimulationResultsComponent implements OnInit {
 
 
   showPlot() {
-    Plotly.newPlot('previsions', this.traces, this.layout);
-    const annotation: Partial<Plotly.Annotations> = {
-      text: "Date de la simulation",
-      xref: 'x', yref: 'paper',
-      x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
-      y: 1,
-      showarrow: false,
-      font: { size: 14 }
-    };
-    Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
-  }
+  if(document.getElementById('previsions')){
+      Plotly.newPlot('previsions', this.traces, this.layout);
+      const annotation: Partial<Plotly.Annotations> = {
+        text: "Date de la simulation",
+        xref: 'x', yref: 'paper',
+        x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
+        y: 1,
+        showarrow: false,
+        font: { size: 14 }
+      };
+      Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
+    }
+}
 
 
   showTypologyMap(){
@@ -468,17 +492,14 @@ export class SimulationResultsComponent implements OnInit {
           zoom: 6.8
         },
         paper_bgcolor: 'rgba(0,0,0,0)',
-        margin: { l: 0, r: 0, t: 0, b: 0 }
+        margin: { l: 0, r: 0, t: 0, b: 0 },
+        width:0.40 * window.innerWidth,
+        height : document.getElementById("matrice")!.clientHeight
       };
  
       Plotly.newPlot('map', figData, figlayout);
-
-      window.addEventListener('resize', () => {
-        const mapwidth = 0.40 * window.innerWidth;
-        Plotly.relayout('map', { width: mapwidth });
-      });
-    });
-  }
+  })
+}
 
 
 
@@ -487,6 +508,7 @@ export class SimulationResultsComponent implements OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
+    console.log(this.results)
     if (changes['results'] && changes['results'].currentValue) {
       this.updateComponentsWithResults(changes['results'].currentValue);
     }
@@ -509,7 +531,7 @@ export class SimulationResultsComponent implements OnInit {
     this.dataSource.sort = this.sort;
   
     // Mise à jour des autres éléments
-
+      this.fillIndicators();
       this.updateGraphData();
       this.updateLayout();
       this.showPlot();
@@ -645,6 +667,7 @@ interface Indicator {
   type: string;
   value: number;
   color: string;
-  fixed?: boolean;
+  fixed: boolean;
+  modified : boolean;
 }
 

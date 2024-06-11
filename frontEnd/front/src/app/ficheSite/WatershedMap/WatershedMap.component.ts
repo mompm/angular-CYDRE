@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -19,6 +19,8 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
    * 
    */
   export class WatershedMapComponent {
+    private resizeListener: () => void;
+
     @Input() stationSelectionChange!: string;
     private WatershedMapLeaflet!: L.Map;
     MapExecutee = false; 
@@ -50,7 +52,11 @@ WaterShedsMapLayers = {
    * @param dataService 
    * @param jsonService 
    */
-  constructor(private dataService: DataService,private jsonService: JsonService) {}
+  constructor(private dataService: DataService,private jsonService: JsonService) {
+    this.resizeListener = () => {
+      this.WatershedMapLeaflet.invalidateSize();
+    }; 
+  }
 
     /**
      * 
@@ -60,6 +66,11 @@ WaterShedsMapLayers = {
       this.initGDFPiezometry();
       this.initGDFStations();
     }
+
+    ngOnDestroy(){
+      window.removeEventListener('resize',this.resizeListener);
+    }
+
     /**
      * 
      * @param changes 
@@ -193,9 +204,7 @@ WaterShedMap_Leaflet(stationID:string){
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
     }
-    window.addEventListener('resize', () => {
-      this.WatershedMapLeaflet.invalidateSize();
-    }); 
+    
   }
 
   /**

@@ -1,4 +1,4 @@
-import { Component, Input, Output , EventEmitter , SimpleChanges} from '@angular/core';
+import { Component, Input, Output , EventEmitter , SimpleChanges, OnDestroy} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -17,6 +17,8 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
   })
 
   export class RegionalMapComponent {
+    private resizeListener: () => void;
+
     @Input() stationSelectionChange!: string; // Prend en entrée la sélection de la station
     @Output() markerClick: EventEmitter<string> = new EventEmitter<string>(); // Émetteur d'événement pour le clic sur un marqueur
     private RegionalMapLeaflet!: L.Map; // Instance de la carte Leaflet
@@ -54,7 +56,12 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
    * @param dataService Service pour les données
    * @param jsonService Service pour les opérations JSON
    */
-    constructor(private dataService: DataService,private jsonService: JsonService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {
+      this.resizeListener = () => {
+        const hydrographWidth = 0.50 * window.innerWidth;
+        Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
+      };
+    }
 
     /**
      * Méthode appelée à l'initialisation du composant
@@ -64,7 +71,10 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
       this.initGDFPiezometry(); // Initialise les données des piézomètres
       this.initGDFStations(); // Initialise les données des stations
     }
-
+    
+    ngOnDestroy(){
+      window.removeEventListener('resize',this.resizeListener);
+    }
     /**
      * Méthode appelée lorsque les valeurs des propriétés @Input changent
      * @param changes Les changements des propriétés @Input
@@ -320,10 +330,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
       });
     }
     
-    window.addEventListener('resize', () => {
-      const hydrographWidth = 0.50 * window.innerWidth;
-      Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
-    });
+    
   }
 
    

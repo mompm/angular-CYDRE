@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -39,6 +39,8 @@ function generateColors(numColors: number): string[] {
 
 
   export class temperatureSeasonal {
+    private resizeListener: () => void;
+
     @Input() stationSelectionChange!: string; // Identifiant de la station sélectionnée, modifiable par l'utilisateur
     @Input() yearSelectionChange!: number[]; // Liste des années sélectionnées, modifiable par l'utilisateur
     DataTemperature: dataTemperature[] = []; // Tableau pour stocker les données de température
@@ -54,7 +56,12 @@ function generateColors(numColors: number): string[] {
      * @param dataService Service de gestion des données
      * @param jsonService Service de gestion des JSON
      */
-    constructor(private dataService: DataService,private jsonService: JsonService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {
+      this.resizeListener = () => {
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
+      };
+    }
 
     /**
      * Initialisation du composant.
@@ -63,6 +70,10 @@ function generateColors(numColors: number): string[] {
     ngOnInit() {
         this.initStationTemperature(this.stationSelectionChange);
       }
+    
+    ngOnDestroy(){
+      window.removeEventListener('resize',this.resizeListener);
+    }
 
   /**
    * Méthode appelée à chaque changement des valeurs des propriétés @Input.
@@ -276,10 +287,7 @@ function generateColors(numColors: number): string[] {
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout);
-        window.addEventListener('resize', () => {
-          const hydrographWidth = 0.40 * window.innerWidth;
-          Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
-        });
+        
       
       }
   

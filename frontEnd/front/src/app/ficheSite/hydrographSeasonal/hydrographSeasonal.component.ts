@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy } from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -37,7 +37,8 @@ function generateColors(numColors: number): string[] {
   templateUrl: './hydrographSeasonal.component.html',
   styleUrls: ['./hydrographSeasonal.component.scss']
 })
-export class hydrographSeasonal {
+export class hydrographSeasonal implements OnDestroy{
+  private resizeListener: () => void;
   @Input() stationSelectionChange!: string; // ID de la station sélectionnée. L'hydrographe change en fonction de cette sélection.
   @Input() yearSelectionChange!: number[];  // Liste des années sélectionnées pour l'affichage. L'hydrographe inclut les données pour ces années.
   Datadischarge: dataDischarge[] = []; // Tableau pour stocker les données de décharge.
@@ -51,13 +52,22 @@ export class hydrographSeasonal {
    * @param dataService Service pour gérer les données.
    * @param jsonService Service pour gérer les opérations JSON.
    */
-  constructor(private dataService: DataService, private jsonService: JsonService) {}
+  constructor(private dataService: DataService, private jsonService: JsonService) {
+    this.resizeListener = () => {
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
+      }
+  }
 
   /**
    * Initialisation du composant. Appelée une fois que le composant est initialisé.
    */
   ngOnInit() {
     this.initStationDischarge(this.stationSelectionChange);
+  }
+
+  ngOnDestroy(){
+    window.removeEventListener('resize',this.resizeListener);
   }
 
   /**
@@ -277,9 +287,6 @@ export class hydrographSeasonal {
     // Tracer la figure Plotly
     Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout);
 
-    window.addEventListener('resize', () => {
-      const hydrographWidth = 0.40 * window.innerWidth;
-      Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
-    });
+    
   }
 }

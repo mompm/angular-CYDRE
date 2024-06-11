@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -41,6 +41,8 @@ function generateColors(numColors: number): string[] {
  * 
  */
   export class WaterTableDepthSeasonal {
+    private resizeListener: () => void;
+
     //valeur récupérent dans le parent FicheSite 
     @Input() stationSelectionChange!: string;
     @Input() yearSelectionChange!: number[];
@@ -55,7 +57,12 @@ function generateColors(numColors: number): string[] {
      * @param dataService 
      * @param jsonService 
      */
-    constructor(private dataService: DataService,private jsonService: JsonService) {}
+    constructor(private dataService: DataService,private jsonService: JsonService) {
+      this.resizeListener= () => {
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
+      };
+    }
 
     /**
      * 
@@ -63,6 +70,10 @@ function generateColors(numColors: number): string[] {
     ngOnInit() {
         this.initStationDepth(this.stationSelectionChange);
       }
+
+    ngOnDestroy(){
+      window.removeEventListener('resize',this.resizeListener);
+    }
 
     /**
      * 
@@ -342,10 +353,7 @@ function generateColors(numColors: number): string[] {
     
         // Tracer la figure Plotly
         Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout);
-        window.addEventListener('resize', () => {
-          const hydrographWidth = 0.40 * window.innerWidth;
-          Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
-        });
+        
       
       }
   

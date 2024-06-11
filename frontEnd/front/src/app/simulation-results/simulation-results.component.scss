@@ -32,20 +32,23 @@
 
 
 .containerIndicatiors {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    margin: 40px;
+  display: flex;
+  flex-wrap: wrap; /* Permet aux indicateurs de passer à la ligne suivante si nécessaire */
+  justify-content: space-around; /* Espacement uniforme */
+  margin: 40px;
 }
 
 .containerIndicatior {
-    border: 1px solid #ccc;
-    padding: 10px;
-    width: 18%;
-    box-sizing: border-box;
-    border-radius: 10px; /* Coins arrondis */
-    overflow: hidden; 
+  border: 1px solid #ccc;
+  padding: 10px;
+  flex: 1; /* Cela permet à la boîte de grandir pour remplir l'espace disponible */
+  box-sizing: border-box;
+  border-radius: 10px;
+  margin: 10px; /* Ajoutez une marge pour éviter que les boîtes ne touchent */
+  min-width: 180px; /* Assurez une largeur minimale pour chaque boîte */
+  overflow: hidden;
 }
+
 
 .titleIndicators {
     text-align: center;

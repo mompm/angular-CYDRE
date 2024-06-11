@@ -11,7 +11,6 @@
         <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle>
       </div>
       <div id="previsions"></div>
-      <!-- <plotly-plot [data]="results.graph.data" [layout]="results.graph.layout"></plotly-plot> -->
     </div>
     <div class="card my-4">
       <div class="card-header">
@@ -31,11 +30,12 @@
       </div>
       <div class="card-body">
         <div class="input-group mt-2" *ngFor="let indicator of indicators; let i = index">
-          <input type="color" [(ngModel)]="indicator.color" class="color-selector" (ngModelChange)="updateColorStyle($event,i)">
-          <input type="text" class="form-control" [(ngModel)]="indicator.type" [readonly]="indicator.fixed"
-            [placeholder]="indicator.type" (ngModelChange)="onIndicatorTextChange($event, i)">
-          <input type="number" [(ngModel)]="indicator.value" class="form-control" [readonly]="indicator.fixed"
-            placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)">
+          <input type="color" [(ngModel)]="indicator.color" [disabled]="indicator.fixed" 
+          class="color-selector" (ngModelChange)="updateColorStyle($event,i)" >
+          <input type="text" class="form-control" [(ngModel)]="indicator.type" [readonly]="indicator.fixed" 
+          [placeholder]="indicator.type" (ngModelChange)="onIndicatorTextChange($event, i)">
+          <input type="number" step = "0.001" [(ngModel)]="indicator.value" class="form-control" [readonly]="indicator.fixed"
+            placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)" >
           <button *ngIf="i !== 0" (click)="removeIndicator(i,indicator.type)" class="btn btn-danger">-</button>
         </div>
         <button (click)="addIndicator()" class="btn btn-primary mt-2">+</button>
@@ -109,11 +109,11 @@
       <div class="card-header">
         <h3>Interprétation - Analyse de similarité</h3>
       </div>
-      <div class="card-body">
+      <div class="card-body" >
         <div class="row">
           <div class="col-md-6">
             <h4>Matrice de corrélation</h4>
-            <div *ngIf="dataSource" class="mat-elevation-z8">
+            <div *ngIf="dataSource" class="mat-elevation-z8" id = "matrice">
               <mat-table [dataSource]="dataSource" matSort>
 
                 <!-- Year Column -->

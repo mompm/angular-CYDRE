@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges } from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -14,7 +14,9 @@ import dataDischarge from 'src/app/model/dataDischarge';
     templateUrl: './hydrographGlobal.component.html',
     styleUrls: ['./hydrographGlobal.component.scss']
 })
-export class hydrographGlobal {
+export class hydrographGlobal implements OnDestroy{
+
+    private resizeListener: () => void;
     // Le paramètre d'entrée qui représente le changement de sélection de la station
     @Input() stationSelectionChange!: string;
     // Variable booléenne pour activer/désactiver des fonctionnalités (ex. échelle logarithmique)
@@ -27,7 +29,12 @@ export class hydrographGlobal {
      * @param dataService Service pour gérer les données.
      * @param jsonService Service pour obtenir les données en format JSON.
      */
-    constructor(private dataService: DataService, private jsonService: JsonService) {}
+    constructor(private dataService: DataService, private jsonService: JsonService) {
+        this.resizeListener = () => {
+            const hydrographWidth = 0.72 * window.innerWidth;
+            Plotlydist.relayout('hydrograph', { width: hydrographWidth });
+        };
+    }
 
     /**
      * Méthode appelée lorsque des changements sont détectés sur les paramètres d'entrée.
@@ -38,6 +45,10 @@ export class hydrographGlobal {
         if (changes['stationSelectionChange']) {
             this.initStationDischarge(changes['stationSelectionChange'].currentValue);
         }
+    }
+
+    ngOnDestroy(){
+        window.removeEventListener('resize', this.resizeListener);
     }
 
     /**
@@ -120,9 +131,6 @@ export class hydrographGlobal {
         Plotlydist.relayout('hydrograph', { annotations: [annotation] });
 
         // Ajuster la taille du graphique lors du redimensionnement de la fenêtre
-        window.addEventListener('resize', () => {
-            const hydrographWidth = 0.72 * window.innerWidth;
-            Plotlydist.relayout('hydrograph', { width: hydrographWidth });
-        });
+        window.addEventListener('resize', this.resizeListener);
     }
 }
