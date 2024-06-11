@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy , ViewChild, ElementRef} from '@angular/core';
 import { Options } from '@angular-slider/ngx-slider';
 import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
@@ -6,6 +6,8 @@ import { SharedWatershedService } from '../service/shared-watershed.service';
 import { FormControl } from '@angular/forms';
 import { Observable, map, startWith } from 'rxjs';
 import { DataService } from '../service/data.service';
+import {MatDialog} from '@angular/material/dialog';
+import { error } from 'console';
 import { AuthService } from '../service/auth.service';
 
 
@@ -17,7 +19,11 @@ import { AuthService } from '../service/auth.service';
 })
 export class SimulateurCydreComponent implements OnInit {
 
-  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService) { }
+  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog) { }
+  @ViewChild('fileInput')
+  fileInput!: ElementRef<HTMLInputElement>;
+  selectedFile: File | null = null;
+
   myControl = new FormControl();
   filteredOptions!: Observable<{ index: string, station_name: string }[]>;
   progressMessages: string[] = [];
@@ -26,6 +32,8 @@ export class SimulateurCydreComponent implements OnInit {
   stations: any[] = [];
   selectedStation: string | null | undefined;
   selectedStationName: string | null | undefined;
+  selectedStattionBSS: string | null | undefined;
+  selectedStationDisabled: boolean | undefined;
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
@@ -60,6 +68,7 @@ export class SimulateurCydreComponent implements OnInit {
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
+    this.selectedStattionBSS = this.sharedService.getSelectedValueBSS();
 
     //récupérer les données de la simulation choisie si on vient de l'historique
     if(localStorage.getItem('showLastSimul')=="true"){
@@ -152,6 +161,12 @@ export class SimulateurCydreComponent implements OnInit {
     return obj;
 }
   onStartSimulation() {
+    //affiche le poppup error si la station selection est dans list_of_disabled_options
+    if (this.sharedService.isWatersheddisabled(this.selectedStation)){
+      this.dialog.open(ErrorDialog);
+    }
+    //sinon start simulation 
+    else{
     const params = {
       Parameters :{
         watershed: this.selectedStation,
@@ -183,7 +198,10 @@ export class SimulateurCydreComponent implements OnInit {
         console.error(error);
       }
     );
+    }
   }
+
+
 
   saveSimulationId(simulationId: string) {
     localStorage.setItem('lastSimulationId', simulationId);
@@ -199,12 +217,17 @@ export class SimulateurCydreComponent implements OnInit {
     const selectedOption = event.option.value;
     this.sharedService.setSelectedValue(selectedOption.index);
     this.selectedStation = selectedOption.index;
+    const test = this.stations.find(station => station.index === selectedOption.index)?.name;
     const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
     if (select){
-      this.selectedStationName = select;
+      this.selectedStattionBSS = select;
       this.sharedService.setSelectedValueBSS(select);
     }
-    console.log('Selected Value:', this.selectedStation, this.selectedStationName);
+    if (test){
+      this.selectedStationName = test;
+      this.sharedService.setSelectedStationName(test);
+    }
+    console.log('Selected Value:', this.selectedStation, this.selectedStattionBSS, test);
   }
 
   isOptionDisabled(option: { index: string, station_name: string }): boolean {
@@ -215,4 +238,28 @@ export class SimulateurCydreComponent implements OnInit {
     return option ? `${option.index} - ${option.station_name}` : '';
   }
 
+  openDialog() {
+    this.dialog.open(PopupDialogSimulateur);
+  }
+
+
 }
+  /**
+   * 
+   */
+  @Component({
+    selector: 'popupDialogSimulateur',
+    templateUrl: './popupDialogSimulateur.html',
+  })
+  export class PopupDialogSimulateur {}
+
+
+    /**
+   * 
+   */
+    @Component({
+      selector: 'errorDialog',
+      templateUrl: './errorDialog.html',
+    })
+    export class ErrorDialog {}
+  

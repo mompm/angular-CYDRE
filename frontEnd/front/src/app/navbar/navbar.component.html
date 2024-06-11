@@ -1,14 +1,13 @@
 <div class="container-fluid p-0">
-  <nav class="navbar sticky-top navbar-expand-lg" style="background: #333">
+  <nav class="navbar sticky-top navbar-expand-lg" style="background: #1a1a1a">
     <div class="container-fluid">
-      <div class="navbar-brand col-6">
-        <a href="/home"><img src="../../assets/img/logo1.png"></a>
+      <div class="navbar-brand">
+        <a href="/home"><img src="../../assets/img/logo3.png" alt="Logo" style="height: 100px;"></a>
       </div>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapseNavbar" aria-controls="collapseNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapseNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
-
-      <div class="collapse navbar-collapse col-6 text-right" id="collapseNavbar">
+      <div class="collapse navbar-collapse justify-content-end" id="collapseNavbar">
         <ul class="navbar-nav mr-auto nav-nav">
           <!-- <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li> -->
           <li><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite" routerLinkActive="active" translate (click)="login()">ficheSiteTitle</a></li>
@@ -23,6 +22,13 @@
           <li *ngIf="(authService.isLoggedIn | async) && authService.isDev"><a class="navbar-underline-onglet menu-item" routerLink="/create-account" routerLinkActive="active" translate (click)="createAccount()">createAccount</a></li>
           <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/login" routerLinkActive="active" translate (click)="logout()">logout</a></li>
         </ul>
+        <div class="d-flex align-items-center">
+          <img src="../../assets/img/Europe_logo.png" alt="europe Logo" class="navbar-logo">
+          <img src="../../assets/img/Région-bretagne-logo.png" alt="Région Bretagne Logo" class="navbar-logo">
+          <button class="btn custom-btn mx-2" (click)="openDialog()">
+            <img src="../../assets/img/quiz.png" alt="Help Center" style="vertical-align: middle; margin-right: 5px; margin-left: 5px;">
+          </button>
+        </div>
       </div>
     </div>
   </nav>

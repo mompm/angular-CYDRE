@@ -1,0 +1,95 @@
+.custom-dialog {
+    position: fixed;
+    top: 20%;
+    left: 2%;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 20px;
+    z-index: 1000; /* Assurez-vous qu'elle soit plus élevée que les autres éléments */
+    width: 95%;
+    height: auto;
+    max-height: 95vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+.scrollable-content {
+    overflow-y: auto;
+    max-height: 60vh;
+    padding-right: 10px;
+}
+
+.title {
+    margin: 20px 0;
+    align-self: flex-start;
+    font-size: 22px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    color: 'black',
+}
+
+.close-button {
+    position:absolute;
+    top: 8px;
+    right: 8px;
+}
+
+
+.tabs-container {
+    flex-grow: 1;
+}
+
+.tab-style {
+    width: 100%;
+    border: none;
+    box-shadow: inset 0px -1px 0px 0px lightgrey;
+    background: white;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+
+.home-div {
+    text-align: justify;
+    font-size: 16px;
+}
+
+.home-logo {
+    width: 600px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.guide-div {
+    text-align: justify;
+    font-size: 16px;
+}
+
+.menu-logo {
+    width: 350px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.station-selection {
+    width: 700px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.red-text{
+    color:red;
+}
