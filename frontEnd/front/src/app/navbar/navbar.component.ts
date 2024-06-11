@@ -1,6 +1,6 @@
 import { Component,EventEmitter, OnInit, ViewEncapsulation, Output, Input } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs';
+//import { NavigationEnd, Router } from '@angular/router';
+//import { filter } from 'rxjs';
 import { AuthService } from '../service/auth.service';
 import {MatTabsModule} from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
@@ -82,7 +82,6 @@ export class NavbarComponent {
     this.dialog.open(DocumentationPopup, {});
   }
 }
-
 
 @Component({
   selector: 'documentationPopup',
