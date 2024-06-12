@@ -73,7 +73,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   yMin = 0;
   yMax = 0;
   maxPredictedValue : number[] = [];
-
+  XaxisObservations : Date[] = [];
+  XaxisPredictions : Date[] = [];
   
   indicators: Array<Indicator> = [];
 
@@ -96,7 +97,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     console.log(this.results)
     this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
+    if(this.results.results.data){
+      console.log('generating traces')
+      this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date)
+      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
 
+    }
     if(this.results.results.corr_matrix){//création de la matrice de corrélation
       this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
       this.dataSource.paginator = this.paginator;
@@ -109,7 +115,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }else{
       console.log("Problème lors du chargement des indicateurs")
     }
-
+    
     window.addEventListener('resize', this.resizeListener);
   }
 
@@ -244,6 +250,17 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
     
   }
+
+  generateDateSeries(startDate: string, endDate: string): Date[] {
+    let dates = [];
+    let currentDate = new Date(startDate);
+
+    while (currentDate <= new Date(endDate)) {
+      dates.push(new Date(currentDate.toISOString().split('T')[0])); // Format as 'YYYY-MM-DD'
+      currentDate.setDate(currentDate.getDate() + 1); // Increment day
+    }
+    return dates;
+  }
   
   updateGraphData(): void {
    
@@ -263,10 +280,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
 
-      this.results.results.data.graph.forEach((line: { x: any[]; y: any[]; name: string; mode: string; line: any;}) => {
+      this.results.results.data.graph.forEach((line: { y: any[]; name: string; mode: string; line: any;}) => {
           // console.log('Processing line:', line);
-          if (line.x && line.y && line.x.length === line.y.length) {
-              var parsedDates = line.x.map(date => new Date(date));
+          if ( line.y ) {
+              var parsedDates = this.XaxisPredictions;
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
                   this.endDate = parsedDates[parsedDates.length - 1];
               }
@@ -285,26 +302,26 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             this.yMax = Math.max(...yValuesWithinObservedPeriod);
             
             if(line.name == 'Q10'){
-              q10Data = { x: parsedDates, y: line.y };
+              q10Data = { x: this.XaxisPredictions, y: line.y };
               incertitudeX = parsedDates; 
             }
             else if ( line.name == 'Q90'){
-              if (line.x.length > 0) {
+              if (parsedDates.length > 0) {
                 this.simulationStartDate = parsedDates[0];
                 this.simulationEndDate = parsedDates[parsedDates.length-1];
               }
               q90Data = { x: parsedDates, y: line.y };
             }
             else if ( line.name == 'Q50'){
-              q50X = parsedDates;
+              q50X = this.XaxisPredictions;
               q50Y = line.y;
             }
             else if (line.name == 'observations'){
-              observationsX = parsedDates;
+              observationsX = this.XaxisObservations;
               observationsY = line.y;
             }else if (line.name.includes('Projection')){
               var trace: Plotly.Data = {
-                x: parsedDates,
+                x: this.XaxisPredictions,
                 y: line.y,
                 showlegend : false,
                 hoverinfo :'none',
@@ -367,6 +384,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateSliderOptions();
     
     }
+    console.log(this.traces)
   }
 
   updateSliderOptions() {

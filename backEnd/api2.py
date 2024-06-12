@@ -758,7 +758,12 @@ def getGraph(simulation_id):
         # Calculer les projections
         graph_results = results.plot_streamflow_projections(module=True)
         # Transformer les résultats en JSON pour les stocker
-        json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],"last_date":graph_results['last_date']})
+        json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],
+                                   "last_date":graph_results['last_date'],
+                                   'first_observation_date':graph_results['first_observation_date'],
+                                   'last_observation_date':graph_results['last_observation_date'],
+                                   'first_prediction_date':graph_results['first_prediction_date'],
+                                   'last_prediction_date':graph_results['last_prediction_date']})
         # Mise à jour de chaque champ
         stmt = (
             update(Simulation)
@@ -1212,18 +1217,19 @@ class Graph():
                              right_on=projection_df.index, how='right')
         merged_df = merged_df.set_index(merged_df['key_0'])
         
+         #On ne stocke pas les données en x qui sont des dates générables dans le front
         data =[
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
-            go.Scatter(x=reference_df.index.tolist(), y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
+            go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
+            go.Scatter(x=None, y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
         ]
 
 
         # Convert each projection series DataFrame to a Plotly trace
         for idx, serie in enumerate(projection_series):
             serie_trace = go.Scatter(
-                x=serie.index.tolist(),
+                x=None, #On ne stocke pas les données en x qui sont des dates générables dans le front
                 y=serie['Q_streamflow'].tolist(),
                 mode='lines',
                 line=dict(color='rgba(0, 0, 255, 0.2)', width=1),  # Semi-transparent blue lines
@@ -1231,12 +1237,16 @@ class Graph():
             ).to_plotly_json()
             data.append(serie_trace)
 
-        #convert Timestamp data for json serialisation
-        for entry in data:
-            entry['x'] = [ts.isoformat() if not isinstance(ts, str) else ts for ts in entry['x']]
+        # #convert Timestamp data for json serialisation
+        # for entry in data:
+        #     entry['x'] = [ts.isoformat() if not isinstance(ts, str) else ts for ts in entry['x']]
 
         data = {
         'graph': data,
+        'first_observation_date': reference_df.index.tolist()[0].isoformat(),#la première date d'observations
+        'last_observation_date': reference_df.index.tolist()[len(reference_df.index.tolist())-1].isoformat(),#la dernière date d'observations
+        'first_prediction_date': merged_df.index.tolist()[0].isoformat(),#la première date de perdicitions
+        'last_prediction_date': merged_df.index.tolist()[len(merged_df.index.tolist())-1].isoformat(),#la dernière date de predictions
         'proj_values': {
             'Q50': float(self.proj_values.Q50),
             'Q10': float(self.proj_values.Q10),
