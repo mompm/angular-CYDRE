@@ -70,11 +70,12 @@ function generateColors(numColors: number): string[] {
      * Cette méthode est appelée une fois que les propriétés @Input ont été initialisées.
      */
     ngOnInit() {
-        this.initStationPrecipitation(this.stationSelectionChange);
-      }
-
+      window.addEventListener('resize', this.resizeListener);
+      this.initStationPrecipitation(this.stationSelectionChange);
+    }
+  
     ngOnDestroy() {
-        window.removeEventListener('resize', this.resizeListener);
+      window.removeEventListener('resize', this.resizeListener);
     }
 
   /**
@@ -353,7 +354,9 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout);
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout, { responsive: true });
+        Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
 
         
       

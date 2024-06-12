@@ -68,6 +68,7 @@ function generateColors(numColors: number): string[] {
      * 
      */
     ngOnInit() {
+      window.addEventListener('resize', this.resizeListener);
         this.initStationDepth(this.stationSelectionChange);
       }
 
@@ -352,7 +353,9 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout);
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout, { responsive: true });
+        Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
         
       
       }

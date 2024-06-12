@@ -68,6 +68,7 @@ function generateColors(numColors: number): string[] {
      * Cette méthode est appelée une fois que les propriétés @Input ont été initialisées.
      */
     ngOnInit() {
+      window.addEventListener('resize', this.resizeListener);
         this.initStationTemperature(this.stationSelectionChange);
       }
     
@@ -286,7 +287,9 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout);
+        const hydrographWidth = 0.40 * window.innerWidth;
+        Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout, { responsive: true });
+        Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
         
       
       }

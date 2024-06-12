@@ -67,6 +67,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
      * Méthode appelée à l'initialisation du composant
      */
     ngOnInit() {
+      window.addEventListener('resize', this.resizeListener);
       this.initGDFWatersheds(); // Initialise les données des bassins versants
       this.initGDFPiezometry(); // Initialise les données des piézomètres
       this.initGDFStations(); // Initialise les données des stations
@@ -206,7 +207,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         markerstations.addTo(this.RegionalMapLeaflet);
       }
       
-
+      /*
       //création des point piezo  
       //boucle parcourant tous les points des piezometre  
       for (let i = 0; i < this.DataGDFPiezometry.length; i++){
@@ -216,6 +217,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         // Ajout du marqueur 
         markerpiezo.addTo(this.RegionalMapLeaflet);
       }
+      */
     }
 
 
@@ -295,6 +297,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
       name: '',
     });
 
+    /*
     //récupère les information points piezo
     const x_wgs84_piezo: any[] = [];
     const y_wgs84_piezo: any[] = [];
@@ -315,9 +318,11 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
       hovertext: text_piezo,
       name: '',
     });
-
+    */
     // Création de la carte regional ! identifiant de cette element est map :)
-    Plotlydist.newPlot('RegionalMapPlotly', figData, figLayout);
+    const hydrographWidth = 0.50 * window.innerWidth;
+    Plotlydist.newPlot('RegionalMapPlotly', figData,  figLayout, { responsive: true });
+    Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
 
     const plotlyElement = document.getElementById('RegionalMapPlotly');
     if (plotlyElement) {

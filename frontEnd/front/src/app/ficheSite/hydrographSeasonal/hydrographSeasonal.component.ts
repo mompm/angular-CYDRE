@@ -63,6 +63,7 @@ export class hydrographSeasonal implements OnDestroy{
    * Initialisation du composant. Appelée une fois que le composant est initialisé.
    */
   ngOnInit() {
+    window.addEventListener('resize', this.resizeListener);
     this.initStationDischarge(this.stationSelectionChange);
   }
 
@@ -285,7 +286,9 @@ export class hydrographSeasonal implements OnDestroy{
     }
 
     // Tracer la figure Plotly
-    Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout);
+    const hydrographWidth = 0.40 * window.innerWidth;
+    Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout, { responsive: true });
+    Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
 
     
   }
