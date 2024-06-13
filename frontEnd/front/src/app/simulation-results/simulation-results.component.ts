@@ -592,6 +592,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           r: 150   // marge droite
       },
       height: 700,
+      width : 500,
       yaxis: {
           tickmode: 'array',
           autorange: 'reversed'
@@ -648,7 +649,8 @@ renderHeatmap2(): void {
         l: 150, // left margin
         r: 150  // right margin
     },
-    height: 700,  
+    height: 700, 
+    width : 500, 
     yaxis: {
         tickmode: 'array',
         autorange :'reversed'
