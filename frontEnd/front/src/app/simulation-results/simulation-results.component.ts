@@ -546,63 +546,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   renderHeatmap(): void {
     const recharge = this.results.results.similarity.corr_matrix.recharge;
-    console.log('recharge',recharge);
-    const columns = this.results.results.similarity.corr_matrix.recharge.columns;
-    
+    const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
     const data = this.results.results.similarity.corr_matrix.recharge.data;
-    console.log(data);
     const index = this.results.results.similarity.corr_matrix.recharge.index;
     const testData: any[] = [];
-    
-    // Adjust the color scale to match the desired heatmap
+
+    // Remplacer les 1 par null dans le tableau de données
+    const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
     const colorscale = [
-        ['0.0', 'rgb(165,0,38)'],
-        ['0.111111111111', 'rgb(215,48,39)'],
-        ['0.222222222222', 'rgb(244,109,67)'],
-        ['0.333333333333', 'rgb(253,174,97)'],
-        ['0.444444444444', 'rgb(254,224,144)'],
-        ['0.555555555556', 'rgb(224,243,248)'],
-        ['0.666666666667', 'rgb(171,217,233)'],
-        ['0.777777777778', 'rgb(116,173,209)'],
-        ['0.888888888889', 'rgb(69,117,180)'],
-        ['1.0', 'rgb(49,54,149)']
-    ];
-    
-    testData.push({
-      z: data,
-      x: columns,
-      y: index,
-      type: 'heatmap',
-      colorscale: colorscale,
-      reversescale: true,
-      showscale: true,
-      xgap: 0.5,  
-      ygap: 0.5  
-    });
-
-    const figLayout: Partial<Layout> = {
-      title: 'Heatmap des similarités recharge',
-      xaxis: {
-        tickangle: -90,  
-        side: 'bottom'
-      },
-      yaxis: {
-        title: 'Années',
-        autorange: 'reversed'  
-      },
-    };
-    Plotly.newPlot('heatmap', testData, figLayout);
-}
-
-renderHeatmap2(): void {
-  const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
-  const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
-  const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
-  const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
-  const testData: any[] = [];
-  
-  // Adjust the color scale to match the desired heatmap
-  const colorscale = [
       ['0.0', 'rgb(165,0,38)'],
       ['0.111111111111', 'rgb(215,48,39)'],
       ['0.222222222222', 'rgb(244,109,67)'],
@@ -615,17 +566,75 @@ renderHeatmap2(): void {
       ['1.0', 'rgb(49,54,149)']
   ];
   
-  testData.push({
-    z: data,
-    x: columns,
-    y: index,
-    type: 'heatmap',
-    colorscale: colorscale ,
-    reversescale: true,
-    showscale: true,
-    xgap: 0.5,  
-    ygap: 0.5  
-  });
+    // Ajuster l'échelle de couleurs pour correspondre à la heatmap souhaitée
+    testData.push({
+      z: modifiedData,
+      x: columns,
+      y: index,
+      type: 'heatmap',
+      colorscale: colorscale,
+      reversescale: true,
+      showscale: true,
+      xgap: 1,
+      ygap: 1
+    });
+
+    const figLayout: Partial<Layout> = {
+      title: 'Heatmap des similarités recharge',
+      xaxis: {
+        tickangle: -90,
+        side: 'bottom'
+      },
+      margin: {
+          t: 100,  // marge supérieure
+          b: 100,  // marge inférieure
+          l: 150,  // marge gauche
+          r: 150   // marge droite
+      },
+      height: 700,
+      yaxis: {
+          tickmode: 'array',
+          autorange: 'reversed'
+      }
+    };
+
+    Plotly.newPlot('heatmap', testData, figLayout);
+}
+
+
+renderHeatmap2(): void {
+  const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
+  const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
+  const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
+  const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
+  const testData: any[] = [];
+   // Remplacer les 1 par null dans le tableau de données
+   const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
+   const colorscale = [
+     ['0.0', 'rgb(165,0,38)'],
+     ['0.111111111111', 'rgb(215,48,39)'],
+     ['0.222222222222', 'rgb(244,109,67)'],
+     ['0.333333333333', 'rgb(253,174,97)'],
+     ['0.444444444444', 'rgb(254,224,144)'],
+     ['0.555555555556', 'rgb(224,243,248)'],
+     ['0.666666666667', 'rgb(171,217,233)'],
+     ['0.777777777778', 'rgb(116,173,209)'],
+     ['0.888888888889', 'rgb(69,117,180)'],
+     ['1.0', 'rgb(49,54,149)']
+ ];
+ 
+   // Ajuster l'échelle de couleurs pour correspondre à la heatmap souhaitée
+   testData.push({
+     z: modifiedData,
+     x: columns,
+     y: index,
+     type: 'heatmap',
+     colorscale: colorscale,
+     reversescale: true,
+     showscale: true,
+     xgap: 1,
+     ygap: 1
+   });
 
   const figLayout: Partial<Layout> = {
     title: 'Heatmap des similarités specific discharge',
@@ -633,12 +642,20 @@ renderHeatmap2(): void {
       tickangle: -90,  
       side: 'bottom'
     },
-    yaxis: {
-      title: 'Années',
-      autorange: 'reversed'  
+    margin: {
+        t: 100,  // top margin
+        b: 100,  // bottom margin
+        l: 150, // left margin
+        r: 150  // right margin
     },
-  };
-  Plotly.newPlot('heatmap2', testData, figLayout);
+    height: 700,  
+    yaxis: {
+        tickmode: 'array',
+        autorange :'reversed'
+    }
+};
+
+Plotly.newPlot('heatmap2', testData, figLayout);
 }
 
   openDialog() {
