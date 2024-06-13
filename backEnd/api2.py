@@ -606,6 +606,11 @@ def run_timeseries_similarity(simulation_id):
         cydre_app.run_timeseries_similarity(json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
+        print(corr_matrix)
+        # with open('dataframe_output.txt', 'w') as file:
+        #     for index, row in corr_matrix.iterrows():
+        #         file.write(f"{row['Nom']}, {row['Age']}, {row['Ville']}\n")
+
         # La transformer en JSON pour la stocker
         for key,value in corr_matrix.items():
             if key=="specific_discharge":
@@ -662,21 +667,52 @@ def select_scenarios(simulation_id):
             recharge_df = pd.read_json(recharge, orient='split')
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-        # Chemin JSON de la mise à jour
-        selected_scenarios_path = '$.similarity.selected_scenarios'
+        scenarios_grouped,selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        print(selected_scenarios)
+        for key,value in selected_scenarios.items():
+            if key=="specific_discharge":
+                specific_discharge = value.to_json(orient='split')
+                print(specific_discharge)
+            elif key=="recharge":
+                recharge = value.to_json(orient='split')
+                print(recharge)
+                print("fin recharge")
+        
+        
+               # Chemin JSON de la mise à jour
+        scenarios_grouped_path = '$.scenarios_grouped'
+        selected_scenarios_path = '$.selected_scenarios'
+        json_path_specific_discharge = selected_scenarios_path+'.specific_discharge'
+        json_path_recharge = selected_scenarios_path+'.recharge' 
+
         # Préparation de la requête SQL pour la mise à jour
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, selected_scenarios_path,selected_scenarios.to_json())})
+            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_grouped_path,scenarios_grouped.to_json())})
         )
-        
+        db.session.execute(stmt)
+       # Préparation de la mise à jour
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_specific_discharge, specific_discharge)})
+        )
         # Exécution de la mise à jour
         db.session.execute(stmt)
+        # Préparation de la mise à jour
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_recharge, recharge)})
+        )
+
+        # Exécution de la mise à jour
+        db.session.execute(stmt)
+        
         db.session.commit()
 
-        return jsonify({"Success":"Scenarios selected succesfully"}), 200
+        return jsonify({"scenarios grouped":scenarios_grouped.to_json(),"specific discharge":specific_discharge,"recharge":recharge}), 200
     except Exception as e : 
         return {"error":str(e)}, 500
     
@@ -718,7 +754,7 @@ def getGraph(simulation_id):
     try:
         # Récuperer et re-transformer les éléments nécessaire à la création du graphe
         scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         scenarios_grouped = json.loads(scenarios_grouped)
         scenarios_grouped_dict = json.loads(scenarios_grouped)
@@ -825,7 +861,7 @@ def update_indicator(simulation_id):
 
         #Récuperer les scénarios de la simulation
         scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         
         scenarios_grouped = json.loads(scenarios_grouped)
@@ -941,7 +977,7 @@ def getCorrMatrix(simulation_id):
     cydre_app, simulation = start_simulation_cydre_app(simulation_id)
 
     scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
     scenarios_grouped = json.loads(scenarios_grouped)
     scenarios_grouped_dict = json.loads(scenarios_grouped)
@@ -1216,7 +1252,7 @@ class Graph():
         merged_df = pd.merge(reference_df, projection_df, left_on=reference_df.index,
                              right_on=projection_df.index, how='right')
         merged_df = merged_df.set_index(merged_df['key_0'])
-        
+
          #On ne stocke pas les données en x qui sont des dates générables dans le front
         data =[
             go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
