@@ -543,7 +543,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.showPlot();
       this.updateIndicatorShapes();
       this.showTypologyMap();
-
   }
 
   openDialog() {
