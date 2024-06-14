@@ -21,7 +21,7 @@ import { index, string } from 'mathjs';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
-  selectedMatrix: string = '';
+  selectedMatrix: string = 'all';
   on: boolean = false;
   private resizeListener : ()=> void;
 
@@ -112,6 +112,11 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
     if(this.results.indicators){//création du tableau contenant les indicateurs
       this.fillIndicators();
+    if(this.results.results.similarity){
+      this.cdr.detectChanges();
+      this.matriceRecharge();
+      this.matriceSpecificDischarge();
+    }
     }else{
       console.log("Problème lors du chargement des indicateurs")
     }
@@ -261,6 +266,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   updateGraphData(): void {
    
     if (this.showResults && this.results.results.data.graph) {
+      //mettre à jour les données de axes x des observation et prediction 
+      this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
+      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;
@@ -280,7 +288,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
                   this.endDate = parsedDates[parsedDates.length - 1];
               }
-
               for (let i = 0; i < parsedDates.length; i++) {
                 if (parsedDates[i] >= this.startDate && parsedDates[i] <= this.endDate) {
                     yValuesWithinObservedPeriod.push(line.y[i]);
@@ -303,6 +310,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 this.simulationStartDate = parsedDates[0];
                 this.simulationEndDate = parsedDates[parsedDates.length-1];
               }
+              this.simulationStartDate = parsedDates[0];
               q90Data = { x: parsedDates, y: line.y };
             }
             else if ( line.name == 'Q50'){
@@ -312,6 +320,33 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             else if (line.name == 'observations'){
               observationsX = this.XaxisObservations;
               observationsY = line.y;
+              // Get the lengths of XaxisObservations and observationsY
+              let lengthX = observationsX.length;
+              let lengthY = observationsY.length;
+                              
+              // Convert dates to Date objects for comparison
+              let maxDateTimestamp = Math.max(...observationsX.map(date => new Date(date).getTime()));
+
+              if (this.simulationStartDate) {
+                let simulationStartDateTimestamp = new Date(this.simulationStartDate).getTime();
+            
+                // Check if the max date in XaxisObservations is less than simulationStartDate
+                if (maxDateTimestamp < simulationStartDateTimestamp) {
+                    // Replace values in observationsY with null if the date in observationsX is after simulationStartDate
+                    for (let i = 0; i < lengthX; i++) {
+                        if (new Date(observationsX[i]).getTime() >= simulationStartDateTimestamp) {
+                            observationsY[i] = null;
+                        }
+                    }
+                }
+              }
+              if (lengthY < lengthX) {
+                for (let i = lengthY; i < lengthX; i++) {
+                    observationsY.unshift(null); // Add null to the beginning of observationsY
+                }
+              }
+              console.log(this.simulationStartDate);
+              console.log(observationsY);
             }else if (line.name.includes('Projection')){
               var trace: Plotly.Data = {
                 x: this.XaxisPredictions,
@@ -397,7 +432,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       range = [this.yMin, this.yMax];
       type = 'linear';
   } else {
-      range = [Math.log10(0.01), Math.log10(this.yMax)];
+      range = [Math.log10(this.yMin), Math.log10(this.yMax)];
       type = 'log';
   }
     this.layout = {
@@ -511,6 +546,134 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   })
 }
 
+        matriceRecharge(): void {
+          //const recharge = this.results.results.similarity.corr_matrix.recharge;
+          const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
+          const data = this.results.results.similarity.corr_matrix.recharge.data;
+          const index = this.results.results.similarity.corr_matrix.recharge.index;
+
+          // Remplacer les 1 par null dans le tableau de données
+          const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
+          const colorscale = [
+            ['0.0', 'rgb(165,0,38)'],
+            ['0.111111111111', 'rgb(215,48,39)'],
+            ['0.222222222222', 'rgb(244,109,67)'],
+            ['0.333333333333', 'rgb(253,174,97)'],
+            ['0.444444444444', 'rgb(254,224,144)'],
+            ['0.555555555556', 'rgb(224,243,248)'],
+            ['0.666666666667', 'rgb(171,217,233)'],
+            ['0.777777777778', 'rgb(116,173,209)'],
+            ['0.888888888889', 'rgb(69,117,180)'],
+            ['1.0', 'rgb(49,54,149)']
+        ];
+
+          const DataMatrice: any[] = [];
+          DataMatrice.push({
+            z: modifiedData,
+            x: columns,
+            y: index,
+            type: 'heatmap',
+            colorscale: colorscale,
+            reversescale: true,
+            showscale: true,
+            xgap: 1,
+            ygap: 1
+          });
+
+          // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+          const caseHeight = 10; // Hauteur de chaque case en pixels
+          const caseWidth = 20;  // Largeur de chaque case en pixels
+          const height = caseHeight * index.length; // Hauteur totale de la figure
+          const width = caseWidth * columns.length; // Largeur totale de la figure
+
+          const figLayout: Partial<Layout> = {
+              title: 'Recharge des nappes',
+              xaxis: {
+                  tickangle: -90,
+                  side: 'bottom',
+                  automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
+              },
+              yaxis: {
+                  tickmode: 'array',
+                  autorange: 'reversed'
+              },
+              margin: {
+                  t: 100,  // marge supérieure
+                  b: 100,  // marge inférieure pour éviter la coupe des labels
+                  l: 150,  // marge gauche
+                  r: 150   // marge droite
+              },
+              height: height + 200, // Ajuster pour inclure les marges
+              width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
+          };
+
+          Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
+        }
+
+
+        matriceSpecificDischarge(): void {
+        //const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
+        const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
+        const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
+        const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
+
+        // Remplacer les 1 par null dans le tableau de données
+        const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
+        const colorscale = [
+          ['0.0', 'rgb(165,0,38)'],
+          ['0.111111111111', 'rgb(215,48,39)'],
+          ['0.222222222222', 'rgb(244,109,67)'],
+          ['0.333333333333', 'rgb(253,174,97)'],
+          ['0.444444444444', 'rgb(254,224,144)'],
+          ['0.555555555556', 'rgb(224,243,248)'],
+          ['0.666666666667', 'rgb(171,217,233)'],
+          ['0.777777777778', 'rgb(116,173,209)'],
+          ['0.888888888889', 'rgb(69,117,180)'],
+          ['1.0', 'rgb(49,54,149)']
+        ];
+
+        const DataMatrice: any[] = [];
+        DataMatrice.push({
+          z: modifiedData,
+          x: columns,
+          y: index,
+          type: 'heatmap',
+          colorscale: colorscale,
+          reversescale: true,
+          showscale: true,
+          xgap: 1,
+          ygap: 1
+        });
+
+        // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+        const caseHeight = 10; // Hauteur de chaque case en pixels
+        const caseWidth = 20;  // Largeur de chaque case en pixels
+        const height = caseHeight * index.length; // Hauteur totale de la figure
+        const width = caseWidth * columns.length; // Largeur totale de la figure
+
+        const figLayout: Partial<Layout> = {
+            title: 'Débits de cours d\'eau',
+            xaxis: {
+                tickangle: -90,
+                side: 'bottom',
+                automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
+            },
+            yaxis: {
+                tickmode: 'array',
+                autorange: 'reversed'
+            },
+            margin: {
+                t: 100,  // marge supérieure
+                b: 100,  // marge inférieure pour éviter la coupe des labels
+                l: 150,  // marge gauche
+                r: 150   // marge droite
+            },
+            height: height + 200, // Ajuster pour inclure les marges
+            width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
+        };
+
+        Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+        }
 
 
   ngAfterViewInit() {
@@ -550,6 +713,20 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateIndicatorShapes();
       this.showTypologyMap();
   }
+
+  renderMatrix() {
+    this.cdr.detectChanges();
+    if (this.selectedMatrix === 'recharge') {
+      this.matriceRecharge();
+    } else if (this.selectedMatrix === 'discharge') {
+      this.matriceSpecificDischarge();
+    }
+    else if (this.selectedMatrix === 'all'){
+      this.matriceRecharge();
+      this.matriceSpecificDischarge();
+    } 
+  }
+
 
   
 
