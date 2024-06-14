@@ -27,7 +27,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     this.resizeListener = () => {
-      console.log("resizing")
       const mapwidth = 0.40 * window.innerWidth;
       const mapHeight = document.getElementById("matrice")!.clientHeight ;
       Plotly.relayout('map', { width: mapwidth, height: mapHeight});
@@ -100,7 +99,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     console.log(this.results)
     this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
     if(this.results.results.data){
-      console.log('generating traces')
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date)
       this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
 
@@ -141,7 +139,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                     modified:false
                 });
             });
-    console.log(this.indicators)
     this.showPlot();
     this.updateIndicatorShapes(); // Mettre à jour les représentations visuelles des indicateurs
 
@@ -158,8 +155,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       fixed: false,
       modified:true
   })
-  console.log(this.indicators)
-
   }
 
   removeIndicator(index: number, type : string) {
@@ -176,7 +171,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       }
     });
     this.updateIndicatorShapes();
-    console.log(this.indicators)
     return this.indicators
   }
   onIndicatorTextChange(text : string, index : number){
@@ -242,9 +236,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   // }
 
   updateResults() {
-    console.log("simulation_id:", this.simulation_id)
     if(localStorage.getItem('lastSimulationId')){
-      console.log("updating results for ", localStorage.getItem('lastSimulationId'))  
       //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
       this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true)).subscribe(
         (data) => {this.results.indicators = data;
@@ -269,7 +261,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   updateGraphData(): void {
    
     if (this.showResults && this.results.results.data.graph) {
-      console.log("mise à jour du graphe")
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;
@@ -279,13 +270,11 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       let q50Y ;
       let observationsX ;
       let observationsY ;
-      console.log(this.results.results.similarity.user_similarity_period);
 
       this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
       var yValuesWithinObservedPeriod: number[] = [];
 
       this.results.results.data.graph.forEach((line: { y: any[]; name: string; mode: string; line: any;}) => {
-          // console.log('Processing line:', line);
           if ( line.y ) {
               var parsedDates = this.XaxisPredictions;
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
@@ -388,7 +377,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateSliderOptions();
     
     }
-    console.log(this.traces)
   }
 
   updateSliderOptions() {
@@ -415,7 +403,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.layout = {
       hovermode: "x unified",
       title: {
-        text: this.watershedName + " - "+ Object.keys(this.results.results.similarity.selected_scenarios).length + " événements",
+        text: this.watershedName + " - "+ this.results.results.corr_matrix.length + " événements",
         font: {size: 17},
       },
       legend: {

@@ -532,7 +532,6 @@ def run_cydre():
             Indicators = [],
             Results = {"similarity": {"clusters":{},
                            "similar_watersheds": [],
-                           "selected_scenarios":{},
                            "corr_matrix":{
                                "specific_discharge":{},
                                "recharge":{}
@@ -656,43 +655,50 @@ def run_timeseries_similarity(simulation_id):
 def select_scenarios(simulation_id):
     try:
         # Recréer l'app correspondant à l'id de simulation
-        cydre_app,simulation = start_simulation_cydre_app(simulation_id)
+        cydre_app, simulation = start_simulation_cydre_app(simulation_id)
         # Récuperer les éléments nécesssaires
         specific_discharge = simulation.Results.get("similarity").get("corr_matrix").get("specific_discharge")
         recharge = simulation.Results.get("similarity").get("corr_matrix").get("recharge")
+
         # Reconversion des chaînes JSON en DataFrame pour leur utilisation
         if specific_discharge:
             specific_discharge_df = pd.read_json(specific_discharge, orient='split')
         if recharge:
             recharge_df = pd.read_json(recharge, orient='split')
 
+        # Vérifier et réinitialiser les index pour garantir l'unicité
+        if not specific_discharge_df.index.is_unique:
+            specific_discharge_df.reset_index(drop=True, inplace=True)
+        if not recharge_df.index.is_unique:
+            recharge_df.reset_index(drop=True, inplace=True)
+
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        scenarios_grouped,selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
         print(selected_scenarios)
-        for key,value in selected_scenarios.items():
-            if key=="specific_discharge":
+
+        for key, value in selected_scenarios.items():
+            if key == "specific_discharge":
                 specific_discharge = value.to_json(orient='split')
                 print(specific_discharge)
-            elif key=="recharge":
+            elif key == "recharge":
                 recharge = value.to_json(orient='split')
                 print(recharge)
                 print("fin recharge")
-        
-        
-               # Chemin JSON de la mise à jour
+
+        # Chemin JSON de la mise à jour
         scenarios_grouped_path = '$.scenarios_grouped'
         selected_scenarios_path = '$.selected_scenarios'
-        json_path_specific_discharge = selected_scenarios_path+'.specific_discharge'
-        json_path_recharge = selected_scenarios_path+'.recharge' 
+        json_path_specific_discharge = selected_scenarios_path + '.specific_discharge'
+        json_path_recharge = selected_scenarios_path + '.recharge'
 
         # Préparation de la requête SQL pour la mise à jour
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_grouped_path,scenarios_grouped.to_json())})
+            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_grouped_path, scenarios_grouped.to_json())})
         )
         db.session.execute(stmt)
-       # Préparation de la mise à jour
+        # Préparation de la mise à jour
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
@@ -712,9 +718,10 @@ def select_scenarios(simulation_id):
         
         db.session.commit()
 
-        return jsonify({"scenarios grouped":scenarios_grouped.to_json(),"specific discharge":specific_discharge,"recharge":recharge}), 200
-    except Exception as e : 
-        return {"error":str(e)}, 500
+        return jsonify({"scenarios grouped": scenarios_grouped.to_json(), "specific discharge": specific_discharge, "recharge": recharge}), 200
+    except Exception as e:
+        return {"error": str(e)}, 500
+
     
 
 def start_simulation_cydre_app(simulation_id):
@@ -976,11 +983,15 @@ def getCorrMatrix(simulation_id):
     # Recréer l'app correspondant à l'id de simulation
     cydre_app, simulation = start_simulation_cydre_app(simulation_id)
 
-    scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.scenarios_grouped')
-        ).filter(Simulation.SimulationID == simulation_id).scalar()
-    scenarios_grouped = json.loads(scenarios_grouped)
+    scenarios_grouped = db.session.query(
+        func.json_extract(Simulation.Results, '$.scenarios_grouped')
+    ).filter(Simulation.SimulationID == simulation_id).scalar()
+    
+    if not scenarios_grouped:
+        return jsonify({'error': 'scenarios_grouped not found'}), 404
+    
     scenarios_grouped_dict = json.loads(scenarios_grouped)
+    scenarios_grouped_dict = json.loads(scenarios_grouped_dict)
 
     # Transformer le dictionnaire en une liste de tuples pour la conversion en Series
     index_values = [(int(key.split(',')[0][1:]), key.split(',')[1].split('\'')[1].strip()) for key in scenarios_grouped_dict.keys()]
@@ -997,20 +1008,29 @@ def getCorrMatrix(simulation_id):
         corr_matrix = pd.DataFrame(cydre_app.scenarios_grouped)
         df = corr_matrix.reset_index()
         df.columns = ['Year', 'ID', 'Coeff']
+        # Nettoyer les données
+          # Remplacer NaN par des chaînes vides
         df['Coeff'] = df['Coeff'].round(2)
         df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
+        df['ID'] = df['ID'].replace({np.nan: 'Unknown Station'})
         df = df.astype({'Year': 'int', 'Coeff': 'float'})
+        
+        # Convertir en dictionnaire
         corr_matrix = df.to_dict(orient='records')
+        
+        # Mise à jour de la base de données
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results,'$.corr_matrix',json.dumps(corr_matrix))})
+            .values({Simulation.Results: func.json_set(Simulation.Results, '$.corr_matrix', json.dumps(corr_matrix))})
         )
         db.session.execute(stmt)
         db.session.commit()
-        return jsonify(corr_matrix),200
+        
+        return jsonify(corr_matrix), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
     
 @app.route('/api/results/<simulation_id>', methods=['GET'])
 def get_results(simulation_id):
