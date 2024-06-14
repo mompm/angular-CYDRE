@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import {Observable, Subject, catchError, concatMap, forkJoin, from, lastValueFrom, map, of, switchMap, takeWhile, tap, timer, toArray } from 'rxjs';
+import {Observable, Subject, catchError, concatMap, finalize, forkJoin, from, lastValueFrom, map, of, switchMap, takeWhile, tap, timer, toArray } from 'rxjs';
 import dataGDFWatersheds from '../model/dataGDFWatersheds';
 import dataGDFPiezometry from '../model/dataGDFPiezometry';
 import dataDischarge from '../model/dataDischarge';
@@ -111,41 +111,64 @@ private baseUrl = 'http://localhost:5000';
 	  }
 	  
 	
-	  runSimulation(params : any ,progressCallback: (message: string, progress: number) => void): Observable<any> {
-		// let taskId: string;
-		let simulation_id :string;
-	
+	  runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Observable<any> {
+		let simulation_id: string;
+	  
 		progressCallback('Initialisation de la simulation...', 0);
 		return this.getRunCydre(params).pipe(
 		  tap(response => {
 			simulation_id = response.SimulationID;
-			progressCallback('Cydre app lancée.',10);
+			progressCallback('Cydre app lancée.', 10);
+			console.log('Simulation ID:', simulation_id);
 		  }),
 		  switchMap(() => this.runSpatialSimilarity(simulation_id).pipe(
-			tap(() => progressCallback('Similarités spatiales exécutées.',20))
+			tap(() => {
+			  progressCallback('Similarités spatiales exécutées.', 20);
+			  console.log('Similarités spatiales exécutées');
+			})
 		  )),
 		  switchMap(() => this.runTimeseriesSimilarity(simulation_id).pipe(
-			tap(() => progressCallback('Similarités temporelles exécutées',50))
+			tap(() => {
+			  progressCallback('Similarités temporelles exécutées', 50);
+			  console.log('Similarités temporelles exécutées');
+			})
 		  )),
 		  switchMap(() => this.runScenarios(simulation_id).pipe(
-			tap(() => progressCallback('Scenarios exécutés.',60))
+			tap(() => {
+			  progressCallback('Scenarios exécutés.', 60);
+			  console.log('Scenarios exécutés');
+			})
 		  )),
 		  switchMap(() => this.getGraph(simulation_id).pipe(
-			tap(() => progressCallback('Graphe généré.',75))
+			tap(() => {
+			  progressCallback('Graphe généré.', 75);
+			  console.log('Graphe généré');
+			})
 		  )),
 		  switchMap(() => this.getCorrMatrix(simulation_id).pipe(
-			tap(() => progressCallback('Matrice de corrélation récupérée.',85))
+			tap(() => {
+			  progressCallback('Matrice de corrélation récupérée.', 85);
+			  console.log('Matrice de corrélation récupérée');
+			})
 		  )),
 		  switchMap(() => this.getResults(simulation_id).pipe(
-			tap(() => progressCallback('Résultats récupérés.',100)),
+			tap(() => {
+			  progressCallback('Résultats récupérés.', 100);
+			  console.log('Résultats récupérés');
+			}),
 			map(results => ({ simulation_id, results }))
 		  )),
+		  finalize(() => {
+			console.log('Chaîne d\'observables terminée');
+		  }),
 		  catchError(error => {
-			progressCallback('Erreur lors de la simulation :'+ error,0);
+			progressCallback('Erreur lors de la simulation :' + error, 0);
+			console.error('Erreur lors de la simulation:', error);
 			return of(null);
 		  })
 		);
 	  }
+	  
 	getTemperature(id: string): Promise<Array<dataTemperature>> {
 		const url = `/osur/stationTemperature/${id}`;
 		return lastValueFrom(this.http.get<Array<dataTemperature>>(url));
