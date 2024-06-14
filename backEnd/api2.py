@@ -606,6 +606,11 @@ def run_timeseries_similarity(simulation_id):
         cydre_app.run_timeseries_similarity(json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
+        print(corr_matrix)
+        # with open('dataframe_output.txt', 'w') as file:
+        #     for index, row in corr_matrix.iterrows():
+        #         file.write(f"{row['Nom']}, {row['Age']}, {row['Ville']}\n")
+
         # La transformer en JSON pour la stocker
         for key,value in corr_matrix.items():
             if key=="specific_discharge":
@@ -662,21 +667,52 @@ def select_scenarios(simulation_id):
             recharge_df = pd.read_json(recharge, orient='split')
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-        # Chemin JSON de la mise à jour
-        selected_scenarios_path = '$.similarity.selected_scenarios'
+        scenarios_grouped,selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        print(selected_scenarios)
+        for key,value in selected_scenarios.items():
+            if key=="specific_discharge":
+                specific_discharge = value.to_json(orient='split')
+                print(specific_discharge)
+            elif key=="recharge":
+                recharge = value.to_json(orient='split')
+                print(recharge)
+                print("fin recharge")
+        
+        
+               # Chemin JSON de la mise à jour
+        scenarios_grouped_path = '$.scenarios_grouped'
+        selected_scenarios_path = '$.selected_scenarios'
+        json_path_specific_discharge = selected_scenarios_path+'.specific_discharge'
+        json_path_recharge = selected_scenarios_path+'.recharge' 
+
         # Préparation de la requête SQL pour la mise à jour
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, selected_scenarios_path,selected_scenarios.to_json())})
+            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_grouped_path,scenarios_grouped.to_json())})
         )
-        
+        db.session.execute(stmt)
+       # Préparation de la mise à jour
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_specific_discharge, specific_discharge)})
+        )
         # Exécution de la mise à jour
         db.session.execute(stmt)
+        # Préparation de la mise à jour
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_recharge, recharge)})
+        )
+
+        # Exécution de la mise à jour
+        db.session.execute(stmt)
+        
         db.session.commit()
 
-        return jsonify({"Success":"Scenarios selected succesfully"}), 200
+        return jsonify({"scenarios grouped":scenarios_grouped.to_json(),"specific discharge":specific_discharge,"recharge":recharge}), 200
     except Exception as e : 
         return {"error":str(e)}, 500
     
@@ -718,7 +754,7 @@ def getGraph(simulation_id):
     try:
         # Récuperer et re-transformer les éléments nécessaire à la création du graphe
         scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         scenarios_grouped = json.loads(scenarios_grouped)
         scenarios_grouped_dict = json.loads(scenarios_grouped)
@@ -758,7 +794,12 @@ def getGraph(simulation_id):
         # Calculer les projections
         graph_results = results.plot_streamflow_projections(module=True)
         # Transformer les résultats en JSON pour les stocker
-        json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],"last_date":graph_results['last_date']})
+        json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],
+                                   "last_date":graph_results['last_date'],
+                                   'first_observation_date':graph_results['first_observation_date'],
+                                   'last_observation_date':graph_results['last_observation_date'],
+                                   'first_prediction_date':graph_results['first_prediction_date'],
+                                   'last_prediction_date':graph_results['last_prediction_date']})
         # Mise à jour de chaque champ
         stmt = (
             update(Simulation)
@@ -820,7 +861,7 @@ def update_indicator(simulation_id):
 
         #Récuperer les scénarios de la simulation
         scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         
         scenarios_grouped = json.loads(scenarios_grouped)
@@ -936,7 +977,7 @@ def getCorrMatrix(simulation_id):
     cydre_app, simulation = start_simulation_cydre_app(simulation_id)
 
     scenarios_grouped =  db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.selected_scenarios')
+            func.json_extract(Simulation.Results, '$.scenarios_grouped')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
     scenarios_grouped = json.loads(scenarios_grouped)
     scenarios_grouped_dict = json.loads(scenarios_grouped)
@@ -1211,19 +1252,20 @@ class Graph():
         merged_df = pd.merge(reference_df, projection_df, left_on=reference_df.index,
                              right_on=projection_df.index, how='right')
         merged_df = merged_df.set_index(merged_df['key_0'])
-        
+
+         #On ne stocke pas les données en x qui sont des dates générables dans le front
         data =[
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
-            go.Scatter(x=merged_df.index.tolist(), y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
-            go.Scatter(x=reference_df.index.tolist(), y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
+            go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
+            go.Scatter(x=None, y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
         ]
 
 
         # Convert each projection series DataFrame to a Plotly trace
         for idx, serie in enumerate(projection_series):
             serie_trace = go.Scatter(
-                x=serie.index.tolist(),
+                x=None, #On ne stocke pas les données en x qui sont des dates générables dans le front
                 y=serie['Q_streamflow'].tolist(),
                 mode='lines',
                 line=dict(color='rgba(0, 0, 255, 0.2)', width=1),  # Semi-transparent blue lines
@@ -1231,12 +1273,16 @@ class Graph():
             ).to_plotly_json()
             data.append(serie_trace)
 
-        #convert Timestamp data for json serialisation
-        for entry in data:
-            entry['x'] = [ts.isoformat() if not isinstance(ts, str) else ts for ts in entry['x']]
+        # #convert Timestamp data for json serialisation
+        # for entry in data:
+        #     entry['x'] = [ts.isoformat() if not isinstance(ts, str) else ts for ts in entry['x']]
 
         data = {
         'graph': data,
+        'first_observation_date': reference_df.index.tolist()[0].isoformat(),#la première date d'observations
+        'last_observation_date': reference_df.index.tolist()[len(reference_df.index.tolist())-1].isoformat(),#la dernière date d'observations
+        'first_prediction_date': merged_df.index.tolist()[0].isoformat(),#la première date de perdicitions
+        'last_prediction_date': merged_df.index.tolist()[len(merged_df.index.tolist())-1].isoformat(),#la dernière date de predictions
         'proj_values': {
             'Q50': float(self.proj_values.Q50),
             'Q10': float(self.proj_values.Q10),

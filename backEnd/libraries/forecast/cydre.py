@@ -91,7 +91,7 @@ class Cydre():
             #if spatial:
              #   correlation_matrix = Selection.filter_with_similar_watersheds(correlation_matrix, self.Similarity.similar_watersheds)
             correlation_matrix = Selection.drop_target_scenarios(correlation_matrix, self.date.year, self.UserConfiguration.user_watershed_id)
-            correlation_matrix = Selection.filter_with_threshold(correlation_matrix)            
+            # correlation_matrix = Selection.filter_with_threshold(correlation_matrix)            
             
             # Store the variable scenarios
             self.selected_scenarios[variable] = correlation_matrix
@@ -102,7 +102,7 @@ class Cydre():
         
         # Group all scenarios in one dataframe
         self.scenarios_grouped = Selection.group_scenarios(self.scenarios)
-        return self.scenarios_grouped
+        return self.scenarios_grouped, self.selected_scenarios
     
     
     def streamflow_forecast(self):
