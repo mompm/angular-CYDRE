@@ -518,18 +518,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     } 
   }
 
-  renderMatrix() {
-    this.cdr.detectChanges();
-    if (this.selectedMatrix === 'recharge') {
-      this.matriceRecharge();
-    } else if (this.selectedMatrix === 'discharge') {
-      this.matriceSpecificDischarge();
-    }
-    else if (this.selectedMatrix === 'all'){
-      this.matriceRecharge();
-      this.matriceSpecificDischarge();
-    } 
-  }
+
 
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
@@ -554,133 +543,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.showPlot();
       this.updateIndicatorShapes();
       this.showTypologyMap();
-      //this.matriceRecharge();
-      //this.matriceSpecificDischarge();
-
-
   }
 
-  matriceRecharge(): void {
-    //const recharge = this.results.results.similarity.corr_matrix.recharge;
-    const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
-    const data = this.results.results.similarity.corr_matrix.recharge.data;
-    const index = this.results.results.similarity.corr_matrix.recharge.index;
-
-    // Remplacer les 1 par null dans le tableau de données
-    const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-    const colorscale = [
-      ['0.0', 'rgb(165,0,38)'],
-      ['0.111111111111', 'rgb(215,48,39)'],
-      ['0.222222222222', 'rgb(244,109,67)'],
-      ['0.333333333333', 'rgb(253,174,97)'],
-      ['0.444444444444', 'rgb(254,224,144)'],
-      ['0.555555555556', 'rgb(224,243,248)'],
-      ['0.666666666667', 'rgb(171,217,233)'],
-      ['0.777777777778', 'rgb(116,173,209)'],
-      ['0.888888888889', 'rgb(69,117,180)'],
-      ['1.0', 'rgb(49,54,149)']
-  ];
   
-    const DataMatrice: any[] = [];
-    DataMatrice.push({
-      z: modifiedData,
-      x: columns,
-      y: index,
-      type: 'heatmap',
-      colorscale: colorscale,
-      reversescale: true,
-      showscale: true,
-      xgap: 1,
-      ygap: 1
-    });
-
-    // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
-    const caseHeight = 10; // Hauteur de chaque case en pixels
-    const caseWidth = 20;  // Largeur de chaque case en pixels
-    const height = caseHeight * index.length; // Hauteur totale de la figure
-    const width = caseWidth * columns.length; // Largeur totale de la figure
-
-    const figLayout: Partial<Layout> = {
-        title: 'Recharge des nappes',
-        xaxis: {
-            tickangle: -90,
-            side: 'bottom',
-            automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
-        },
-        yaxis: {
-            tickmode: 'array',
-            autorange: 'reversed'
-        },
-        margin: {
-            t: 100,  // marge supérieure
-            b: 100,  // marge inférieure pour éviter la coupe des labels
-            l: 150,  // marge gauche
-            r: 150   // marge droite
-        },
-        height: height + 200, // Ajuster pour inclure les marges
-        width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
-    };
-
-    Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
-}
-
-
-matriceSpecificDischarge(): void {
-  //const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
-  const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
-  const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
-  const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
-  
-   // Remplacer les 1 par null dans le tableau de données
-   const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-   const colorscale = [
-     ['0.0', 'rgb(165,0,38)'],
-     ['0.111111111111', 'rgb(215,48,39)'],
-     ['0.222222222222', 'rgb(244,109,67)'],
-     ['0.333333333333', 'rgb(253,174,97)'],
-     ['0.444444444444', 'rgb(254,224,144)'],
-     ['0.555555555556', 'rgb(224,243,248)'],
-     ['0.666666666667', 'rgb(171,217,233)'],
-     ['0.777777777778', 'rgb(116,173,209)'],
-     ['0.888888888889', 'rgb(69,117,180)'],
-     ['1.0', 'rgb(49,54,149)']
- ];
-
-   const DataMatrice: any[] = [];
-   DataMatrice.push({
-     z: modifiedData,
-     x: columns,
-     y: index,
-     type: 'heatmap',
-     colorscale: colorscale,
-     reversescale: true,
-     showscale: true,
-     xgap: 1,
-     ygap: 1
-   });
-
-  const figLayout: Partial<Layout> = {
-    title: 'Matrice Similarités Debits de cours d\'eau',
-    xaxis: {
-      tickangle: -90,  
-      side: 'bottom'
-    },
-    margin: {
-        t: 100,  // top margin
-        b: 100,  // bottom margin
-        l: 150, // left margin
-        r: 150  // right margin
-    },
-    height: 700, 
-    width : 500, 
-    yaxis: {
-        tickmode: 'array',
-        autorange :'reversed'
-    }
-};
-
-Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
-}
 
   openDialog() {
     this.dialog.open(Dialogsimulationresults);
