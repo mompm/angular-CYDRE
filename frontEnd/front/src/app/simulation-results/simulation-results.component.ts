@@ -2,7 +2,7 @@ import { Options } from '@angular-slider/ngx-slider/options';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnDestroy, OnInit, SimpleChange, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, SimpleChange, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
@@ -21,10 +21,11 @@ import { index, string } from 'mathjs';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
+  selectedMatrix: string = '';
   on: boolean = false;
   private resizeListener : ()=> void;
 
-  constructor(private jsonService: JsonService, public dialog : MatDialog){
+  constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     this.resizeListener = () => {
       console.log("resizing")
       const mapwidth = 0.40 * window.innerWidth;
@@ -117,6 +118,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   ngOnDestroy(){
     window.removeEventListener('resize', this.resizeListener);
   }
+
+  
 
   fillIndicators() {
     this.indicators = [];  // Réinitialiser le tableau des indicateurs
@@ -509,10 +512,23 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    console.log(this.results)
     if (changes['results'] && changes['results'].currentValue) {
+      console.log('results changes');
       this.updateComponentsWithResults(changes['results'].currentValue);
+    } 
+  }
+
+  renderMatrix() {
+    this.cdr.detectChanges();
+    if (this.selectedMatrix === 'recharge') {
+      this.matriceRecharge();
+    } else if (this.selectedMatrix === 'discharge') {
+      this.matriceSpecificDischarge();
     }
+    else if (this.selectedMatrix === 'all'){
+      this.matriceRecharge();
+      this.matriceSpecificDischarge();
+    } 
   }
 
   applyFilter(event: Event) {
@@ -538,18 +554,17 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.showPlot();
       this.updateIndicatorShapes();
       this.showTypologyMap();
-      this.renderHeatmap();
-      this.renderHeatmap2();
+      //this.matriceRecharge();
+      //this.matriceSpecificDischarge();
 
 
   }
 
-  renderHeatmap(): void {
-    const recharge = this.results.results.similarity.corr_matrix.recharge;
+  matriceRecharge(): void {
+    //const recharge = this.results.results.similarity.corr_matrix.recharge;
     const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
     const data = this.results.results.similarity.corr_matrix.recharge.data;
     const index = this.results.results.similarity.corr_matrix.recharge.index;
-    const testData: any[] = [];
 
     // Remplacer les 1 par null dans le tableau de données
     const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
@@ -566,8 +581,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       ['1.0', 'rgb(49,54,149)']
   ];
   
-    // Ajuster l'échelle de couleurs pour correspondre à la heatmap souhaitée
-    testData.push({
+    const DataMatrice: any[] = [];
+    DataMatrice.push({
       z: modifiedData,
       x: columns,
       y: index,
@@ -579,36 +594,43 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       ygap: 1
     });
 
+    // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+    const caseHeight = 10; // Hauteur de chaque case en pixels
+    const caseWidth = 20;  // Largeur de chaque case en pixels
+    const height = caseHeight * index.length; // Hauteur totale de la figure
+    const width = caseWidth * columns.length; // Largeur totale de la figure
+
     const figLayout: Partial<Layout> = {
-      title: 'Heatmap des similarités recharge',
-      xaxis: {
-        tickangle: -90,
-        side: 'bottom'
-      },
-      margin: {
-          t: 100,  // marge supérieure
-          b: 100,  // marge inférieure
-          l: 150,  // marge gauche
-          r: 150   // marge droite
-      },
-      height: 700,
-      width : 500,
-      yaxis: {
-          tickmode: 'array',
-          autorange: 'reversed'
-      }
+        title: 'Recharge des nappes',
+        xaxis: {
+            tickangle: -90,
+            side: 'bottom',
+            automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
+        },
+        yaxis: {
+            tickmode: 'array',
+            autorange: 'reversed'
+        },
+        margin: {
+            t: 100,  // marge supérieure
+            b: 100,  // marge inférieure pour éviter la coupe des labels
+            l: 150,  // marge gauche
+            r: 150   // marge droite
+        },
+        height: height + 200, // Ajuster pour inclure les marges
+        width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
     };
 
-    Plotly.newPlot('heatmap', testData, figLayout);
+    Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
 }
 
 
-renderHeatmap2(): void {
-  const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
+matriceSpecificDischarge(): void {
+  //const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
   const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
   const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
   const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
-  const testData: any[] = [];
+  
    // Remplacer les 1 par null dans le tableau de données
    const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
    const colorscale = [
@@ -623,9 +645,9 @@ renderHeatmap2(): void {
      ['0.888888888889', 'rgb(69,117,180)'],
      ['1.0', 'rgb(49,54,149)']
  ];
- 
-   // Ajuster l'échelle de couleurs pour correspondre à la heatmap souhaitée
-   testData.push({
+
+   const DataMatrice: any[] = [];
+   DataMatrice.push({
      z: modifiedData,
      x: columns,
      y: index,
@@ -638,7 +660,7 @@ renderHeatmap2(): void {
    });
 
   const figLayout: Partial<Layout> = {
-    title: 'Heatmap des similarités specific discharge',
+    title: 'Matrice Similarités Debits de cours d\'eau',
     xaxis: {
       tickangle: -90,  
       side: 'bottom'
@@ -657,7 +679,7 @@ renderHeatmap2(): void {
     }
 };
 
-Plotly.newPlot('heatmap2', testData, figLayout);
+Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
 }
 
   openDialog() {
