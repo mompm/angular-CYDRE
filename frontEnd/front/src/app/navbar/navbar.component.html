@@ -2,13 +2,13 @@
   <nav class="navbar sticky-top navbar-expand-lg" style="background: #1a1a1a">
     <div class="container-fluid">
       <div class="navbar-brand">
-        <a href="/home"><img src="../../assets/img/logo3.png" alt="Logo" style="height: 100px;"></a>
+        <a href="/home"><img src="../../assets/img/logo3.png" alt="Logo" style="height: 60px;"></a>
       </div>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapseNavbar">
         <span class="navbar-toggler-icon"></span>
       </button>
-      <div class="collapse navbar-collapse justify-content-end" id="collapseNavbar">
-        <ul class="navbar-nav mr-auto nav-nav">
+      <div class="collapse navbar-collapse justify-content-center" id="collapseNavbar">
+        <ul class="navbar-nav nav-nav">
           <!-- <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li> -->
           <li><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite" routerLinkActive="active" translate (click)="login()">ficheSiteTitle</a></li>
           <li><a class="navbar-underline-onglet menu-item" routerLink="/simulator" routerLinkActive="active" translate (click)="data()">simulatorTitle</a></li>
@@ -22,13 +22,13 @@
           <li *ngIf="(authService.isLoggedIn | async) && authService.isDev"><a class="navbar-underline-onglet menu-item" routerLink="/create-account" routerLinkActive="active" translate (click)="createAccount()">createAccount</a></li>
           <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/login" routerLinkActive="active" translate (click)="logout()">logout</a></li>
         </ul>
-        <div class="d-flex align-items-center">
-          <img src="../../assets/img/Europe_logo.png" alt="europe Logo" class="navbar-logo">
-          <img src="../../assets/img/Région-bretagne-logo.png" alt="Région Bretagne Logo" class="navbar-logo">
-          <button class="btn custom-btn mx-2" (click)="openDialog()">
-            <img src="../../assets/img/quiz.png" alt="Help Center" style="vertical-align: middle; margin-right: 5px; margin-left: 5px;">
-          </button>
-        </div>
+      </div>
+      <div class="d-flex align-items-center justify-content-end">
+        <img src="../../assets/img/Europe_logo.png" alt="europe Logo" style="height: 60px;" class="navbar-logo">
+        <img src="../../assets/img/Région-bretagne-logo.png" alt="Région Bretagne Logo" style="height: 60px;" class="navbar-logo">
+        <button class="btn custom-btn mx-2" (click)="openDialog()">
+          <img src="../../assets/img/quiz.png" alt="Help Center" style="vertical-align: middle; margin-right: 5px; margin-left: 5px; height:40px; width: 40px;">
+        </button>
       </div>
     </div>
   </nav>
