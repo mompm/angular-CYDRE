@@ -114,46 +114,46 @@ private baseUrl = 'http://localhost:5000';
 	  runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Observable<any> {
 		let simulation_id: string;
 	  
-		progressCallback('Initialisation de la simulation...', 0);
+		progressCallback('Préparation de la simulation...', 0);
 		return this.getRunCydre(params).pipe(
 		  tap(response => {
 			simulation_id = response.SimulationID;
-			progressCallback('Cydre app lancée.', 10);
+			progressCallback('Récupération des conditions de la prévision', 10);
 			console.log('Simulation ID:', simulation_id);
 		  }),
 		  switchMap(() => this.runSpatialSimilarity(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Similarités spatiales exécutées.', 20);
+			  progressCallback('Typologie de bassins versants : OK', 20);
 			  console.log('Similarités spatiales exécutées');
 			})
 		  )),
 		  switchMap(() => this.runTimeseriesSimilarity(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Similarités temporelles exécutées', 50);
+			  progressCallback('Identification des années similaires : OK', 50);
 			  console.log('Similarités temporelles exécutées');
 			})
 		  )),
 		  switchMap(() => this.runScenarios(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Scenarios exécutés.', 60);
+			  progressCallback('Sélection des événements similaires : OK', 60);
 			  console.log('Scenarios exécutés');
 			})
 		  )),
 		  switchMap(() => this.getGraph(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Graphe généré.', 75);
+			  progressCallback('Préparation des résultats', 75);
 			  console.log('Graphe généré');
 			})
 		  )),
 		  switchMap(() => this.getCorrMatrix(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Matrice de corrélation récupérée.', 85);
+			//   progressCallback('Matrice de corrélation récupérée.', 85);
 			  console.log('Matrice de corrélation récupérée');
 			})
 		  )),
 		  switchMap(() => this.getResults(simulation_id).pipe(
 			tap(() => {
-			  progressCallback('Résultats récupérés.', 100);
+			  progressCallback('Fin de la prévision !', 100);
 			  console.log('Résultats récupérés');
 			}),
 			map(results => ({ simulation_id, results }))
