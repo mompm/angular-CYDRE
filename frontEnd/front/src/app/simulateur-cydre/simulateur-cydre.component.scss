@@ -11,9 +11,29 @@
   .card {
     margin-bottom: 1.5rem !important;
   }
+
+  .card-header {
+    font-size: 18px;
+    color: white;
+    background-color:#413f3f;
+    text-align: center;
+  }
+
+  h5 {
+    font-size: 18px;
+    text-align: center;
+  }
+
+  .forecast_horizon{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
   
   .text-center {
     text-align: center !important;
+    margin-bottom: 30px;
   }
   
   .d-flex {
@@ -43,7 +63,7 @@
   }
   
   .progress-container {
-    margin-bottom: 15px; /* Ajoute un espace de 15 pixels sous la barre de progression */
+    margin-bottom: 25px; /* Ajoute un espace de 15 pixels sous la barre de progression */
   }
   
   .body{
@@ -57,13 +77,14 @@
     text-align: center;
 }
 
+
 .button_info {
     background-color: white;
     color: black;              
     border-radius: 5px;        
     cursor: pointer;          
     font-size: 12px; 
-    margin-left:25px;
+    margin-left:5px;
     }
 
 
@@ -87,6 +108,7 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
+    margin-bottom: 25px;
     
 }
 
@@ -95,6 +117,7 @@
     max-width: 500px;
     margin-right: 20px; // Espace à droite pour séparer du bouton
 }
+
 
 mat-form-field.first-dropdown{
     width: 375px;
@@ -120,18 +143,48 @@ mat-select.first-dropdown {
     display: flex;
     align-items: center;
     justify-content: center;
+
 }
 
 .button_link_hydroportail img,
 .button_link_ades img {
-    height: 20px;
+    height: 25px;
+    display: flex;
+    align-items: center;
 }
 
 .disabled-option {
     color: red; // Couleur pour les options désactivées
 }
 
+.info-tooltip {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    background-color: #ccf2cb;
+    border: 1px solid #ccf2cb;
+    // border-radius: 5px;
+    color: #000000;
+    font-size: 14px;
+    max-width: 300px;
+    text-align: justify;
+}
 
+.warning-tooltip {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    background-color: #f2cbcb;
+    border: 1px solid #ccf2cb;
+    // border-radius: 5px;
+    color: #000000;
+    font-size: 14px;
+    max-width: 300px;
+    text-align: justify;
+}
+
+
+.mat-menu-panel {
+    transition: opacity 0.3s ease;
+}
 
 
 //map style 
@@ -254,9 +307,72 @@ mat-form-field.second-dropdown{
     justify-content: space-around;
     
 }
-.slider{
-    margin-bottom: 30px;
-}
-    
 
-  
+::ng-deep{
+    .slider{
+        margin-bottom: 30px;
+        width: 80%;
+    }
+    
+    .slider .ngx-slider .ngx-slider-bar {
+        background: #0b254f;
+        height: 2px;
+      }
+    
+    // .slider .ngx-slider .ngx-slider-selection {
+    //     background: orange;
+    //   }
+
+    .slider .ngx-slider .ngx-slider-pointer {
+        width: 8px;
+        height: 16px;
+        top: auto; /* to remove the default positioning */
+        bottom: 0;
+        background-color: #333;
+        border-top-left-radius: 3px;
+        border-top-right-radius: 3px;
+      }
+
+    .slider .ngx-slider .ngx-slider-pointer:after {
+        display: none;
+      }
+
+    // .slider .ngx-slider .ngx-slider-tick.ngx-slider-selected {
+    //     background: orange;
+    //   }
+
+    .slider .ngx-slider .ngx-slider-bubble.ngx-slider-limit {
+        font-weight: bold;
+        color: #333;
+      }
+    
+    .slider .ngx-slider .ngx-slider-tick {
+        width: 2px;
+        height: 10px;
+        margin-left: 4px;
+        border-radius: 0;
+        background: #333;
+        top: -1px;
+      }
+}
+
+.form-control{
+    font-size: 18px;
+    text-align: center;
+    // width: 100%;
+}
+
+.run-application {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.info-icon{
+    color: #07861c;
+}
+
+.warning-icon{
+    color: #d51717;
+}

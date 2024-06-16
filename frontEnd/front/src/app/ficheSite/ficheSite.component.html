@@ -2,7 +2,18 @@
   <div>
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+      <!-- <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button> -->
+      <!-- Bulle d'info pour la sélection des stations hydrologiques -->
+      <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
+        <mat-icon>info</mat-icon>
+      </button>
+      <mat-menu #dateInfoPopup="matMenu" xPosition="after">
+        <ng-template matMenuContent>
+          <div class="info-tooltip">
+          <p><strong>Info : </strong>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
+          </div>
+        </ng-template>
+      </mat-menu>
     </div>
 
     <div>

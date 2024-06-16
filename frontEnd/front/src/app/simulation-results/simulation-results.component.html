@@ -1,29 +1,87 @@
 <div *ngIf = "simulation_id!=null">
   <div>
-    <div class="visu-align" >    
-      <h4>Visualisation des prévisions saisonnières</h4>
-      <!--<button mat-button (click)="downloadFile()"><mat-icon>file_download</mat-icon></button>-->
-      <button mat-button (click)="openDialog()"><mat-icon>info</mat-icon></button>
-    </div>
-    <div>
-      <div style="text-align: center;">
-        <p>échelle logarithmique | échelle linéaire</p>
-        <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle>
-      </div>
-      <div id="previsions"></div>
-    </div>
-    <div class="card my-4">
+
+    <!-- Visualisation d'une prévision saisonnière -->
+    <div class="card mb-4">
       <div class="card-header">
-        <div class="visu-align">
-          <h3>Indicateurs</h3>
-          <button mat-icon-button class="button_info" [matMenuTriggerFor]="dateInfoPopup">
-            <mat-icon>info</mat-icon>
+        <div class="align-tooltip">    
+          Visualisation de la prévision saisonnière
+          <!-- Bulle info pour l'échéance de la prévision' -->
+          <button mat-icon-button class="button_info" aria-label="Visualisation prevision" [matMenuTriggerFor]="dateInfoPopupGraph">
+            <mat-icon class="info-icon">info</mat-icon>
+          </button>
+          <mat-menu #dateInfoPopupGraph="matMenu" xPosition="after">
+            <ng-template matMenuContent>
+              <div class="info-graph-tooltip">
+              <p><strong>Info : </strong>Le graphique a pour objectif de visualiser les tendances saisonnières de débits produites par
+              l'outil CYDRE. Les données mesurées en station sont représentées par la courbe noire. Différentes informations sont ajoutées
+            sur la période de simulation. La courbe bleu en pointillée représente la tendance médiane des prévisions. La bande bleue représente
+          l'intervalle entre les quantiles 10 et 90 des prévisions. Chaque courbe individuelle grise en arrière plan correspond aux séries
+        utilisées pour établir les prévisions. Enfin, le 1/10 est module est représenté par une ligne rouge horizontale. Le 1/10 du module
+        est calculé sur l'ensemble de la chronique. Des indicateurs sont calculés dans la section suivante par rapport au
+         franchissement ou non du 1/10 du module. Il est également possible d'ajouter des seuils personnalisés. La section suivante
+        détaille le mode opératoire.</p>
+              </div>
+            </ng-template>
+          </mat-menu>
+          <!-- Bulle warning pour l'échéance de la prévision' -->
+          <button mat-icon-button class="button_info" aria-label="Visualisation prevision" [matMenuTriggerFor]="dateInfoPopup">
+            <mat-icon class="warning-icon">warning</mat-icon>
           </button>
           <mat-menu #dateInfoPopup="matMenu" xPosition="after">
             <ng-template matMenuContent>
-              <p>*La date de simulation a été réajustée au {{ results.results.data.first_date }} pour améliorer la qualité
-                des projections. Le réajustement s'effectue lorsque la date de simulation est réalisée sur des événements
+              <div class="warning-tooltip">
+              <p><strong>Attention : </strong>La date de simulation a été réajustée au {{ results.results.data.first_date }} pour améliorer la qualité
+                des projections. Le réajustement s'effectue lorsque la date de simulation est réalisée pendant des événements
                 de précipitations.</p>
+              </div>
+            </ng-template>
+          </mat-menu>
+          <button mat-button (click)="downloadFile()"><mat-icon class="download-icon">file_download</mat-icon></button>
+        </div>
+        <!--<button mat-button (click)="downloadFile()"><mat-icon>file_download</mat-icon></button>-->
+        <!-- <button mat-button (click)="openDialog()"><mat-icon>info</mat-icon></button> -->
+      </div>
+      <div class="card-body">
+        <div class="align-tooltip">
+          <p>échelle logarithmique | échelle linéaire</p>
+          <button mat-icon-button class="button_info" aria-label="Echelle log" [matMenuTriggerFor]="dateInfoPopup2">
+            <mat-icon class="info-icon">info</mat-icon>
+          </button>
+          <mat-menu #dateInfoPopup2="matMenu" xPosition="after">
+            <ng-template matMenuContent>
+              <div class="info-tooltip">
+              <p><strong>Info : </strong>L'échelle linéaire est adaptée pour la représentation de la dynamique générale des débits et pour identifier les pics de crues. 
+                L'échelle logarithmique est particulièrement adaptée pour l'identification des années sèches.</p>
+              </div>
+            </ng-template>
+          </mat-menu>
+          <!-- <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle> -->
+        </div>
+        <div style="text-align: center;">
+          <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle>
+        </div>
+        <div id="previsions"></div>
+      </div>
+    </div>
+
+    <!-- Définition des seuils sécheresse -->
+    <div class="card my-4">
+      <div class="card-header">
+        <div class="align-tooltip">
+          Définition des seuils sécheresse
+          <!-- Bulle info pour la définition des seuils sécheresse -->
+          <button mat-icon-button class="button_info" aria-label="Definition seuils secheresse" [matMenuTriggerFor]="dateInfoPopupGraph3">
+            <mat-icon class="info-icon">info</mat-icon>
+          </button>
+          <mat-menu #dateInfoPopupGraph3="matMenu" xPosition="after">
+            <ng-template matMenuContent>
+              <div class="info-tooltip">
+              <p><strong>Info : </strong>Cette section a pour objectif de personnaliser le calcul des indicateurs opérationnels en
+              ajoutant de nouveaux seuils sécheresse. En cliquant sur le "+" vous pouvez définir le nom du seuil, choisir sa couleur
+            (pour l'affichage sur le graphique de la section précédente) et définir la valeur du seuil en m3/s. Le graphique s'actualisera
+          directement. Pour le calcul des indicateurs il faudra cliquer sur "Mettre à jour avec les nouveaux seuils".</p>
+              </div>
             </ng-template>
           </mat-menu>
       </div>
@@ -43,14 +101,17 @@
     </div>
     <div class="d-flex">
       <div class="ml-auto">
-        <button type="button" class="btn btn-primary" (click)="updateResults()">Mettre à jour avec le nouvel
-          indicateur</button>
+        <button type="button" class="btn btn-primary" (click)="updateResults()">Mettre à jour avec les nouveaux seuils</button>
       </div>
     </div>
+
+    <!-- Calcul et affichage des indicateurs opérationnels -->
     <div *ngFor="let indicator of results.indicators">
       <div class="card my-4 ">
         <div class="card-header">
-          <h3>{{indicator.type}}</h3>
+          <div class="align-tooltip">
+          Seuil : {{indicator.type}}
+          </div>
         </div>
         <div class="card-body">
           <div class="containerIndicatiors">
@@ -104,16 +165,20 @@
       </div>
     </div>
 
+    <!-- Interprétation des prévisions - matrices de corrélation -->
     <div class="card my-4">
       <div class="card-header">
-        <h3>Interprétation - Analyse de similarité</h3>
+          <div class="align-tooltip">
+            Interprétation des prévisions par l'analyse de similarité
+            <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+          </div>
       </div>
       <div class="form-group">
-        <label for="matrixSelect"> <h5>Choix des matrices de similarités:  </h5></label>
+        <!-- <label for="matrixSelect"> <h5>Choix des matrices de similarités:  </h5></label> -->
         <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
           <option value="recharge">Recharge des nappes</option>
           <option value="discharge">Débits de cours d'eau</option>
-          <option value="all">Recharge des nappes et Débits de cours d'eau</option> 
+          <option value="all">Toutes</option> 
         </select>
       </div>
       <div class="heatmapcontainer">
@@ -122,7 +187,7 @@
       </div>
     </div>
 
-    <div class="card my-4">
+    <!-- <div class="card my-4">
       <div class="card-header">
         <h3>Interprétation - Analyse de similarité</h3>
       </div>
@@ -131,26 +196,26 @@
           <div class="col-md-6">
             <h4>Matrice de corrélation</h4>
             <div *ngIf="dataSource" class="mat-elevation-z8" id = "matrice">
-              <mat-table [dataSource]="dataSource" matSort>
+              <mat-table [dataSource]="dataSource" matSort> -->
 
                 <!-- Year Column -->
-                <ng-container matColumnDef="Year">
+                <!-- <ng-container matColumnDef="Year">
                   <mat-header-cell *matHeaderCellDef mat-sort-header> Quand ? </mat-header-cell>
                   <mat-cell *matCellDef="let element"> {{element.Year}} </mat-cell>
-                </ng-container>
+                </ng-container> -->
 
                 <!-- ID Column -->
-                <ng-container matColumnDef="ID">
+                <!-- <ng-container matColumnDef="ID">
                   <mat-header-cell *matHeaderCellDef mat-sort-header> Où ? </mat-header-cell>
                   <mat-cell *matCellDef="let element"> {{element.ID}} </mat-cell>
-                </ng-container>
+                </ng-container> -->
 
                 <!-- Coeff Column -->
-                <ng-container matColumnDef="Coeff">
+                <!-- <ng-container matColumnDef="Coeff">
                   <mat-header-cell *matHeaderCellDef mat-sort-header> Quelle proximité ? </mat-header-cell>
                   <mat-cell *matCellDef="let element"> {{element.Coeff}} </mat-cell>
-                </ng-container>
-
+                </ng-container> -->
+<!-- 
                 <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
                 <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
               </mat-table>
@@ -167,4 +232,4 @@
       </div>
     </div>  
   </div>
-</div>
+</div> -->

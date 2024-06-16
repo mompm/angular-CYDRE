@@ -27,7 +27,22 @@
         width:100%;
     }
 
-
+    .info-tooltip {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        background-color: #ccf2cb;
+        border: 1px solid #ccc;
+        // border-radius: 5px;
+        color: #000000;
+        font-size: 14px;
+        max-width: 300px;
+        text-align: justify;
+    }
+    
+    
+    .mat-menu-panel {
+        transition: opacity 0.3s ease;
+    }
 
 .center_ligne {
     display: inline-block; 

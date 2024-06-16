@@ -5,10 +5,17 @@
   width :100%
 }
 
+.card {
+  margin-bottom: 1.5rem !important;
+}
+
 .card-header {
-    text-align: center;
+  font-size: 18px;
+  color: white;
+  background-color:#413f3f;
+  text-align: center;
   }
-  
+
 .card-body .row .col-md-2 {
     display: flex;
     flex-direction: column;
@@ -34,6 +41,7 @@
   display: flex; /* Utilise flexbox pour la disposition */
   width: 100%; /* Prend toute la largeur disponible */
   height: 100%; /* Prend toute la hauteur disponible */
+  align-items: center;
 }
 
 
@@ -43,7 +51,7 @@
   display: flex;
   flex-wrap: wrap; /* Permet aux indicateurs de passer à la ligne suivante si nécessaire */
   justify-content: space-around; /* Espacement uniforme */
-  margin: 40px;
+  margin: 10px;
 }
 
 .containerIndicatior {
@@ -52,7 +60,7 @@
   flex: 1; /* Cela permet à la boîte de grandir pour remplir l'espace disponible */
   box-sizing: border-box;
   border-radius: 10px;
-  margin: 10px; /* Ajoutez une marge pour éviter que les boîtes ne touchent */
+  margin: 5px; /* Ajoutez une marge pour éviter que les boîtes ne touchent */
   min-width: 180px; /* Assurez une largeur minimale pour chaque boîte */
   overflow: hidden;
 }
@@ -96,6 +104,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  text-align: center;
   height: 60px;
 }
 
@@ -103,4 +112,61 @@
   
   width: 500px;
   height: 50px;
+}
+
+.align-tooltip{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.info-tooltip {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  background-color: #ccf2cb;
+  border: 1px solid #ccf2cb;
+  // border-radius: 5px;
+  color: #000000;
+  font-size: 14px;
+  max-width: 300px;
+  text-align: justify;
+}
+
+.info-graph-tooltip {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  background-color: #ccf2cb;
+  border: 1px solid #ccf2cb;
+  // border-radius: 5px;
+  color: #000000;
+  font-size: 14px;
+  // width: 500px;
+  max-width: 500px;
+  text-align: justify;
+}
+
+.warning-tooltip {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  background-color: #f2cbcb;
+  border: 1px solid #ccf2cb;
+  // border-radius: 5px;
+  color: #000000;
+  font-size: 14px;
+  max-width: 300px;
+  text-align: justify;
+}
+
+.info-icon{
+  color: #07861c;
+}
+
+
+.warning-icon{
+  color: #d51717;
+}
+
+.download-icon{
+  color: white;
 }

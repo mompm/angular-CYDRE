@@ -32,7 +32,7 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
   stations: any[] = [];
   selectedStation: string | null | undefined;
   selectedStationName: string | null | undefined;
-  selectedStattionBSS: string | null | undefined;
+  selectedStationBSS: string | null | undefined;
   selectedStationDisabled: boolean | undefined;
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
@@ -68,7 +68,7 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
-    this.selectedStattionBSS = this.sharedService.getSelectedValueBSS();
+    this.selectedStationBSS = this.sharedService.getSelectedValueBSS();
 
     //récupérer les données de la simulation choisie si on vient de l'historique
     if(localStorage.getItem('showLastSimul')=="true"){
@@ -220,14 +220,14 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     const test = this.stations.find(station => station.index === selectedOption.index)?.name;
     const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
     if (select){
-      this.selectedStattionBSS = select;
+      this.selectedStationBSS = select;
       this.sharedService.setSelectedValueBSS(select);
     }
     if (test){
       this.selectedStationName = test;
       this.sharedService.setSelectedStationName(test);
     }
-    console.log('Selected Value:', this.selectedStation, this.selectedStattionBSS, test);
+    console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
   }
 
   isOptionDisabled(option: { index: string, station_name: string }): boolean {

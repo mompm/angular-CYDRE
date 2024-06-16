@@ -31,8 +31,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       const mapHeight = document.getElementById("matrice")!.clientHeight ;
       Plotly.relayout('map', { width: mapwidth, height: mapHeight});
 
-      const previsionGraphWidth = window.innerWidth * 0.90;
-      Plotly.relayout('previsions', { width: previsionGraphWidth });
+      const previsionGraphWidth = window.innerWidth * 0.80;
+      Plotly.relayout('previsions', { width: previsionGraphWidth});
     };
   }
 
@@ -403,7 +403,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           type: 'scatter',
           name: 'observation',
           showlegend : true,
-          hoverinfo : 'none',
+          // hoverinfo : 'none',
           line: { color: 'black', width: 1 }, 
         };
         this.traces.push(observationsTrace); 
@@ -450,7 +450,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         yanchor: 'top',
       },
       xaxis: {
-        title: 'Date',
+        title: '',
         showgrid: false,
         zeroline: false,
         tickformat: '%d-%m-%Y',
@@ -598,10 +598,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                   autorange: 'reversed'
               },
               margin: {
-                  t: 100,  // marge supérieure
+                  t: 50,  // marge supérieure
                   b: 100,  // marge inférieure pour éviter la coupe des labels
-                  l: 150,  // marge gauche
-                  r: 150   // marge droite
+                  l: 50,  // marge gauche
+                  r: 50   // marge droite
               },
               height: height + 200, // Ajuster pour inclure les marges
               width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
@@ -663,10 +663,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 autorange: 'reversed'
             },
             margin: {
-                t: 100,  // marge supérieure
+                t: 50,  // marge supérieure
                 b: 100,  // marge inférieure pour éviter la coupe des labels
-                l: 150,  // marge gauche
-                r: 150   // marge droite
+                l: 50,  // marge gauche
+                r: 50   // marge droite
             },
             height: height + 200, // Ajuster pour inclure les marges
             width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
