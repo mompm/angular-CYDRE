@@ -60,7 +60,7 @@ geometry_piezometry = [Point(xy) for xy in zip(piezo_stations['X_WGS84'], piezo_
 gdf_piezometry = gpd.GeoDataFrame(piezo_stations, geometry=geometry_piezometry, crs="EPSG:4326")
 
 # Watershed boundaries
-gdf_watersheds = gpd.read_file(os.path.join(app_root, 'data', 'watersheds.shp'))
+gdf_watersheds = gpd.read_file(os.path.join(app_root, 'data', 'watersheds2.shp'))
 gdf_watersheds = gdf_watersheds.set_index('index')
 
 for i in gdf_watersheds.index:
@@ -141,6 +141,7 @@ class Simulation(db.Model):
 
 @app.route('/api/simulations', methods=['GET'])
 @login_required
+@cross_origin
 def get_simulations():
     # Assurez-vous que l'utilisateur est connecté et récupérez son ID
     user_id = current_user.id
@@ -477,6 +478,7 @@ def get_water_table_depth(id):
         return jsonify({"error": "Identifiant non fourni"}), 404
 
 @app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
+@cross_origin()
 def delete_simulation(simulation_id):
     try:
          # Recherche de la simulation à supprimer
@@ -513,6 +515,7 @@ def create_cydre_app(params):
         return e
 
 @app.route('/api/run_cydre', methods=['POST'])
+@cross_origin()
 def run_cydre():
     data = request.json
 
@@ -554,6 +557,7 @@ def run_cydre():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/run_spatial_similarity/<simulation_id>', methods=['POST'])
+@cross_origin()
 def run_spatial_similarity(simulation_id):
 # Récupérer les paramètres de la simulation correspondant au simulation_id
     if not simulation_id:
@@ -596,6 +600,7 @@ def run_spatial_similarity(simulation_id):
 
 
 @app.route('/api/run_timeseries_similarity/<simulation_id>', methods=['POST'])
+@cross_origin()
 def run_timeseries_similarity(simulation_id):
     
     try:
@@ -652,6 +657,7 @@ def run_timeseries_similarity(simulation_id):
     return jsonify({"specific_discharge":json.loads(specific_discharge),"recharge":json.loads(recharge)}), 200
 
 @app.route('/api/select_scenarios/<simulation_id>', methods=['POST'])
+@cross_origin()
 def select_scenarios(simulation_id):
     try:
         # Recréer l'app correspondant à l'id de simulation
@@ -754,6 +760,7 @@ def start_simulation_cydre_app(simulation_id):
         return {"Error starting cydre app":str(e)}
     
 @app.route('/api/simulateur/getGraph/<simulation_id>', methods=['GET'])
+@cross_origin()
 def getGraph(simulation_id):
     # Recréer l'app correspondant à l'id de simulation
     cydre_app,simulation = start_simulation_cydre_app(simulation_id)
@@ -852,6 +859,7 @@ def getGraph(simulation_id):
         return jsonify({'error': str(e)}), 500
     
 @app.route('/api/simulateur/update_indicator/<simulation_id>', methods=['POST'])
+@cross_origin()
 def update_indicator(simulation_id):
     try:
         data = request.get_json()
@@ -931,6 +939,7 @@ def update_indicator(simulation_id):
     
 
 @app.route('/api/simulateur/get_indicators_value/<simulation_id>', methods=['GET'])
+@cross_origin()
 def get_indicators_value(simulation_id):
     #Récuperer la simulation concernée
     simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
@@ -942,6 +951,7 @@ def get_indicators_value(simulation_id):
     return indicators, 200
 
 @app.route('/api/simulateur/remove_indicator/<simulation_id>', methods=['POST'])
+@cross_origin()
 def remove_indicator(simulation_id):
     try:
         # Récupérer les données envoyées avec la requête, supposons que l'indicateur à supprimer soit identifié par son 'type'
@@ -979,6 +989,7 @@ def remove_indicator(simulation_id):
         return jsonify({'Error': str(e)}), 500
 
 @app.route('/api/simulateur/getCorrMatrix/<simulation_id>', methods=['GET'])
+@cross_origin()
 def getCorrMatrix(simulation_id):
     # Recréer l'app correspondant à l'id de simulation
     cydre_app, simulation = start_simulation_cydre_app(simulation_id)
@@ -1033,6 +1044,7 @@ def getCorrMatrix(simulation_id):
 
     
 @app.route('/api/results/<simulation_id>', methods=['GET'])
+@cross_origin()
 def get_results(simulation_id):
     try:
         if(simulation_id):
@@ -1338,4 +1350,4 @@ class Graph():
         mod10 = mod/10
         return mod, mod10
 if __name__ == '__main__':
-    app.run(host='localhost')
+    app.run(host='0.0.0.0')
