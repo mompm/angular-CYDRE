@@ -14,7 +14,7 @@ wbt = whitebox.WhiteboxTools()
 wbt.verbose = False
 import rasterio as rio
 import geopandas as gpd
-from osgeo import gdal, osr
+#from osgeo import gdal, osr
 from pyproj import Proj
 from pyproj import CRS
 from pyproj import Transformer
