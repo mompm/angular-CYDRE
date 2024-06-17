@@ -1,100 +1,117 @@
 name;ID;station_name;area;x_outlet;y_outlet;BSS_ID;BSS_name
-Nancon;J0014010;Le Nançon à Lécousse;64.45;389358;6816630;BSS000TRGE;Louvigne-du-Desert
-Couesnon;J0121510;Le Couesnon à Romazy;517.0;366609;6816734;;
-Loysance;J0144010;La Loisance à Saint-Ouen-la-Rouërie;82.1;372020;6823398;BSS000TRGE;Louvigne-du-Desert
-Guyoult;J0323010;Le Guyoult à Epiniac;62.7;353973;6835365;;
-Rance_StJouan;J0611610;La Rance à Saint-Jouan-de-l'Isle;143.5;316728;6807388;BSS000XKNA;Merdrignac
-Rance_Guenroc;J0621610;La Rance à Guenroc [EDF];374.4;325225;6813778;BSS000XLMM;Boisgervilly
-Neal;J0626610;Le Néal à Médréac;83.3;326084;6808862;BSS000XLMM;Boisgervilly
-Fremur_Pleslin;J1004520;Le Frémur [de Lancieux] à Pleslin-Trigavou;36.5;325717;6839857;;
-Arguenon;J1103010;L'Arguenon à Jugon-les-Lacs;103.5;305570;6824711;BSS000VPUH;Tremeur
-Quilloury;J1105810;Le Quiloury à Plénée-Jugon;37.11;301658;6821438;BSS000VPUH;Tremeur
-Rosette;J1114010;La Rosette à Mégrit;112.9;311269;6820269;BSS000VPUH;Tremeur
-Fremur_Henanbihen;J1205410;Le Frémur [d'Hénanbihen] à Pléboulle;68.0;305041;6846021;BSS000TKJT;Quintenic
-Gouessant;J1313010;Le Gouessant à Andel;244.345;288863;6834984;BSS000TKJT;Quintenic
-Evron;J1324010;L'Evron à Coëtmieux;139.3;286124;6835808;BSS000VNGX;Brehand
-Urne;J1405310;L'Urne à Plédran;43.0;275188;6833965;BSS000VNGX;Brehand
-Gouet;J1513010;Le Gouët à Saint-Julien;135.9;269016;6832185;BSS000VLAJ;Kerpert
-Maudouve;J1524010;La Maudouve à Saint-Donan;29.2;268082;6834560;BSS000VLAJ;Kerpert
-Ic;J1614010;L'Ic à Binic;79.4;268863;6849415;BSS000TFHB;Tremuson
-Trieux;J1711710;Le Trieux à Saint-Péver;183.39;248581;6837823;BSS000VLAJ;Kerpert
-Leff_Boqueho;J1803010;Le Leff à Boqueho;42.12;260615;6836790;BSS000VLAJ;Kerpert
-Leff_Quemper;J1813010;Le Leff à Quemper-Guézennec et à Yvias;339.7;253936;6862194;BSS000QXSM;Goudelin
-Jaudy;J2023010;Le Jaudy à Mantallot;165.32;239153;6864255;BSS000TBHG;Louargat
-Guindy;J2034010;Le Guindy à Plouguiel;123.1;240725;6871783;BSS000QVLD;Pommerit-Jaudy
-Guic;J2213110;Le Guic à Guerlesquin;7.3;213828;6842804;BSS000TASQ;Plougonven
-Leguer_BelleIsle;J2233010;Le Léguer à Belle-Isle-en-Terre;265.0;228253;6846555;;
-Leguer_Pluzunet;J2233020;Le Léguer à Pluzunet;358.5;227883;6856475;BSS000TBHG;Louargat
-Yar;J2314910;Le Yar à Tréduder;58.1;216004;6858690;BSS000TASQ;Plougonven
-Douron;J2404010;Le Douron au Ponthou;25.8;210153;6849065;BSS000TASQ;Plougonven
-Dourduff;J2514010;Le Dourduff à Garlan;44.24;201590;6855584;BSS000TASQ;Plougonven
-Jarlot;J2603010;Le Jarlot à Plougonven;43.5;198899;6851181;BSS000TASQ;Plougonven
-Tromorgant;J2605410;Le Tromorgant à Plougonven;41.7;199117;6851198;;
-Queffleuth;J2614010;Le Queffleuth à Plourin-lès-Morlaix;95.3;196175;6851544;;
-Penze;J2723010;La Penzé à Taulé;141.6;189998;6854106;BSS000TASQ;Plougonven
-Horn;J3014330;L'Horn à Mespaul;38.35;183533;6856805;BSS000SZAF;Plouvorn
-Guillec;J3024010;Le Guillec à Trézilidé;44.7;179067;6858450;BSS000SZAF;Plouvorn
-Aber-Wrach_Loc;J3204020;L'Aber Wrac'h à Lanarvily et à Loc-Brévalaire;79.2;154672;6854120;;
-Aber-Wrach_Drennec;J3205710;[L'Aber Wrac'h (branche ouest)] au Drennec;24.7;157220;6851005;BSS000SYKG;Saint-Divy
 Aber-Benoit;J3213020;L'Aber Benoît à Plabennec;26.9;153861;6850521;BSS000SYKG;Saint-Divy
 Aber-Ildut;J3323020;L'Aber Ildut à Brélès et à Plouarzel;94.25;132967;6844862;BSS000SXEA;Lanrivoare
-Elorn_Sizun;J3403010;L'Elorn à Sizun;24.93;180695;6833078;BSS000VHWC;Commana
-Elorn_Commana;J3403020;L'Elorn à Commana;9.5;182402;6832320;BSS000VHWC;Commana
-Mougau-Bihan;J3404110;[Le ruisseau de Mougau Bihan] à Commana;8.64;182977;6833659;BSS000VHWC;Commana
-Elorn_Plouedern;J3413030;L'Elorn à Plouédern;260.5;167042;6843154;BSS000VHWC;Commana
-Mignonne;J3514010;La Mignonne à Irvillac;66.4;166613;6834036;BSS000SZLF;Pencran
-Aulne_Poullaouen;J3601810;L'Aulne à Poullaouen;117.6;206949;6830719;;
-Aulne_Cleden;J3631810;L'Aulne à Cléden-Poher et à Kergloff et à Landeleau;518.0;201636;6812777;;
-Hyeres;J3733010;Le canal de Nantes à Brest à Cléden-Poher et à Saint-Hernin;525.8;206347;6812298;BSS000XDRF;Spezet
-Aulne_Gouezec;J3821810;L'Aulne à Gouézec;1390.9;181526;6810733;;
-Aulne_Chateaulin;J3821820;L'Aulne à Châteaulin;1483.4;173672;6812125;;
-Douffine;J3834010;La Douffine à Lopérec;138.73;176707;6818946;BSS000XCLK;Saint-Segal
-Pont-Abbe;J4124420;Le Pont l'Abbé à Plonéour-Lanvern;32.0;159764;6781187;BSS000ZCUJ;Landudec
-Troyon;J4125720;[Le Troyon] à Plonéour-Lanvern;11.9;159125;6781221;BSS000ZCUJ;Landudec
-Odet_Ergue;J4211910;L'Odet à Ergué-Gabéric;203.2;173957;6790824;BSS000ZGDV;Scaer
-Langelin;J4214510;Le Langelin à Briec;7.17;180600;6801050;BSS000XCWZ;Landrevarzec
-Jet;J4224010;Le Jet à Ergué-Gabéric;107.43;177475;6788609;BSS000ZGDV;Scaer
-Steir;J4313010;Le Steïr à Guengat;179.67;167988;6793761;;
-Moros;J4514010;Le Moros à Concarneau;21.0;186796;6776080;BSS000ZGDV;Scaer
-Styval;J4515420;L'Hôpital [Le Styval] à Concarneau;23.24;186625;6776584;BSS000ZGDV;Scaer
-Ster-Goz;J4614010;Le Stêr Goz à Bannalec;72.1;196197;6777932;;
-Aven;J4623020;L'Aven à Pont-Aven [Voie express];167.2;197234;6775320;;
-Elle_Priziac;J4712010;L'Ellé au Faouët et à Priziac;145.4;217917;6790732;;
-Inam;J4734010;L'Inam au Faouët;118.27;212056;6792230;BSS000ZGDV;Scaer
-Elle_Arzano;J4742010;L'Ellé à Arzano;575.14;217210;6775766;;
-Isole;J4803010;L'Isole à Scaër;110.0;202959;6786302;BSS000ZGDV;Scaer
-Laita;J4902010;L'Ellé [La Laïta] à Quimperlé;831.89;211471;6771724;;
-Scorff;J5102210;Le Scorff à Plouay;299.79;220941;6775624;BSS000XGDQ;Ploerdut
-Blavet_Kerien;J5202110;Le Blavet à Kerien;19.18;237725;6828461;BSS000VLAJ;Kerpert
-Lestolet;J5205210;Le Moulin de l'Estolet à Kerien;13.19;238179;6827960;BSS000VLAJ;Kerpert
-Sulon;J5224010;Le Sulon à Sainte-Tréphine;120.5;243823;6812860;;
-Blavet_Plelauff;J5402120;Le Blavet à Plélauff;567.0;245080;6807883;;
-Blavet_MurDeBretagne;J5412110;Le Blavet à Mûr-de-Bretagne [EDF];675.3;253149;6804825;;
-Evel;J5613010;L'Evel à Guénin;315.23;254000;6772493;BSS001BFZQ;Baud
-Fremeur_Guenin;J5618310;Le Frémeur à Guénin;15.5;255903;6776413;BSS001BFZQ;Baud
-Coet-Organ;J5704810;Le Moulin de Tallené [Le Sebrevet] à Quistinic;45.5;237193;6774264;BSS000ZJKX;Bieuzy
-Loch;J6213010;L'Auray [Le Loch] à Brech;183.6;251408;6752806;BSS001BGUE;Grand-Champ
-Valiere;J7024010;La Valière à Erbrée;30.8;392983;6786761;BSS000XTEY;Val-d'Ize
-Chevre;J7083110;La Veuvre [Le Chevré] à la Bouëxière;151.29;365833;6796501;;
-Ille;J7103010;L'Ille à Montreuil-sur-Ille;102.79;353670;6809810;BSS000VPUH;Tremeur
-Illet;J7114010;L'Illet à Chasné-sur-Illet;111.46;360534;6803805;;
-Flume;J7214010;La Flume à Pacé;91.71;344949;6797491;BSS000XLMM;Boisgervilly
-Meu_Gael;J7313010;Le Meu à Gaël;132.2;312118;6793547;BSS000XKNA;Merdrignac
-Garun;J7344010;Le Garun à Iffendic;94.6;329020;6797251;BSS000XLMM;Boisgervilly
-Meu_Montfort;J7353010;Le Meu à Montfort-sur-Meu;473.1;332392;6792413;BSS000XLMM;Boisgervilly
-Cheze_Plelan;J7364220;La Chèze à Plélan-le-Grand;9.9;324472;6779605;BSS000ZLVF;Paimpont
-Canut-Nord;J7513010;Le Canut [nord] à Maxent;24.8;327811;6777901;BSS000ZLVF;Paimpont
-Semnon;J7633010;Le Semnon à Bain-de-Bretagne;404.1;353976;6761233;BSS000ZPHJ;Bourg-des-Comptes
-Chateaubriant;J7803020;La Chère à Châteaubriant [Béré];61.5;371179;6744540;BSS001DMKM;Segre-en-Anjou Bleu
-Aron;J7824010;L'Aron à Grand-Fougeray et à Mouais;111.9;348507;6745196;;
-Chere;J7833010;La Chère à Derval et à Pierric;350.3;347381;6743791;;
-Canut-Sud;J7973010;Le Canut [sud] à Saint-Just;39.96;327336;6753517;;
-Lie;J8133010;Le Lié à la Prénessaye et à Plémet;298.4;282660;6803938;BSS000VNUM;Plouguenast-Langast
-Oust_Pleugriffet;J8202310;Le canal de Nantes à Brest [L'Oust] à Pleugriffet;907.0;278794;6781562;;
-Yvel;J8363110;L'Yvel à Loyat;300.25;299970;6779720;;
-Claie_StJean;J8433010;La Claie à Saint-Jean-Brévelay;134.7;273656;6762669;;
-Claie_Bohal;J8443010;La Claie à Saint-Marcel;290.4;294191;6756892;;
-Oust_StGrave;J8502310;Le canal de Nantes à Brest [L'Oust] à Saint-Gravé;2453.5;306421;6750843;;
+Aber-Wrach_Drennec;J3205710;[L'Aber Wrac'h (branche ouest)] au Drennec;24.7;157220;6851005;BSS000SYKG;Saint-Divy
+Aber-Wrach_Loc;J3204020;L'Aber Wrac'h à Lanarvily et à Loc-Brévalaire;79.2;154672;6854120;BSS000SYKG;Saint-Divy
 Aff_Paimpont;J8602410;L'Aff à Paimpont;29.0;316560;6777182;BSS000ZLVF;Paimpont
 Aff_Quelneuc;J8632410;L'Aff à Quelneuc;344.85;320771;6759979;BSS001BJPJ;Guer
-Arz;J8813010;L'Arz à Molac;141.48;293032;6749179;;
+Arguenon;J1103010;L'Arguenon à Jugon-les-Lacs;103.5;305570;6824711;BSS000VPUH;Tremeur
+Aron;J7824010;L'Aron à Grand-Fougeray et à Mouais;111.9;348507;6745196;BSS001BLWA;La Noe-Blanche
+Arz;J8813010;L'Arz à Molac;141.48;293032;6749179;BSS001BGUE;Grandchamp
+Aulne_Chateaulin;J3821820;L'Aulne à Châteaulin;1483.4;173672;6812125;BSS000XDRF;Spezet
+Aulne_Chateauneuf;J3811810;L'Aulne à Châteauneuf-du-Faou;1224.8;190505;6807114;;
+Aulne_Cleden;J3631810;L'Aulne à Cléden-Poher et à Kergloff et à Landeleau;518.0;201636;6812777;BSS000VHWC;Commana
+Aulne_Gouezec;J3821810;L'Aulne à Gouézec;1390.9;181526;6810733;BSS000XDRF;Spezet
+Aulne_Poullaouen;J3601810;L'Aulne à Poullaouen;117.6;206949;6830719;BSS000TASQ;Plougonven
+Aven;J4623020;L'Aven à Pont-Aven [Voie express];167.2;197234;6775320;BSS000ZGDV;Scaer
+Blavet_Kerien;J5202110;Le Blavet à Kerien;19.18;237725;6828461;BSS000VLAJ;Kerpert
+Blavet_MurDeBretagne;J5412110;Le Blavet à Mûr-de-Bretagne [EDF];675.3;253149;6804825;BSS000XFPD;Rostrenen
+Blavet_Plelauff;J5402120;Le Blavet à Plélauff;567.0;245080;6807883;BSS000XFPD;Rostrenen
+Canut-Nord;J7513010;Le Canut [nord] à Maxent;24.8;327811;6777901;BSS000ZLVF;Paimpont
+Canut-Sud;J7973010;Le Canut [sud] à Saint-Just;39.96;327336;6753517;BSS001BJPJ;Guer
+Careil;J7356010;[Le Careil] à Monterfil;14.34;328853;6784875;BSS000ZLVF;Paimpont
+Chateaubriant;J7803020;La Chère à Châteaubriant [Béré];61.5;371179;6744540;BSS001DMKM;Segre-en-Anjou Bleu
+Chere;J7833010;La Chère à Derval et à Pierric;350.3;347381;6743791;BSS001BLWA;La Noe-Blanche
+Veuvre;J7083110;La Veuvre [Le Chevré] à la Bouëxière;151.29;365833;6796501;BSS000XTEY;Val-d'Ize
+Cheze_Plelan;J7364220;La Chèze à Plélan-le-Grand;9.9;324472;6779605;BSS000ZLVF;Paimpont
+Cheze_StThurial;J7364210;La Chèze à Saint-Thurial;30.0;331206;6781056;BSS000ZLVF;Paimpont
+Claie_StMarcel;J8443010;La Claie à Saint-Marcel;290.4;294191;6756892;BSS000ZLBJ;Bignan
+Claie_StJean;J8433010;La Claie à Saint-Jean-Brévelay;134.7;273656;6762669;BSS000ZLBJ;Bignan
+Coet-Organ;J5704810;Le Moulin de Tallené [Le Sebrevet] à Quistinic;45.5;237193;6774264;BSS000ZJKX;Bieuzy
+Couesnon;J0121510;Le Couesnon à Romazy;517.0;366609;6816734;;
+Don_Treffieux;J7933010;Le Don à Treffieux [Le Bourg];305.0;359233;6733849;BSS001BLWA;La Noe-Blanche
+Douffine;J3834010;La Douffine à Lopérec;138.73;176707;6818946;BSS000XCLK;Saint-Segal
+Dourduff;J2514010;Le Dourduff à Garlan;44.24;201590;6855584;BSS000TASQ;Plougonven
+Douron;J2404010;Le Douron au Ponthou;25.8;210153;6849065;BSS000TASQ;Plougonven
+Elle_Arzano;J4742010;L'Ellé à Arzano;575.14;217210;6775766;BSS000ZHUD;Guilligomarc'h
+Elle_Priziac;J4712010;L'Ellé au Faouët et à Priziac;145.4;217917;6790732;BSS000XGDQ;Ploerdut
+Elorn_Commana;J3403020;L'Elorn à Commana;9.5;182402;6832320;BSS000VHWC;Commana
+Elorn_Plouedern;J3413030;L'Elorn à Plouédern;260.5;167042;6843154;BSS000VHWC;Commana
+Elorn_Sizun;J3403010;L'Elorn à Sizun;24.93;180695;6833078;BSS000VHWC;Commana
+Evel;J5613010;L'Evel à Guénin;315.23;254000;6772493;BSS001BFZQ;Baud
+Evron;J1324010;L'Evron à Coëtmieux;139.3;286124;6835808;BSS000VNGX;Brehand
+Flume;J7214010;La Flume à Pacé;91.71;344949;6797491;BSS000XLMM;Boisgervilly
+Fremeur_Guenin;J5618310;Le Frémeur à Guénin;15.5;255903;6776413;BSS001BFZQ;Baud
+Fremeur_Plumeliau;J5618320;Le Frémeur à Pluméliau;6.7;255903;6776495;BSS001BFZQ;Baud
+Fremur_Henanbihen;J1205410;Le Frémur [d'Hénanbihen] à Pléboulle;68.0;305041;6846021;BSS000TKJT;Quintenic
+Fremur_Pleslin;J1004520;Le Frémur [de Lancieux] à Pleslin-Trigavou;36.5;325717;6839857;BSS000TMEB;Pleurtuit
+Garun;J7344010;Le Garun à Iffendic;94.6;329020;6797251;BSS000XLMM;Boisgervilly
+Gouessant;J1313010;Le Gouessant à Andel;244.345;288863;6834984;BSS000TKJT;Quintenic
+Gouet;J1513010;Le Gouët à Saint-Julien;135.9;269016;6832185;BSS000VLAJ;Kerpert
+Goyen;J4014010;Le Goyen à Pont-Croix;89.2;143849;6797335;BSS000ZCUJ;Landudec
+Guic;J2213110;Le Guic à Guerlesquin;7.3;213828;6842804;BSS000TASQ;Plougonven
+Guillec;J3024010;Le Guillec à Trézilidé;44.7;179067;6858450;BSS000SZAF;Plouvorn
+Guindy;J2034010;Le Guindy à Plouguiel;123.1;240725;6871783;BSS000QVLD;Pommerit-Jaudy
+Guyoult;J0323010;Le Guyoult à Epiniac;62.7;353973;6835365;BSS000TPNY;Bonnemain
+Horn;J3014330;L'Horn à Mespaul;38.35;183533;6856805;BSS000SZAF;Plouvorn
+Hyere_Trebivan;J3713010;L'Hyère à Trébrivan;258.5;217958;6822181;BSS000VLAJ;Kerpert
+Hyeres;J3733010;Le canal de Nantes à Brest à Cléden-Poher et à Saint-Hernin;525.8;206347;6812298;BSS000XDRF;Spezet
+Ic;J1614010;L'Ic à Binic;79.4;268863;6849415;BSS000TFHB;Tremuson
+Ille;J7103010;L'Ille à Montreuil-sur-Ille;102.79;353670;6809810;BSS000VPUH;Tremeur
+Illet;J7114010;L'Illet à Chasné-sur-Illet;111.46;360534;6803805;BSS000XTEY;Val-d'Ize
+Inam;J4734010;L'Inam au Faouët;118.27;212056;6792230;BSS000ZGDV;Scaer
+Isole_Quimperle;J4813010;L'Isole à Quimperlé;227.11;211212;6773079;BSS000ZGDV;Scaer
+Isole_Scaer;J4803010;L'Isole à Scaër;110.0;202959;6786302;BSS000ZGDV;Scaer
+Jarlot_Plougonven;J2603010;Le Jarlot à Plougonven;43.5;198899;6851181;BSS000TASQ;Plougonven
+Jarlot_Morlaix;J2603016;Le Jarlot à Morlaix [Lannidy virtuel];85.9;198297;6851608;;
+Jaudy;J2023010;Le Jaudy à Mantallot;165.32;239153;6864255;BSS000TBHG;Louargat
+Jet;J4224010;Le Jet à Ergué-Gabéric;107.43;177475;6788609;BSS000ZGDV;Scaer
+Laita;J4902010;L'Ellé [La Laïta] à Quimperlé;831.89;211471;6771724;;
+Langelin;J4214510;Le Langelin à Briec;7.17;180600;6801050;BSS000XCWZ;Landrevarzec
+Leff_Boqueho;J1803010;Le Leff à Boqueho;42.12;260615;6836790;BSS000VLAJ;Kerpert
+Leff_Quemper;J1813010;Le Leff à Quemper-Guézennec et à Yvias;339.7;253936;6862194;BSS000QXSM;Goudelin
+Leguer_BelleIsle;J2233010;Le Léguer à Belle-Isle-en-Terre;265.0;228253;6846555;;
+Leguer_Pluzunet;J2233020;Le Léguer à Pluzunet;358.5;227883;6856475;BSS000TBHG;Louargat
+Lestolet;J5205210;Le Moulin de l'Estolet à Kerien;13.19;238179;6827960;BSS000VLAJ;Kerpert
+Lie;J8133010;Le Lié à la Prénessaye et à Plémet;298.4;282660;6803938;BSS000VNUM;Plouguenast-Langast
+Loch;J6213010;L'Auray [Le Loch] à Brech;183.6;251408;6752806;BSS001BGUE;Grand-Champ
+Loysance;J0144010;La Loisance à Saint-Ouen-la-Rouërie;82.1;372020;6823398;BSS000TRGE;Louvigne-du-Desert
+Maudouve;J1524010;La Maudouve à Saint-Donan;29.2;268082;6834560;BSS000VLAJ;Kerpert
+Meu_Gael;J7313010;Le Meu à Gaël;132.2;312118;6793547;BSS000XKNA;Merdrignac
+Meu_Montfort;J7353010;Le Meu à Montfort-sur-Meu;473.1;332392;6792413;BSS000XLMM;Boisgervilly
+Mignonne;J3514010;La Mignonne à Irvillac;66.4;166613;6834036;BSS000SZLF;Pencran
+Moros;J4514010;Le Moros à Concarneau;21.0;186796;6776080;BSS000ZGDV;Scaer
+Mougau-Bihan;J3404110;[Le ruisseau de Mougau Bihan] à Commana;8.64;182977;6833659;BSS000VHWC;Commana
+Nancon;J0014010;Le Nançon à Lécousse;64.45;389358;6816630;BSS000TRGE;Louvigne-du-Desert
+Neal;J0626610;Le Néal à Médréac;83.3;326084;6808862;BSS000XLMM;Boisgervilly
+Odet_Ergue;J4211910;L'Odet à Ergué-Gabéric;203.2;173957;6790824;BSS000ZGDV;Scaer
+Odet_Quimper;J4231911;L'Odet à Quimper [Kervir virtuel];327.48;172666;6789638;BSS000ZGDV;Scaer
+Oust_Hemonstoir;J8022310;L'Oust à Hémonstoir;251.3;267876;6800163;BSS000VNUM;Plouguenast-Langast
+Oust_Pleugriffet;J8202310;Le canal de Nantes à Brest [L'Oust] à Pleugriffet;907.0;278794;6781562;BSS000VNUM;Plouguenast-Langast
+Oust_StGrave;J8502310;Le canal de Nantes à Brest [L'Oust] à Saint-Gravé;2453.5;306421;6750843;BSS000VNUM;Plouguenast-Langast
+Oust_StMartin;J8002310;L'Oust à Saint-Martin-des-Prés;28.4;258240;6819096;BSS000VNUM;Plouguenast-Langast
+Penze;J2723010;La Penzé à Taulé;141.6;189998;6854106;BSS000TASQ;Plougonven
+Pont-Abbe;J4124420;Le Pont l'Abbé à Plonéour-Lanvern;32.0;159764;6781187;BSS000ZCUJ;Landudec
+Queffleuth;J2614010;Le Queffleuth à Plourin-lès-Morlaix;95.3;196175;6851544;BSS000TASQ;Plougonven
+Quilloury;J1105810;Le Quiloury à Plénée-Jugon;37.11;301658;6821438;BSS000VPUH;Tremeur
+Rance_Guenroc;J0621610;La Rance à Guenroc [EDF];374.4;325225;6813778;BSS000XLMM;Boisgervilly
+Rance_StJouan;J0611610;La Rance à Saint-Jouan-de-l'Isle;143.5;316728;6807388;BSS000XKNA;Merdrignac
+Rosette;J1114010;La Rosette à Mégrit;112.9;311269;6820269;BSS000VPUH;Tremeur
+Sarre;J5524010;La Sarre à Melrand;125.3;245176;6780467;BSS000ZJKX;Bieuzy
+Scorff;J5102210;Le Scorff à Plouay;299.79;220941;6775624;BSS000XGDQ;Ploerdut
+Seiche;J7483010;La Seiche à Bruz et à Pont-Péan;786.5;349346;6779662;BSS000ZPHJ;Bourg-des-Comptes
+Semnon;J7633010;Le Semnon à Bain-de-Bretagne;404.1;353976;6761233;BSS000ZPHJ;Bourg-des-Comptes
+Serein;J7355010;Le Serein à Treffendel ;13.12;325098;6783857;BSS000ZLVF;Paimpont
+Steir;J4313010;Le Steïr à Guengat;179.67;167988;6793761;BSS000XCWZ;Landrevarzec
+Ster-Goz;J4614010;Le Stêr Goz à Bannalec;72.1;196197;6777932;;
+Styval;J4515420;L'Hôpital [Le Styval] à Concarneau;23.24;186625;6776584;BSS000ZGDV;Scaer
+Sulon;J5224010;Le Sulon à Sainte-Tréphine;120.5;243823;6812860;;
+Trieux_StClet;J1721720;Le Trieux à Saint-Clet;418.87;246510;6861042;BSS000VLAJ;Kerpert
+Trieux_StPever;J1711710;Le Trieux à Saint-Péver;183.39;248581;6837823;BSS000VLAJ;Kerpert
+Tromorgant;J2605410;Le Tromorgant à Plougonven;41.7;199117;6851198;BSS000TASQ;Plougonven
+Troyon;J4125720;[Le Troyon] à Plonéour-Lanvern;11.9;159125;6781221;BSS000ZCUJ;Landudec
+Urne;J1405310;L'Urne à Plédran;43.0;275188;6833965;BSS000VNGX;Brehand
+Valiere;J7024010;La Valière à Erbrée;30.8;392983;6786761;BSS000XTEY;Val-d'Ize
+Vaunoise;J7373110;La Vaunoise à Saint-Gilles;60.8;339205;6793155;BSS000XLMM;Boisgervilly
+Yar;J2314910;Le Yar à Tréduder;58.1;216004;6858690;BSS000TASQ;Plougonven
+Yvel;J8363110;L'Yvel à Loyat;300.25;299970;6779720;BSS000XKNA;Merdrignac
