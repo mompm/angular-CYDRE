@@ -95,6 +95,10 @@
         </div>
       </div>
     </div>
+    <button (click)="togglePanel()">Show Parameters</button>
+    <div *ngIf="showParametersPanel">
+      <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
+    </div>
     
     <!-- Run application - lancement d'une prévision -->
     <div class="text-center">

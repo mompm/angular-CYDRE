@@ -67,6 +67,7 @@ import {AsyncPipe} from '@angular/common';
 import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
+import { ParametersPanelComponent } from './parameters-panel/parameters-panel.component';
 
 
 
@@ -107,6 +108,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     AnalyseDeSensibiliteComponent,
     SimulationResultsComponent,
     SimulationHistoryComponent,
+    ParametersPanelComponent,
   ],
   imports: [
     BrowserModule,

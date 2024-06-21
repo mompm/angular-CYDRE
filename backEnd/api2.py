@@ -5,6 +5,7 @@ from flask import jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
+import flask_login
 from sqlalchemy.orm.attributes import flag_modified
 
 import numpy as np
@@ -25,6 +26,7 @@ import libraries.forecast.initialization as INI
 import libraries.forecast.outputs as OU
 import plotly.graph_objects as go
 
+import xml.etree.ElementTree as ET
 
 
 # Configuration
@@ -38,6 +40,7 @@ app.config['SECRET_KEY'] = 'une_cle_secrete_tres_complexe'
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 # Application path
 app_root = os.path.dirname(os.path.abspath("api.py"))
@@ -74,8 +77,10 @@ for i in gdf_watersheds.index:
     gdf_watersheds.loc[i, 'max_lon'] = maxx
     gdf_watersheds.loc[i, 'max_lat'] = maxy
 
+Base = declarative_base()
 
 class Users(db.Model, UserMixin):
+    __tablename__="Users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -92,7 +97,7 @@ class Users(db.Model, UserMixin):
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -103,13 +108,13 @@ def login():
         return jsonify({'message': 'Logged in successfully', 'username': username, 'role': user.role, "UserID":user.id}), 200
     return jsonify({'error': 'Invalid username or password'}), 401
 
-@app.route('/logout', methods=['POST'])
+@app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
     return jsonify({'message': 'Logged out successfully'}), 200
 
-@app.route('/users', methods=['POST'])
+@app.route('/api/users', methods=['POST'])
 def create_user():
     data = request.get_json()
     if not data or 'username' not in data or 'password' not in data or 'role' not in data:
@@ -126,7 +131,12 @@ def create_user():
     db.session.commit()
     return jsonify({'message': 'User successfully registered'}), 201
 
-Base = declarative_base()
+@app.route('/api/users', methods=['GET'])
+def get_users():
+    users = Users.query.all()
+    json_users = [{"Username":user.username, "UserID":user.id} for user in users]
+    return json_users
+
 
 # Définition du modèle pour SQLAlchemy
 class Simulation(db.Model):
@@ -141,11 +151,10 @@ class Simulation(db.Model):
 
 @app.route('/api/simulations', methods=['GET'])
 @login_required
-@cross_origin
 def get_simulations():
     # Assurez-vous que l'utilisateur est connecté et récupérez son ID
     user_id = current_user.id
-
+    print(user_id)
     # Récupérer les simulations correspondant à cet utilisateur
     simulations = Simulation.query.filter_by(UserID=user_id).all()
 
@@ -492,7 +501,17 @@ def delete_simulation(simulation_id):
         return jsonify({"Succes":"Simulation deleted succesfully"}),200
     except Exception as e:
         return jsonify({"Error":str(e)}),500
-
+    
+def extract_param_names(params, prefix=""):
+    param_names = []
+    for key, value in params.items():
+        current_path = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            param_names.extend(extract_param_names(value, current_path))
+        else:
+            param_names.append(current_path)
+    # print(param_names)
+    return param_names
 
 def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
@@ -500,14 +519,25 @@ def create_cydre_app(params):
         # Initialiser l'app cydre
         init = INI.Initialization(app_root)  
         cydre_app = init.cydre_initialization()
-        
+        param_names=extract_param_names(params=params)
+        # print('param names: ', param_names)
         # Mettre à jour les paramètres de l'application en fonction des entrées
-        param_names = ['user_watershed_id', 'user_horizon', 'date']
+        # param_names = ['user_watershed_id', 'user_horizon', 'date']
         param_paths = init.get_parameters_path(param_names)
-        init.params.find_and_replace_param(param_paths[0], params.get('watershed'))
-        init.params.find_and_replace_param(param_paths[1], int(params.get('slider')))
-        init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
-        
+        # print('param paths : ',param_paths)
+        param_paths_dict = {name: path for name, path in zip(param_names, param_paths) if path and name!='watershed_name'}
+        # print('param_paths_dict', param_paths_dict)
+        # init.params.find_and_replace_param(param_paths[0], params.get('watershed'))
+        # init.params.find_and_replace_param(param_paths[1], int(params.get('slider')))
+        # init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
+        for name in param_paths_dict.keys():
+            path = param_paths_dict.get(name)
+            if path != []:
+                keys = name.split('.')
+                value = params
+                for key in keys:
+                    value = value[key]
+                init.params.find_and_replace_param(path, value)
         cydre_app = init.create_cydre_app()
         return cydre_app
     except Exception as e :
@@ -1349,5 +1379,67 @@ class Graph():
         mod = df.mean()
         mod10 = mod/10
         return mod, mod10
+    
+
+@app.route('/api/parameters/<default>', methods=['GET'])
+def get_parameters(default):
+    root = parse_xml('./launchers/run_cydre_params.xml')
+    params = parse_xml_to_dict(root, default)
+    return jsonify(params)  
+
+@app.route('/api/parameters', methods=['POST'])
+def update_parameters():
+    data = request.json
+    update_xml('./launchers/run_cydre_params.xml', data)
+    return jsonify({"message": "Parameters updated successfully"})
+
+def parse_xml(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    return root
+
+def xml_to_dict(root, default):
+    params = {}
+    if(default):
+        for param in root.iter('Parameter'):
+            params[param.get('name')] = param.find('default_value').text
+    else:
+        for param in root.iter('Parameter'):
+            params[param.get('name')] = param.find('value').text
+    return params
+
+def update_xml(file_path, data):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    for key, value in data.items():
+        element = root.find(".//*[@name='{}']/value".format(key))
+        if element is not None:
+            print("on change ",key)
+            element.text = value
+    tree.write(file_path)
+
+def parse_xml_to_dict(element, default):
+    """Convertit un élément XML en un dictionnaire imbriqué en incluant les possible_values."""
+    result = {}
+    if len(element) > 0:
+        for child in element:
+            if child.tag == 'ParametersGroup':
+                result[child.attrib['name']] = parse_xml_to_dict(child, default)
+            elif child.tag == 'Parameter':
+                param_name = child.attrib['name']
+                if default:
+                    param_value = child.find('default_value').text
+                else:
+                    param_value = child.find('value').text
+                
+                possible_values = child.find('possible_values').text
+                possible_values_list = possible_values.split('; ') if possible_values else []
+
+                result[param_name] = {
+                    'value': param_value,
+                    'possible_values': possible_values_list
+                }
+    return result
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', debug=True)

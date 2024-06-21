@@ -105,28 +105,33 @@ class Initialization():
 
 
     def get_parameters_path(self, param_names):
-
-        element = self.params
         param_paths = []
 
         for param_name in param_names:
-            
             param_path = []
-            
-            # Recherche du paramètre dans l'arbre
-            param_element = element.root.find(f'.//Parameter[@name="{param_name}"]')
+
+            # Split the param_name by dots to handle nested parameters
+            param_parts = param_name.split('.')
+            search_path = './/'
+
+            # Build the search path to handle nested parameters
+            for part in param_parts:
+                search_path += f'*[@name="{part}"]/'
+            search_path = search_path.rstrip('/')
+
+            # Search for the parameter in the XML tree
+            param_element = self.params.root.find(search_path)
 
             if param_element is not None:
-                
-                # Recherche du chemin jusqu'au paramètre en remontant l'arborescence
+                # Search for the path to the parameter by traversing up the tree
                 current_element = param_element
                 while current_element is not None:
                     if current_element.tag == 'ParametersGroup':
                         param_path.insert(0, current_element.get('name'))
                     current_element = current_element.getparent()
-                
-                # Ajout du nom du paramètre à la fin du chemin
-                param_path.append(param_name)
+
+                # Add the full param_name to the end of the path
+                param_path.append(param_parts[-1])
 
             param_paths.append(param_path)
 

@@ -1,0 +1,78 @@
+/* Base styling for the entire form */
+form {
+    display: block;
+    margin: 20px;
+    font-family: 'Arial', sans-serif;
+  }
+  
+  /* Styling for each details/summary block */
+  details {
+    background: #f9f9f9;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  
+    summary {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+  
+      /* Custom styles for the summary elements */
+      &:hover {
+        color: #0056b3;
+      }
+    }
+  
+    /* Styling when the details element is open */
+    &[open] {
+      background: #fff;
+    }
+  }
+  
+  /* Styling for labels and inputs within the form */
+  label {
+    display: block;
+    margin: 10px 0;
+    color: #666;
+  
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box; /* Makes sure padding does not affect width */
+      transition: border-color 0.3s;
+  
+      &:focus {
+        border-color: #0056b3;
+        outline: none;
+      }
+    }
+  }
+  
+  /* Styling for the submit button */
+  button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  
+    &:hover {
+      background-color: #0056b3;
+    }
+  }
+  
+  .radio-group {
+    display: inline-block;
+    margin-right: 10px;
+    label {
+      margin-left: 5px;
+    }
+  }
+    

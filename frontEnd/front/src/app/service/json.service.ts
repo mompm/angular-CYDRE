@@ -40,133 +40,137 @@ private baseUrl = 'http://localhost:5000';
 		return lastValueFrom(this.http.get<Array<dataDischarge>>(url));
 	}
 
-	getRunCydre(params :any ): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/run_cydre`, params).pipe(
-		  tap(() => console.log('Running Cydre app...'))
-		);
-	  }
-	  getGraph(taskId:string ): Observable<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/getGraph/`+taskId).pipe(
-		  tap(() => console.log('Generating graph...'))
-		);
+	getRunCydre(params: any): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/run_cydre`, params).toPromise()
+		  .then(response => {
+			console.log('Running Cydre app...');
+			return response;
+		  });
 	  }
 	
-	  get_indicators_value(simulation_id: string): Observable<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/`+simulation_id).pipe(
-		  tap(() => console.log('Fetching M10 values...'))
-		);
+	  getGraph(taskId: string): Promise<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/getGraph/` + taskId).toPromise()
+		  .then(response => {
+			console.log('Generating graph...');
+			return response;
+		  });
 	  }
-
-	  removeIndicator(simulationId: string, indicatorType: string): Observable<any> {
+	
+	  get_indicators_value(simulation_id: string): Promise<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/` + simulation_id).toPromise()
+		  .then(response => {
+			console.log('Fetching M10 values...');
+			return response;
+		  });
+	  }
+	
+	  removeIndicator(simulationId: string, indicatorType: string): Promise<any> {
 		const url = `${this.baseUrl}/api/simulateur/remove_indicator/${simulationId}`;
-		return this.http.post(url, { type: indicatorType });
-	  }  
-	  
-	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Observable<any> {
-		const updateRequests = from(indicators).pipe(
-			concatMap(indicator => {
-				console.log("Updating indicator:", indicator.type);
-				return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator);
-			}),
-			toArray()  // Regroupe toutes les réponses en un seul tableau
-		);
-	
-		return updateRequests.pipe(
-			tap(() => console.log('All indicators updated')),
-			switchMap(() => this.get_indicators_value(simulation_id))
-		);
-	}
-
-	  updateM10Value(params: any): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/update_indicator`, params).pipe(
-		  tap(() => console.log('Fetching M10 values...'))
-		);
+		return this.http.post(url, { type: indicatorType }).toPromise();
 	  }
 	
-	  getCorrMatrix(taskId: string): Observable<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/getCorrMatrix/`+taskId).pipe(
-		  tap(() => console.log('Fetching correlation matrix...'))
-		);
+	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Promise<any> {
+		const updatePromises = indicators.map(indicator => {
+		  console.log("Updating indicator:", indicator.type);
+		  return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator).toPromise();
+		});
+	
+		return Promise.all(updatePromises)
+		  .then(() => {
+			console.log('All indicators updated');
+			return this.get_indicators_value(simulation_id);
+		  });
 	  }
 	
-	  getResults(taskId: string): Observable<any> {
-		return this.http.get(`${this.baseUrl}/api/results/`+taskId).pipe(
-		  tap(() => console.log('Fetching results...'))
-		);
+	  updateM10Value(params: any): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/update_indicator`, params).toPromise()
+		  .then(response => {
+			console.log('Fetching M10 values...');
+			return response;
+		  });
 	  }
-	  runSpatialSimilarity(simulation_id:string): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity/${simulation_id}`,{simulation_id:simulation_id}).pipe(
-		  tap(() => console.log('Running spatial similaritiy'))
-		);
-	  }
-	  runTimeseriesSimilarity(simulation_id:string): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity/${simulation_id}`,{simulation_id:simulation_id}).pipe(
-		  tap(() => console.log('Running timeseries similaritiy'))
-		);
-	  }
-	  runScenarios(simulation_id:string): Observable<any> {
-		return this.http.post(`${this.baseUrl}/api/select_scenarios/${simulation_id}`,{simulation_id:simulation_id}).pipe(
-		  tap(() => console.log('Running scenarios'))
-		);
-	  }
-	  
 	
-	  runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Observable<any> {
+	  getCorrMatrix(taskId: string): Promise<any> {
+		return this.http.get(`${this.baseUrl}/api/simulateur/getCorrMatrix/` + taskId).toPromise()
+		  .then(response => {
+			console.log('Fetching correlation matrix...');
+			return response;
+		  });
+	  }
+	
+	  getResults(taskId: string): Promise<any> {
+		return this.http.get(`${this.baseUrl}/api/results/` + taskId).toPromise()
+		  .then(response => {
+			console.log('Fetching results...');
+			return response;
+		  });
+	  }
+	
+	  runSpatialSimilarity(simulation_id: string): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity/${simulation_id}`, { simulation_id }).toPromise()
+		  .then(response => {
+			console.log('Running spatial similarity');
+			return response;
+		  });
+	  }
+	
+	  runTimeseriesSimilarity(simulation_id: string): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity/${simulation_id}`, { simulation_id }).toPromise()
+		  .then(response => {
+			console.log('Running timeseries similarity');
+			return response;
+		  });
+	  }
+	
+	  runScenarios(simulation_id: string): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/select_scenarios/${simulation_id}`, { simulation_id }).toPromise()
+		  .then(response => {
+			console.log('Running scenarios');
+			return response;
+		  });
+	  }
+	
+	  async runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Promise<any> {
 		let simulation_id: string;
-	  
-		progressCallback('Préparation de la simulation...', 0);
-		return this.getRunCydre(params).pipe(
-		  tap(response => {
-			simulation_id = response.SimulationID;
-			progressCallback('Récupération des conditions de la prévision', 10);
-			console.log('Simulation ID:', simulation_id);
-		  }),
-		  switchMap(() => this.runSpatialSimilarity(simulation_id).pipe(
-			tap(() => {
-			  progressCallback('Typologie de bassins versants : OK', 20);
-			  console.log('Similarités spatiales exécutées');
-			})
-		  )),
-		  switchMap(() => this.runTimeseriesSimilarity(simulation_id).pipe(
-			tap(() => {
-			  progressCallback('Identification des années similaires : OK', 50);
-			  console.log('Similarités temporelles exécutées');
-			})
-		  )),
-		  switchMap(() => this.runScenarios(simulation_id).pipe(
-			tap(() => {
-			  progressCallback('Sélection des événements similaires : OK', 60);
-			  console.log('Scenarios exécutés');
-			})
-		  )),
-		  switchMap(() => this.getGraph(simulation_id).pipe(
-			tap(() => {
-			  progressCallback('Préparation des résultats', 75);
-			  console.log('Graphe généré');
-			})
-		  )),
-		  switchMap(() => this.getCorrMatrix(simulation_id).pipe(
-			tap(() => {
-			//   progressCallback('Matrice de corrélation récupérée.', 85);
-			  console.log('Matrice de corrélation récupérée');
-			})
-		  )),
-		  switchMap(() => this.getResults(simulation_id).pipe(
-			tap(() => {
-			  progressCallback('Fin de la prévision !', 100);
-			  console.log('Résultats récupérés');
-			}),
-			map(results => ({ simulation_id, results }))
-		  )),
-		  finalize(() => {
-			console.log('Chaîne d\'observables terminée');
-		  }),
-		  catchError(error => {
-			progressCallback('Erreur lors de la simulation :' + error, 0);
-			console.error('Erreur lors de la simulation:', error);
-			return of(null);
-		  })
-		);
+		try {
+		  progressCallback('Préparation de la simulation...', 0);
+		  const runCydreResponse = await this.getRunCydre(params);
+		  simulation_id = runCydreResponse.SimulationID;
+		  progressCallback('Récupération des conditions de la prévision', 10);
+		  console.log('Simulation ID:', simulation_id);
+	
+		  await this.runSpatialSimilarity(simulation_id);
+		  progressCallback('Typologie de bassins versants : OK', 20);
+		  console.log('Similarités spatiales exécutées');
+	
+		  await this.runTimeseriesSimilarity(simulation_id);
+		  progressCallback('Identification des années similaires : OK', 50);
+		  console.log('Similarités temporelles exécutées');
+	
+		  await this.runScenarios(simulation_id);
+		  progressCallback('Sélection des événements similaires : OK', 60);
+		  console.log('Scenarios exécutés');
+	
+		  await this.getGraph(simulation_id);
+		  progressCallback('Préparation des résultats', 75);
+		  console.log('Graphe généré');
+	
+		  await this.getCorrMatrix(simulation_id);
+		  // progressCallback('Matrice de corrélation récupérée.', 85);
+		  console.log('Matrice de corrélation récupérée');
+	
+		  const results = await this.getResults(simulation_id);
+		  progressCallback('Fin de la prévision !', 100);
+		  console.log('Résultats récupérés');
+	
+		  return { simulation_id, results };
+		} catch (error) {
+		  progressCallback('Erreur lors de la simulation :' + error, 0);
+		  console.error('Erreur lors de la simulation:', error);
+		  return null;
+		} finally {
+		  console.log('Chaîne d\'opérations terminée');
+		}
 	  }
 	  
 	getTemperature(id: string): Promise<Array<dataTemperature>> {
@@ -186,6 +190,6 @@ private baseUrl = 'http://localhost:5000';
 
 	getUserSimulations(): Observable<any[]> {
 		return this.http.get<any[]>(`${this.baseUrl}/api/simulations`,{ withCredentials: true });
-	  }
+	}
 
 }

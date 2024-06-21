@@ -4,11 +4,11 @@ import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
 import { SharedWatershedService } from '../service/shared-watershed.service';
 import { FormControl } from '@angular/forms';
-import { Observable, map, startWith } from 'rxjs';
+import { Observable, generate, map, startWith } from 'rxjs';
 import { DataService } from '../service/data.service';
 import {MatDialog} from '@angular/material/dialog';
-import { error } from 'console';
 import { AuthService } from '../service/auth.service';
+import { ParametersPanelComponent } from '../parameters-panel/parameters-panel.component';
 
 
 
@@ -18,12 +18,17 @@ import { AuthService } from '../service/auth.service';
   styleUrls: ['./simulateur-cydre.component.scss']
 })
 export class SimulateurCydreComponent implements OnInit, OnDestroy {
+  @ViewChild(ParametersPanelComponent) parametersPanel!: ParametersPanelComponent;
+
+togglePanel() {
+  this.showParametersPanel = !this.showParametersPanel;
+}
 
   constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog) { }
   @ViewChild('fileInput')
   fileInput!: ElementRef<HTMLInputElement>;
   selectedFile: File | null = null;
-
+  showParametersPanel :boolean = false;
   myControl = new FormControl();
   filteredOptions!: Observable<{ index: string, station_name: string }[]>;
   progressMessages: string[] = [];
@@ -38,6 +43,7 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
   simulation_id = ""
+  parameters = {}
   
   list_of_disabled_options: string[] = [
     'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
@@ -56,13 +62,13 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     step: 1, // Permet de sélectionner chaque valeur
     showTicks: true, // Affiche les traits pour chaque valeur principale
     showTicksValues: true, // Affiche les valeurs des points principaux
-    ticksArray: [0, 20, 40, 60, 80, 100, 120], // Spécifiez les emplacements des gros points
+    ticksArray: [0, 20, 40, 60, 80, 100, 120], // Spécifie les emplacements des gros points
     translate: (value: number): string => {
       return value.toString();
     }
 };
 
-  ngOnInit() {
+  async ngOnInit() {
     
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
@@ -72,31 +78,21 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     //récupérer les données de la simulation choisie si on vient de l'historique
     if(localStorage.getItem('showLastSimul')=="true"){
       if(localStorage.getItem('lastSimulationId')){
-        console.log(localStorage.getItem('lastSimulationId'))
-        this.jsonService.getResults(localStorage.getItem('lastSimulationId')!).subscribe(
-          (data) => {
+        let data = await this.jsonService.getResults(localStorage.getItem('lastSimulationId')!);
             if (data) {
               this.simulation_id = data.simulation_id;
               this.results = this.deepParseJson(data);
               this.progressMessages.push('Simulation chargée avec succès.');
               this.showResults = true;
-              console.log(this.results)
             }
-          },
-          (error) => {
+          }else{
             this.progressMessages.push('Erreur lors du chargement la simulation.');
-            console.error(error);
-          }
-        );
+                    }
       }
       localStorage.removeItem("showLastSimul");
-      console.log('Selected Value:', this.selectedStation, this.selectedStationName);
-      console.log(this.authService.isLoggedIn)
     }
-}
 
   ngOnDestroy() {
-    console.log("On quitte le composant");
     this.authService.isLoggedIn.subscribe(isLoggedIn => {
         if (!isLoggedIn) {
             this.deleteSimulation(this.simulation_id);
@@ -159,18 +155,26 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     }
     return obj;
 }
-  onStartSimulation() {
+
+handleParametersChanged(parameters: any) {
+  this.parameters = parameters;
+  console.log('Parameters received in parent:', this.parameters);
+  // Add your logic to handle the parameters and start the simulation
+}
+  async onStartSimulation() {
     //affiche le poppup error si la station selection est dans list_of_disabled_options
     if (this.sharedService.isWatersheddisabled(this.selectedStation)){
       this.dialog.open(ErrorDialog);
     }
     //sinon start simulation 
     else{
+      this.parametersPanel.getFormValues();
     const params = {
       Parameters :{
-        watershed: this.selectedStation,
-        slider: this.sliderValue,
-        date: this.simulationDate
+        user_watershed_id: this.selectedStation,
+        user_horizon: this.sliderValue,
+        date: this.simulationDate,
+        ...this.parameters,
       },
       UserID : localStorage.getItem("UserID")
     };
@@ -180,9 +184,9 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     this.progressValue = 0;
     this.currentProgressMessage = 'Initialisation de la simulation...';
 
+try{
+    let data = await this.jsonService.runSimulation(params, this.updateProgress.bind(this))
 
-    this.jsonService.runSimulation(params, this.updateProgress.bind(this)).subscribe(
-      (data) => {
         if (data) {
           this.simulation_id = data.simulation_id;
           this.results = this.deepParseJson(data.results);
@@ -191,12 +195,10 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
           this.showResults = true;
           console.log(this.results)
         }
-      },
-      (error) => {
+      }catch(error){
         this.progressMessages.push('Erreur lors de la simulation.');
         console.error(error);
       }
-    );
     }
   }
 

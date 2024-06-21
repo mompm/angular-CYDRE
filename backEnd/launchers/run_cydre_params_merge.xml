@@ -7,7 +7,7 @@
 		<description>ID of the watershed for which we wish to predict the seasonal streamflow.</description>
 		<type>string</type>
 		<possible_values/>
-		<value>J5102210</value>
+		<value>J0626610</value>
 		<default_value>J0626610</default_value>
 	</Parameter>
 	<Parameter name="user_horizon">
@@ -25,14 +25,14 @@
 		<type>string</type>
 		<possible_values/>
 		<value>data.pkl</value>
-		<default_value>regional_object</default_value>
+		<default_value>data.pkl</default_value>
 	</Parameter>
 	<Parameter name="version">
 		<description>Application version: can be an execution version (application) for a user or a test version (test) for a developer.
 		</description>
 		<type>string</type>
 		<possible_values>application; test; plot</possible_values>
-		<value>plot</value>
+		<value>test</value>
 		<default_value>test</default_value>
 	</Parameter>
 	<Parameter name="date">
@@ -40,7 +40,7 @@
 		</description>
 		<type>string</type>
 		<possible_values/>
-		<value>2024-05-12</value>
+		<value>2022-03-01</value>
 		<default_value>2022-03-01</default_value>
 	</Parameter>
 </ParametersGroup>
@@ -82,21 +82,21 @@
 			<Parameter name="metric">
 				<description>method for quantifying correlation between two time series</description>
 				<type>string</type>
-				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
-				<value>dtw</value>
+				<possible_values>nse; nselog; pearson; spearman; dtw</possible_values>
+				<value>pearson</value>
 				<default_value>pearson</default_value>
 			</Parameter>
 			<Parameter name="scale">
 				<description>conversion scale used in similarity calculation</description>
 				<type>string</type>
-				<possible_values>normal, log</possible_values>
+				<possible_values>normal; log</possible_values>
 				<value>normal</value>
 				<default_value>normal</default_value>
 			</Parameter>
 			<Parameter name="selection_method">
 				<description>selection method for extracting top scenarios from the correlation matrix</description>
 				<type>string</type>
-				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<possible_values>minimal_threshold; maximal_percentage; n_scenarios</possible_values>
 				<value>minimal_threshold</value>
 				<default_value>minimal_threshold</default_value>
 			</Parameter>
@@ -151,21 +151,21 @@
 			<Parameter name="metric">
 				<description>method for quantifying correlation between two time series</description>
 				<type>string</type>
-				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<possible_values>nse; nselog; pearson; spearman; dtw</possible_values>
 				<value>dtw</value>
 				<default_value>pearson</default_value>
 			</Parameter>
 			<Parameter name="scale">
 				<description>conversion scale used in similarity calculation</description>
 				<type>string</type>
-				<possible_values>normal, log</possible_values>
+				<possible_values>normal; log</possible_values>
 				<value>normal</value>
 				<default_value>normal</default_value>
 			</Parameter>
 			<Parameter name="selection_method">
 				<description>selection_method for extracting top scenarios from the correlation matrix</description>
 				<type>string</type>
-				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<possible_values>minimal_threshold; maximal_percentage; n_scenarios</possible_values>
 				<value>minimal_threshold</value>
 				<default_value>minimal_threshold</default_value>
 			</Parameter>
@@ -211,7 +211,7 @@
 			<Parameter name="ndays_before_forecast">
 				<description>Number of days before the forescast day (or current date).</description>
 				<type>int</type>
-				<possible_values>period; ndays</possible_values>
+				<possible_values/>
 				<value>60</value>
 				<default_value>60</default_value>
 			</Parameter>
@@ -220,21 +220,21 @@
 			<Parameter name="metric">
 				<description>method for quantifying correlation between two time series</description>
 				<type>string</type>
-				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<possible_values>nse; nselog; pearson; spearman; dtw</possible_values>
 				<value>pearson</value>
 				<default_value>pearson</default_value>
 			</Parameter>
 			<Parameter name="scale">
 				<description>conversion scale used in similarity calculation</description>
 				<type>string</type>
-				<possible_values>normal, log</possible_values>
+				<possible_values>normal; log</possible_values>
 				<value>normal</value>
 				<default_value>normal</default_value>
 			</Parameter>
 			<Parameter name="selection_method">
 				<description>selection_method for extracting top scenarios from the correlation matrix</description>
 				<type>string</type>
-				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<possible_values>minimal_threshold; maximal_percentage; n_scenarios</possible_values>
 				<value>minimal_threshold</value>
 				<default_value>minimal_threshold</default_value>
 			</Parameter>
@@ -289,21 +289,21 @@
 			<Parameter name="metric">
 				<description>method for quantifying correlation between two time series</description>
 				<type>string</type>
-				<possible_values>nse, nselog, pearson, spearman, dtw</possible_values>
+				<possible_values>nse; nselog; pearson; spearman; dtw</possible_values>
 				<value>dtw</value>
 				<default_value>pearson</default_value>
 			</Parameter>
 			<Parameter name="scale">
 				<description>conversion scale used in similarity calculation</description>
 				<type>string</type>
-				<possible_values>normal, log</possible_values>
+				<possible_values>normal; log</possible_values>
 				<value>normal</value>
 				<default_value>normal</default_value>
 			</Parameter>
 			<Parameter name="selection_method">
 				<description>selection_method for extracting top scenarios from the correlation matrix</description>
 				<type>string</type>
-				<possible_values>minimal_threshold, maximal_percentage, n_scenarios</possible_values>
+				<possible_values>minimal_threshold; maximal_percentage; n_scenarios</possible_values>
 				<value>minimal_threshold</value>
 				<default_value>minimal_threshold</default_value>
 			</Parameter>

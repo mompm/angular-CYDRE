@@ -15,7 +15,7 @@ export class AuthService {
 
   // Méthode pour initier la connexion
   login(username: string, password: string): Observable<any> {
-    return this.http.post<any>(`${this.authUrl}/login`, { username, password }, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${this.authUrl}/api/login`, { username, password }, { withCredentials: true }).pipe(
       tap(response => {
         if (response.username) {
           this.loggedIn.next(true);
@@ -30,7 +30,7 @@ export class AuthService {
 
   // Méthode pour déclencher la déconnexion
   logout(): Observable<any> {
-    return this.http.post<any>(`${this.authUrl}/logout`, {}, { withCredentials: true }).pipe(
+    return this.http.post<any>(`${this.authUrl}/api/logout`, {}, { withCredentials: true }).pipe(
       tap(() => {
         this.clearClientSession();
       })

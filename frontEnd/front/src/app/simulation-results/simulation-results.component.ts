@@ -14,6 +14,7 @@ import { switchMap } from 'rxjs';
 import { AxisType } from 'plotly.js-dist';
 import * as Papa from 'papaparse';
 import { index, string } from 'mathjs';
+import * as e from 'express';
 
 @Component({
   selector: 'app-simulation-results',
@@ -26,6 +27,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   private resizeListener : ()=> void;
 
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
+    //listener permettant de redimensionner la map et le graphe en fonction de la taille de fenêtre
     this.resizeListener = () => {
       const mapwidth = 0.40 * window.innerWidth;
       const mapHeight = document.getElementById("matrice")!.clientHeight ;
@@ -66,14 +68,15 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     },
   }};
 
-  taskId: string = "";
   @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
+
   maxPredictedValue : number[] = [];
+
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
   
@@ -86,73 +89,88 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
   };
 
-  sliderOptions: Options = {
-    floor: 0,
-    ceil: Math.max(this.yMax, 1),
-    step: 0.001,
-    translate: (value: number): string => {
-      return value.toString();
-    }
-  };
+  
 
   ngOnInit(): void {
-    console.log(this.results)
+    //récupération de l'id de la simulation si on vient de l'historique
     this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
-    if(this.results.results.data){
-      this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date)
-      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
 
+    try{
+      if(this.results.results.data){//générer les traces du graphe
+        this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date)
+        this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
+      }else{
+        console.log("Données manquantes lors de la création des traces du graphe ")
+      }
+    }catch(error){
+      console.log("Problème lors de la création des traces du graphe : " + error)
     }
-    if(this.results.results.corr_matrix){//création de la matrice de corrélation
-      this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;     
-    }else{
-      console.log("Problème lors du chargement de la matrice de corrélation")
+
+    try{
+      if(this.results.results.corr_matrix){ //création de la matrice de corrélation
+        this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
+        this.dataSource.paginator = this.paginator;
+        this.dataSource.sort = this.sort;     
+      }else{
+        console.log("Données manquantes lors du chargement de la matrice de corrélation")
+      }
+    }catch(error){
+      console.log("Problème lors du chargement de la matrice de corrélation:"+error)
     }
-    if(this.results.indicators){//création du tableau contenant les indicateurs
-      this.fillIndicators();
-    if(this.results.results.similarity){
-      this.cdr.detectChanges();
-      this.matriceRecharge();
-      this.matriceSpecificDischarge();
+
+    try{
+      if(this.results.indicators){//création du tableau contenant les indicateurs
+        this.fillIndicators();
+      }else{
+        console.log("Données manquantes lors du chargement des indicateurs")
+      }
+    }catch(error){
+      console.log("Problème lors du chargement des indicateurs:"+error)
     }
-    }else{
-      console.log("Problème lors du chargement des indicateurs")
+
+
+    try{//création des matrices de similarités
+      if(this.results.results.similarity){
+        this.cdr.detectChanges();
+        this.matriceRecharge();
+        this.matriceSpecificDischarge();
+      }else{
+        console.log("Données manquantes lors du chargement des matrices de similarités")
+      }
+    }catch(error){
+      console.log("Problème lors du chargement des matrices de similarités : " + error)
     }
     
     window.addEventListener('resize', this.resizeListener);
   }
 
-  ngOnDestroy(){
-    window.removeEventListener('resize', this.resizeListener);
+  ngOnDestroy(){//à la destruction du composant
+    window.removeEventListener('resize', this.resizeListener);//détruire le listener
   }
 
   
 
-  fillIndicators() {
+  fillIndicators() {//ajouter les indicateurs de la base de données au tableau du front
     this.indicators = [];  // Réinitialiser le tableau des indicateurs
-    // Supposons que `this.simulationData` contient le tableau des indicateurs
     this.results.indicators.forEach((indicator: { type: string; value : number; results: any; color :string})=> {
-        // `data` est un objet avec `results`, `type`, et `value`
         let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
                 this.indicators.push({
-                    type: indicator.type,  // Ajouter la désignation du quantile au type
+                    type: indicator.type,
                     value: indicator.value,
-                    color: indicator.color,  // Couleur par défaut, peut-être modifiée selon des règles spécifiques
+                    color: indicator.color,
                     fixed: fixedValue,
                     modified:false
                 });
             });
     this.showPlot();
     this.updateIndicatorShapes(); // Mettre à jour les représentations visuelles des indicateurs
-
-}
+  }
 
   onToggleChange() {
     this.updateComponentsWithResults(this.results);
-}
-  addIndicator() {
+  }
+
+  addIndicator() {//ajout d'un indicateur vide lors du clique sur le bouton +
     this.indicators.push({
       type: "",
       value: 0,
@@ -162,19 +180,20 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   })
   }
 
-  removeIndicator(index: number, type : string) {
+  removeIndicator(index: number, type : string) {//suppression d'un indicateur
     this.indicators.splice(index,1);
     this.layout?.shapes!.splice(index,1);
-    this.jsonService.removeIndicator(this.simulation_id!, type).subscribe({
-      next: (response) => {
-        this.results.indicators = response;
-        console.log('Indicator removed successfully', response);
-        // Handle additional logic after successful removal, like refreshing data
-      },
-      error: (error) => {
-        console.error('Failed to remove indicator', error);
-      }
-    });
+    this.results.indicators = this.jsonService.removeIndicator(this.simulation_id!, type)
+  //suppression dans la base de données (l'erreur est gérée dans le back si l'indicateur n'a  pas encore été stocké)
+    // this.jsonService.removeIndicator(this.simulation_id!, type).subscribe({
+    //   next: (response) => {
+    //     this.results.indicators = response;
+    //     console.log('Indicator removed successfully', response);
+    //   },
+    //   error: (error) => {
+    //     console.error('Failed to remove indicator', error);
+    //   }
+    // });
     this.updateIndicatorShapes();
     return this.indicators
   }
@@ -195,6 +214,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
 
   updateColorStyle(color : string ,index : number){
+    //changer la couleur de l'indicateur concerné
     if(index!=0){
     this.indicators[index].color = color;
     this.indicators[index].modified = true;
@@ -233,25 +253,16 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  // onM10Change(value: number) {
-  //   // this.m10SliderValue = value;
-  //   this.updateLayout();
-  //   this.showPlot();
-  //   this.showTypologyMap();
-  // }
 
-  updateResults() {
+  async updateResults() {
     if(localStorage.getItem('lastSimulationId')){
-      //mettre à jour tous les indicateurs sauf le mod10 que l'on ne modifie pas  
-      this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true)).subscribe(
-        (data) => {this.results.indicators = data;
-          this.fillIndicators()
-        }
-      );
+      //mettre à jour tous les indicateurs que l'on a modifié  
+      this.results.indicators = await this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true))
+      this.fillIndicators
     }
     
   }
-
+  //crée les données en abscisses des traces du graphique (afin d'éviter de stocker les dates jour par jour)
   generateDateSeries(startDate: string, endDate: string): Date[] {
     let dates = [];
     let currentDate = new Date(startDate);
@@ -263,7 +274,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     return dates;
   }
   
-  updateGraphData(): void {
+  updateGraphData(): void {//crée les traces du graphe
    
     if (this.showResults && this.results.results.data.graph) {
       //mettre à jour les données de axes x des observation et prediction 
@@ -409,32 +420,20 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         this.traces.push(observationsTrace); 
       }
       
-      this.updateSliderOptions();
     
     }
   }
 
-  updateSliderOptions() {
-    this.sliderOptions = {
-      floor: 0,
-      ceil: Math.max(...this.maxPredictedValue, 1),
-      step: 0.001,
-      translate: (value: number): string => {
-        return value.toString();
-      }
-    };
-  }
-
-  updateLayout() {
+  updateLayout() {//mettre à jour le layout du graphe
     let range ;
     let type ;
     if (this.on) {
       range = [this.yMin, this.yMax];
       type = 'linear';
-  } else {
+    } else {
       range = [Math.log10(this.yMin), Math.log10(this.yMax)];
       type = 'log';
-  }
+    }
     this.layout = {
       hovermode: "x unified",
       title: {
@@ -489,7 +488,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   
 
 
-  showPlot() {
+  showPlot() {//afficher le graphique
   if(document.getElementById('previsions')){
       Plotly.newPlot('previsions', this.traces, this.layout);
       const annotation: Partial<Plotly.Annotations> = {
@@ -505,46 +504,46 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 }
 
 
-  showTypologyMap(){
-    const figData: any[] = [];
-    this.jsonService.getGDFStations().then(data => {
-      const filteredStations = data.filter(station => 
-        this.results.results.similarity.similar_watersheds.includes(station.index)
-      );
+//   showTypologyMap(){
+//     const figData: any[] = [];
+//     this.jsonService.getGDFStations().then(data => {
+//       const filteredStations = data.filter(station => 
+//         this.results.results.similarity.similar_watersheds.includes(station.index)
+//       );
 
-      const x: any[] = [];
-      const y: any[] = [];
-      const text: any[] = []; 
+//       const x: any[] = [];
+//       const y: any[] = [];
+//       const text: any[] = []; 
 
-      for (let i = 0; i < filteredStations.length; i++) {
-          x.push(Number(filteredStations[i].x_outlet)); 
-          y.push(Number(filteredStations[i].y_outlet)); 
-          text.push(`${filteredStations[i].station_name}`);
-      }
-      figData.push({
-        type: 'scattermapbox',
-        lon: x,
-        lat: y,
-        mode: 'markers',
-        hoverinfo: 'text',
-        hovertext: text,
-        name: '',
-    });
-      const figlayout = {
-        mapbox: {
-          style: 'open-street-map',
-          center: { lat: 48.2141667, lon: -2.9424167 },
-          zoom: 6.8
-        },
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        margin: { l: 0, r: 0, t: 0, b: 0 },
-        width:0.40 * window.innerWidth,
-        height : document.getElementById("matrice")!.clientHeight
-      };
+//       for (let i = 0; i < filteredStations.length; i++) {
+//           x.push(Number(filteredStations[i].x_outlet)); 
+//           y.push(Number(filteredStations[i].y_outlet)); 
+//           text.push(`${filteredStations[i].station_name}`);
+//       }
+//       figData.push({
+//         type: 'scattermapbox',
+//         lon: x,
+//         lat: y,
+//         mode: 'markers',
+//         hoverinfo: 'text',
+//         hovertext: text,
+//         name: '',
+//     });
+//       const figlayout = {
+//         mapbox: {
+//           style: 'open-street-map',
+//           center: { lat: 48.2141667, lon: -2.9424167 },
+//           zoom: 6.8
+//         },
+//         paper_bgcolor: 'rgba(0,0,0,0)',
+//         margin: { l: 0, r: 0, t: 0, b: 0 },
+//         width:0.40 * window.innerWidth,
+//         height : document.getElementById("matrice")!.clientHeight
+//       };
  
-      Plotly.newPlot('map', figData, figlayout);
-  })
-}
+//       Plotly.newPlot('map', figData, figlayout);
+//   })
+// }
 
         matriceRecharge(): void {
           //const recharge = this.results.results.similarity.corr_matrix.recharge;
@@ -711,7 +710,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateLayout();
       this.showPlot();
       this.updateIndicatorShapes();
-      this.showTypologyMap();
+      // this.showTypologyMap();
+      this.matriceRecharge();
+      this.matriceSpecificDischarge();
   }
 
   renderMatrix() {
