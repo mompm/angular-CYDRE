@@ -223,7 +223,11 @@ def get_GDF_STATIONS():
             BSS_name_value = BSS_name_value;        
         else:
             BSS_name_value = ''
-        
+        typology_value = row['typology']
+        if np.isnan(typology_value) :
+            typology_value = 99.00
+        else:
+            typology_value = typology_value
         # Convert gdf_stations to a json object
         json_object = {
             'index' : row['ID'],
@@ -235,7 +239,7 @@ def get_GDF_STATIONS():
             'y_outlet': row['y_outlet'],
             'area' : row['area'],
             'geometry': geometry_geojson,
-
+            'typology':typology_value,
         }
     
         json_list.append(json_object)

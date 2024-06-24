@@ -90,11 +90,26 @@
       <div ><app-hydrographSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
       <div  *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
     </div>
-  
-  
   </div>
   </div>
-  
+  <div>
+    <div class="h3_div">
+      <h3 class="h3_text">TITRE</h3>
+    </div>
+  </div>
+  <div class="seasonal_plot_div">
+      <!--<div id="mappy"></div>-->
+      <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;">
+        <div id="mapy" style="height: 370px; width: 60%; margin-left:5px; margin-right:5px; margin-top: 5px;  margin-bottom: 5px; border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;"></div>
+        <div style="height: 350px; width: 30%;">
+          <strong>Légende des Typologies</strong>
+          <div id="legend-items"></div>
+        </div>
+      </div>
+  </div>
   </div>
   
   

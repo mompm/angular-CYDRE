@@ -275,7 +275,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     if (this.showResults && this.results.results.data.graph) {
       //mettre à jour les données de axes x des observation et prediction 
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
-      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
+      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date);
+
+
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;

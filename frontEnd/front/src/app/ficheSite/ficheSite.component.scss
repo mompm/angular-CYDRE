@@ -118,10 +118,14 @@ mat-select.first-dropdown {
 }
 
 .regional_map {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
     width: 60%;
     display: inline-block; 
     height:350;
-    margin: 0px;
+    margin: 5px;
     padding: 0px;
 }
 
@@ -129,7 +133,7 @@ mat-select.first-dropdown {
     width:35%;
     display: inline-block;
     height:350;
-    margin: 0px;
+    margin: 5px;
     padding: 0px;
 }
 
@@ -216,7 +220,8 @@ mat-form-field.second-dropdown{
 .seasonal_plot {
     //width: 100%;
     display: flex; 
-    justify-content: space-around;
-    
+    justify-content: space-around;    
 }
+
+
     

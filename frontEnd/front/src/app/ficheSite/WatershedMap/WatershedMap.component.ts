@@ -28,8 +28,6 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
     DataGDFPiezometry: dataGDFPiezometry [] = [];
     DataGDFStation: dataGDFStation[]  =[];
 
-
-
 WaterShedsMapLayers = {
     "BaseMap" : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -45,7 +43,7 @@ WaterShedsMapLayers = {
     }),
     "SatelliteMap": L.tileLayer('https://tile.geobretagne.fr/photo/service?layer=HR.ORTHOIMAGERY.ORTHOPHOTO&style=&tilematrixset=PM&Service=WMTS&Request=GetTile&Version=1.0.0&Format=png&TileMatrix={z}&TileCol={x}&TileRow={y}', {
       attribution: '&copy; <a href="https://www.ign.fr/">BD Ortho IGN</a> '
-    })    
+    })
   };
   /**
    * 
@@ -142,12 +140,15 @@ WaterShedsMapLayers = {
    * @param stationID 
    * @returns 
    */
-WaterShedMap_Leaflet(stationID:string){
+WaterShedMap_Leaflet(stationID:string){   
+    let point1: any[] = [];
+    let point2: any[] = [];
+    let pointspoly: any[] = [];
     //si la carte existe, supprime (permet la maj pour la station selectionnée)
     if (this.WatershedMapLeaflet ) {
       this.WatershedMapLeaflet.remove();
     }
-    // rechercher le center et le Zoom de la carte 
+    // rechercher le center de base( c'est changer celon les points) et le Zoom de la carte 
     const PointData = this.DataGDFWatersheds.find(data => data.index === stationID);
     if (!PointData) return; 
 
@@ -180,6 +181,7 @@ WaterShedMap_Leaflet(stationID:string){
     const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
     if (stationData) {
       const selectedPolygonCoords = stationData.geometry.coordinates[0].map((coord: any[]) => [coord[1], coord[0]]);
+      pointspoly = selectedPolygonCoords
       L.polyline(selectedPolygonCoords, {
         color: '#3E88A6',
         weight: 2,
@@ -191,19 +193,30 @@ WaterShedMap_Leaflet(stationID:string){
       //this.WatershedMapLeaflet.fitBounds(selectedPolygonCoords);
     }
     // Créer un marqueur pour la station sélectionnée
+    //cherche la station avec ID
     const selectedStation = this.DataGDFStation.find(data => data.index === stationID);
     if (selectedStation) {
+      //remplie les coordonées de la station pour le bound
+      point1 = [selectedStation.y_outlet, selectedStation.x_outlet];
       const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 7, color: 'black',weight : 1, fill:true, fillColor: '#38BFFF',fillOpacity:0.4 })
         .bindPopup(`<b>Identifiant :</b> ${selectedStation.index}<br> <b>Nom de la station hydrologique : </b> ${selectedStation.station_name}<br> <b> Nom de la station piezometrique : </b>${selectedStation.BSS_name}`);
       stationMarker.addTo(this.WatershedMapLeaflet);
-
+      //chercher la station piezo avec ID BSS 
       const piezoSelectedStation = this.DataGDFPiezometry.find(data => data.identifiant_BSS === selectedStation.BSS_ID);
       if (piezoSelectedStation) {
+        //remplie les coordonées de la station pour le bound
+        point2 = [piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84];
         const piezoMarker = L.circleMarker([piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84], { radius: 7, color: 'black',weight : 1,fill:true, fillColor: '#D800A0',fillOpacity:0.4})
           .bindPopup(`<b>Identifiant : ${piezoSelectedStation.identifiant_BSS}</b>`);
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
     }
+      // gerer le center celon les points piezo et station 
+      let bounds = L.latLngBounds([point1, ...pointspoly]);
+      if (point2) {
+        bounds.extend(point2);
+      }
+      this.WatershedMapLeaflet.fitBounds(bounds);
     
   }
 
