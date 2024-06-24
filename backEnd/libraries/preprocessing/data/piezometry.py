@@ -54,7 +54,7 @@ class Piezometry():
     
     def correspondance_bss_names(self, data_path):
         filename = 'stations.csv'
-        return pd.read_csv(os.path.join(data_path, filename), delimiter=',')
+        return pd.read_csv(os.path.join(data_path, filename), delimiter=';', encoding='ISO-8859-1')
     
     
     def correspondance_bss_watershed(self, data_path):

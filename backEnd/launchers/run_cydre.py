@@ -61,7 +61,7 @@ watershed_name = stations[stations['ID'] == watershed_id].station_name.values[0]
 
 # Run the Cydre application
 cydre_app.run_spatial_similarity() 
-cydre_app.run_timeseries_similarity()
+cydre_app.run_timeseries_similarity(cydre_app.Similarity.similar_watersheds)
 cydre_app.select_scenarios(cydre_app.Similarity.correlation_matrix)
 df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast()
 

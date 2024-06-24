@@ -679,7 +679,7 @@ def select_scenarios(simulation_id):
             recharge_df.reset_index(drop=True, inplace=True)
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
         print(selected_scenarios)
 
         for key, value in selected_scenarios.items():

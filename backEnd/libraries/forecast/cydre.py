@@ -52,10 +52,11 @@ class Cydre():
             self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id)
     
             
-    def run_timeseries_similarity(self):
+    def run_timeseries_similarity(self, similar_watersheds):
         self.Similarity.timeseries_similarity(user_watershed = self.UserConfiguration.user_watershed,
                                               watersheds = self.watersheds,
-                                              version = self.version)
+                                              version = self.version,
+                                              similar_watersheds = similar_watersheds)
     
         
     def select_scenarios(self, corr_matrix={}):
