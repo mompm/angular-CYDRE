@@ -14,10 +14,10 @@ def set_cydre_environment_variable(cydre_path):
 
     if current_platform == "Windows":
         print("Windows")
-        os.system(f"setx CYDRE_DASH {cydre_path}")  # Set environment variable for Windows
+        os.system(f"setx CYDRE_ANGULAR {cydre_path}")  # Set environment variable for Windows
     elif current_platform == "Linux":
         print("Linux")
-        os.system(f'echo "export CYDRE_DASH={cydre_path}" >> ~/.bashrc')  # Set environment variable for Linux
+        os.system(f'echo "export CYDRE_ANGULAR={cydre_path}" >> ~/.bashrc')  # Set environment variable for Linux
         os.system(f'source ~/.bashrc')  # Refresh the shell environment
     else:
         print("Other")
