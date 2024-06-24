@@ -26,7 +26,7 @@ out_path = os.path.join(app_root, "outputs")
 surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
 hydro_path = os.path.join(app_root, 'data', 'hydrometry')
 piezo_path = os.path.join(app_root, 'data', 'piezometry')
-
+sys.exit()
 test = surfex.Surfex(surfex_path)
 test.update_reanalysis()
 
@@ -111,14 +111,14 @@ for ws in watersheds.keys():
 #%% Test
 count = 0
 for ws in watersheds.keys():
-    print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
-    count = count + 1
+    #print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
     #print(ws, ':' ,watersheds[ws]['climatic']['temperature'].index[-1])
     #print(watersheds[ws]['climatic']['temperature'].iloc[-1].values[0])
-    #try:
-     #   print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
-    #except:
-     #   pass
+    try:
+        print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
+        count = count + 1
+    except:
+        pass
 
 #%% Save regional object
 toolbox.save_object(watersheds, out_path, 'data.pkl')
