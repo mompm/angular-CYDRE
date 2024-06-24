@@ -2,7 +2,8 @@
     <details open>
       <summary>General</summary>
       <div formGroupName="General">
-        <label>Datasets:
+        <label>Datasets:</label>
+        <div class="input-container">
           <ng-container *ngIf="possibleValues.General.datasets.possible_values.length; else customDataset">
             <div class="radio-group" *ngFor="let option of possibleValues.General.datasets.possible_values">
               <input type="radio" [value]="option" formControlName="datasets">{{option}}
@@ -11,8 +12,13 @@
           <ng-template #customDataset>
             <input type="text" formControlName="datasets">
           </ng-template>
-        </label>
-        <label>Version:
+          <span matTooltip="{{possibleValues.General.datasets.description}}">
+            <mat-icon>info</mat-icon>
+          </span>
+        </div>
+  
+        <label>Version:</label>
+        <div class="input-container">
           <ng-container *ngIf="possibleValues.General.version.possible_values.length; else customVersion">
             <div class="radio-group" *ngFor="let option of possibleValues.General.version.possible_values">
               <input type="radio" [value]="option" formControlName="version">{{option}}
@@ -21,7 +27,10 @@
           <ng-template #customVersion>
             <input type="text" formControlName="version">
           </ng-template>
-        </label>
+          <span matTooltip="{{possibleValues.General.version.description}}">
+            <mat-icon>info</mat-icon>
+          </span>
+        </div>
       </div>
     </details>
   
@@ -29,77 +38,135 @@
       <summary>Similarity</summary>
       <div formGroupName="Similarity">
         <div formGroupName="spatial">
-            <label>Number of Clusters: <input type="text" formControlName="n_clusters"></label>
+          <label>Number of Clusters:</label>
+          <div class="input-container input-container-bottom-margin">
+            <input type="text" formControlName="n_clusters">
+            <span matTooltip="{{possibleValues.Similarity.spatial.n_clusters.description}}">
+              <mat-icon>info</mat-icon>
+            </span>
           </div>
-        <div *ngFor="let key of ['recharge', 'runoff', 'specific_discharge', 'water_table_depth']" [formGroupName]="key">
-          <details>
-            <summary>{{ key }}</summary>
-            <div formGroupName="Calculation">
-              <label>Maximal Percentage: <input type="text" formControlName="maximal_percentage"></label>
-              <label>Metric:
-                <ng-container *ngIf="possibleValues.Similarity[key].Calculation.metric.possible_values.length; else customMetric">
-                  <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.metric.possible_values">
-                    <input type="radio" [value]="option" formControlName="metric">{{option}}
-                  </div>
-                </ng-container>
-                <ng-template #customMetric>
-                  <input type="text" formControlName="metric">
-                </ng-template>
-              </label>
-              <label>Minimal Threshold: <input type="text" formControlName="minimal_threshold"></label>
-              <label>N Scenarios: <input type="text" formControlName="n_scenarios"></label>
-              <label>Scale:
-                <ng-container *ngIf="possibleValues.Similarity[key].Calculation.scale.possible_values.length; else customScale">
-                  <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.scale.possible_values">
-                    <input type="radio" [value]="option" formControlName="scale">{{option}}
-                  </div>
-                </ng-container>
-                <ng-template #customScale>
-                  <input type="text" formControlName="scale">
-                </ng-template>
-              </label>
-              <label>Selection Method:
-                <ng-container *ngIf="possibleValues.Similarity[key].Calculation.selection_method.possible_values.length; else customSelectionMethod">
-                  <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.selection_method.possible_values">
-                    <input type="radio" [value]="option" formControlName="selection_method">{{option}}
-                  </div>
-                </ng-container>
-                <ng-template #customSelectionMethod>
-                  <input type="text" formControlName="selection_method">
-                </ng-template>
-              </label>
-            </div>
-            <div formGroupName="Time">
-              <label>Days Before Forecast: <input type="text" formControlName="ndays_before_forecast"></label>
-              <label>Period Calculation:
-                <ng-container *ngIf="possibleValues.Similarity[key].Time.similarity_period_calculation.possible_values.length; else customPeriodCalculation">
-                  <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Time.similarity_period_calculation.possible_values">
-                    <input type="radio" [value]="option" formControlName="similarity_period_calculation">{{option}}
-                  </div>
-                </ng-container>
-                <ng-template #customPeriodCalculation>
-                  <input type="text" formControlName="similarity_period_calculation">
-                </ng-template>
-              </label>
-              <label>Time Step:
-                <ng-container *ngIf="possibleValues.Similarity[key].Time.time_step.possible_values.length; else customTimeStep">
-                  <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Time.time_step.possible_values">
-                    <input type="radio" [value]="option" formControlName="time_step">{{option}}
-                  </div>
-                </ng-container>
-                <ng-template #customTimeStep>
-                  <input type="text" formControlName="time_step">
-                </ng-template>
-              </label>
-            </div>
-          </details>
+        </div>
+  
+        <div class="grid-container">
+          <div *ngFor="let key of ['recharge', 'runoff', 'specific_discharge', 'water_table_depth']" [formGroupName]="key" class="grid-item">
+            <details>
+              <summary>{{ key }}</summary>
+              <div formGroupName="Calculation">
+                <label>Maximal Percentage:</label>
+                <div class="input-container">
+                  <input type="text" formControlName="maximal_percentage">
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.maximal_percentage.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Metric:</label>
+                <div class="input-container">
+                  <ng-container *ngIf="possibleValues.Similarity[key].Calculation.metric.possible_values.length; else customMetric">
+                    <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.metric.possible_values">
+                      <input type="radio" [value]="option" formControlName="metric">{{option}}
+                    </div>
+                  </ng-container>
+                  <ng-template #customMetric>
+                    <input type="text" formControlName="metric">
+                  </ng-template>
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.metric.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Minimal Threshold:</label>
+                <div class="input-container">
+                  <input type="text" formControlName="minimal_threshold">
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.minimal_threshold.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>N Scenarios:</label>
+                <div class="input-container">
+                  <input type="text" formControlName="n_scenarios">
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.n_scenarios.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Scale:</label>
+                <div class="input-container">
+                  <ng-container *ngIf="possibleValues.Similarity[key].Calculation.scale.possible_values.length; else customScale">
+                    <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.scale.possible_values">
+                      <input type="radio" [value]="option" formControlName="scale">{{option}}
+                    </div>
+                  </ng-container>
+                  <ng-template #customScale>
+                    <input type="text" formControlName="scale">
+                  </ng-template>
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.scale.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Selection Method:</label>
+                <div class="input-container">
+                  <ng-container *ngIf="possibleValues.Similarity[key].Calculation.selection_method.possible_values.length; else customSelectionMethod">
+                    <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Calculation.selection_method.possible_values">
+                      <input type="radio" [value]="option" formControlName="selection_method">{{option}}
+                    </div>
+                  </ng-container>
+                  <ng-template #customSelectionMethod>
+                    <input type="text" formControlName="selection_method">
+                  </ng-template>
+                  <span matTooltip="{{possibleValues.Similarity[key].Calculation.selection_method.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+              </div>
+  
+              <div formGroupName="Time">
+                <label>Days Before Forecast:</label>
+                <div class="input-container">
+                  <input type="text" formControlName="ndays_before_forecast">
+                  <span matTooltip="{{possibleValues.Similarity[key].Time.ndays_before_forecast.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Period Calculation:</label>
+                <div class="input-container">
+                  <ng-container *ngIf="possibleValues.Similarity[key].Time.similarity_period_calculation.possible_values.length; else customPeriodCalculation">
+                    <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Time.similarity_period_calculation.possible_values">
+                      <input type="radio" [value]="option" formControlName="similarity_period_calculation">{{option}}
+                    </div>
+                  </ng-container>
+                  <ng-template #customPeriodCalculation>
+                    <input type="text" formControlName="similarity_period_calculation">
+                  </ng-template>
+                  <span matTooltip="{{possibleValues.Similarity[key].Time.similarity_period_calculation.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+  
+                <label>Time Step:</label>
+                <div class="input-container">
+                  <ng-container *ngIf="possibleValues.Similarity[key].Time.time_step.possible_values.length; else customTimeStep">
+                    <div class="radio-group" *ngFor="let option of possibleValues.Similarity[key].Time.time_step.possible_values">
+                      <input type="radio" [value]="option" formControlName="time_step">{{option}}
+                    </div>
+                  </ng-container>
+                  <ng-template #customTimeStep>
+                    <input type="text" formControlName="time_step">
+                  </ng-template>
+                  <span matTooltip="{{possibleValues.Similarity[key].Time.time_step.description}}">
+                    <mat-icon>info</mat-icon>
+                  </span>
+                </div>
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </details>
-  
     
-
-  
     <button type="submit">Save</button>
   </form>
   

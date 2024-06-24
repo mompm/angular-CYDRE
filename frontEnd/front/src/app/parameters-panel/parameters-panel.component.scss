@@ -43,7 +43,7 @@ form {
       padding: 8px;
       border: 1px solid #ddd;
       border-radius: 4px;
-      box-sizing: border-box; /* Makes sure padding does not affect width */
+      box-sizing: border-box; 
       transition: border-color 0.3s;
   
       &:focus {
@@ -67,7 +67,7 @@ form {
       background-color: #0056b3;
     }
   }
-  
+
   .radio-group {
     display: inline-block;
     margin-right: 10px;
@@ -75,4 +75,72 @@ form {
       margin-left: 5px;
     }
   }
-    
+  .input-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .input-container input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  .input-container span {
+    margin-left: 8px; 
+    font-size: 20px;
+    cursor: pointer;
+  }
+  
+  .input-container mat-icon {
+    // font-size: 20px; 
+    color: #a9a9a9; 
+  }
+  
+  .input-container .radio-group {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 10px;
+  }
+  
+  .input-container .radio-group input {
+    margin-right: 5px;
+  }
+  
+  .input-container-bottom-margin {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px; 
+  }
+
+  .input-container-bottom-margin input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+
+  .input-container-bottom-margin span {
+    margin-left: 8px; 
+    font-size: 10px;
+    cursor: pointer;
+  }
+
+  .input-container-bottom-margin mat-icon {
+    // font-size: 20px; 
+    color: #a9a9a9; 
+  }
+
+  .grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px; /* Adjust the gap between items as needed */
+  }
+  
+  
+  
+ 
+  

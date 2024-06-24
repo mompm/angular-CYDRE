@@ -44,6 +44,7 @@ import { MatSliderModule } from '@angular/material/slider';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatTreeNestedDataSource, MatTreeModule} from '@angular/material/tree';
 import {MatIconModule} from "@angular/material/icon";
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {MatButtonModule} from "@angular/material/button";
 import {MatTableModule} from "@angular/material/table";
 import { MatTabsModule } from '@angular/material/tabs';
@@ -137,6 +138,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatProgressSpinnerModule,
     MatTreeModule,
     MatIconModule,
+    MatTooltipModule,
     MatPaginatorModule,
     MatSortModule,
     MatInputModule,

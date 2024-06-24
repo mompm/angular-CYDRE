@@ -1427,6 +1427,9 @@ def parse_xml_to_dict(element, default):
                 result[child.attrib['name']] = parse_xml_to_dict(child, default)
             elif child.tag == 'Parameter':
                 param_name = child.attrib['name']
+                description = child.find('description').text.strip().replace('\n', ' ').replace('\t', ' ')
+                param_type = child.find('type').text.strip().replace('\n', ' ').replace('\t', ' ')
+
                 if default:
                     param_value = child.find('default_value').text
                 else:
@@ -1437,7 +1440,9 @@ def parse_xml_to_dict(element, default):
 
                 result[param_name] = {
                     'value': param_value,
-                    'possible_values': possible_values_list
+                    'possible_values': possible_values_list,
+                    'description' : description,
+                    'type' : param_type
                 }
     return result
 

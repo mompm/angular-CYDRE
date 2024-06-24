@@ -168,7 +168,9 @@ handleParametersChanged(parameters: any) {
     }
     //sinon start simulation 
     else{
+      if(this.showParametersPanel){
       this.parametersPanel.getFormValues();
+      }
     const params = {
       Parameters :{
         user_watershed_id: this.selectedStation,
