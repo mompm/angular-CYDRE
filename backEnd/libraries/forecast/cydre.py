@@ -46,20 +46,19 @@ class Cydre():
         self.Similarity = SIM.Similarity(similarity_params, self.date)
         
     
-    def run_spatial_similarity(self, spatial=False):
+    def run_spatial_similarity(self, spatial=True):
         if spatial:
             self.Similarity.spatial_similarity(self.watersheds)
             self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id)
     
             
-    def run_timeseries_similarity(self,similar_watersheds):
+    def run_timeseries_similarity(self):
         self.Similarity.timeseries_similarity(user_watershed = self.UserConfiguration.user_watershed,
                                               watersheds = self.watersheds,
-                                              version = self.version,
-                                              similar_watersheds=similar_watersheds)
+                                              version = self.version)
     
         
-    def select_scenarios(self, spatial=False,corr_matrix={}):
+    def select_scenarios(self, corr_matrix={}):
         """
         Extract hydroclimatic events closest to the event to be forecast
 

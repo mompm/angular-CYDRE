@@ -89,8 +89,8 @@ class Outputs():
     def manage_outputs_path(self):
         
         # Watershed folder for storing outputs as plots
-        self.watershed_path = os.path.join(self.output_path, self.watershed_name)
-        self.simulation_path = os.path.join(self.watershed_path, self.selected_date.strftime('%Y-%m-%d'))
+        self.watershed_path = os.path.join(self.output_path, self.watershed_id)
+        self.simulation_path = os.path.join(self.watershed_path, self.selected_date)#.strftime('%Y-%m-%d'))
         if not os.path.exists(self.watershed_path):
             os.makedirs(self.watershed_path)
         if not os.path.exists(self.simulation_path):
@@ -105,7 +105,7 @@ class Outputs():
     
     def save_watershed_similarity(self):
         
-        filename = os.path.join(self.output_path, self.watershed_name, 'watershed_similarity.txt')
+        filename = os.path.join(self.output_path, self.watershed_id, 'watershed_similarity.txt')
         df = self._filter_watershed_similarity()
         df.to_csv(filename)
         
@@ -332,7 +332,7 @@ class Outputs():
             # Add the individual series used for the projections trends
             for i, line in enumerate(projection_series):
                 fig.add_trace(go.Scatter(x=line.index, y=line['Q_streamflow'], mode='lines', 
-                                        line=dict(color='grey', width=0.2, dash='dash'),
+                                        line=dict(color='grey', width=0.25, dash='dash'),
                                         hoverinfo='skip', showlegend=False))
 
             # Add the Median projection
@@ -361,15 +361,6 @@ class Outputs():
                 align="center"  # Alignement du texte
             )
             
-            fig.add_layout_image(
-                dict(
-                    source="https://upload.wikimedia.org/wikipedia/fr/e/eb/Logo_Centre_national_de_la_recherche_scientifique_%282008-2023%29.svg", # Chemin ou URL de l'image
-                    xref="paper", yref="paper",
-                    x=1, y=1.05,
-                    sizex=0.2, sizey=0.2,
-                    xanchor="right", yanchor="bottom"
-                    )
-             )
 
             # Add module if selected by the user
             if module:
@@ -390,22 +381,37 @@ class Outputs():
 
             # Set axis parameters
             fig.update_xaxes(range=[self.similarity_period[0], self.projection_period[-1]], 
-                 #tickvals=pd.date_range(start=self.similarity_period[0], end=self.projection_period[-1]),
-                 tickformat="%d-%m-%Y", title="Date", showgrid=False, type='date')
-            fig.update_yaxes(range=[1e-3, None], showgrid=False)
+                             tickformat="%d-%m-%Y",
+                             type='date',
+                             tickfont = dict(size=14, family='Segoe UI Semibold', color='black'),
+                             gridwidth = 0.01,
+                             gridcolor = 'rgba(0,0,0,0.1)',
+                             )
+            
+            fig.update_yaxes(range=[1e-3, None],
+                             #showgrid=False,
+                             type='log' if log else None,
+                             title="Débit (m3/s)",
+                             rangemode='tozero',
+                             tickfont = dict(size=14, family='Segoe UI Semibold', color='black'),
+                             gridwidth = 0.01,
+                             gridcolor = 'rgba(0,0,0,0.1)',
+                             )
 
 
             #fig.update_xaxes(tickvals=pd.date_range(start=self.similarity_period[0], end=self.projection_period[-1], freq='Y'),
             #                tickformat="%Y", title="Date")
-            fig.update_yaxes(type='log' if log else None, title="Débit (m3/s)", rangemode='tozero')
-            fig.update_layout(title=f"{self.watershed_name}" + f" - {len(self.scenarios)} événements ", legend=dict(x=0, y=1.1, orientation="h"),
-                            margin=dict(l=40, r=40, t=80, b=40), plot_bgcolor='white')
+            fig.update_layout(title=f"{self.watershed_id} | {self.watershed_name}" + f" - {len(self.scenarios)} événements ", 
+                              width=1200,
+                              height=675,
+                              legend=dict(x=0.5, y=1.1, orientation="h", xanchor='center'),
+                              title_x = 0.5,
+                              hovermode = "x unified",
+                              plot_bgcolor = "rgba(0,0,0,0)",
+                              paper_bgcolor = "rgba(0,0,0,0)",)
             
-            fig.update_layout(template="simple_white")  # Choisir un modèle de thème, par exemple "plotly_dark"
-            fig.update_layout(font=dict(family="Arial"))  # Définir la police de caractères
-            fig.update_layout(width=800, height=450)  # Définir la largeur et la hauteur de la figure
-            fig.update_layout(hovermode='x unified')  # Limite les informations affichées au survol à l'axe x uniquement
-            fig.update_layout(hovermode='closest')  # Affiche les informations pour la trace la plus proche du point de survol
+
+           # fig.update_layout(hovermode='closest')  # Affiche les informations pour la trace la plus proche du point de survol
         
             # Save and show plot
             fig.write_html(filename)
@@ -413,6 +419,48 @@ class Outputs():
 
             return fig
      
+        
+    def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id):
+        
+        gdf_stations_filter = gdf_stations[gdf_stations["ID"].isin(self.clusters.index)]
+        gdf_watersheds_filter = gdf_watersheds[gdf_watersheds.index.isin(self.clusters.index)]
+        gdf_watersheds_filter = gdf_watersheds_filter.merge(self.clusters[['typology']], left_index=True, right_index=True, how='left')
+        gdf_watersheds_filter['typology'] = gdf_watersheds_filter['typology'].astype(str)        
+        
+        colors = {
+        '0': '#1f77b4',  # Bleu
+        '1': '#ff7f0e',  # Orange
+        '2': '#2ca02c',  # Vert
+        '3': '#d62728',  # Rouge
+        '4': '#9467bd',  # Violet
+        '5': '#8c564b',  # Marron
+        '6': '#e377c2'   # Rose
+        }
+
+
+        fig = px.choropleth_mapbox(
+            gdf_watersheds_filter,
+            geojson=gdf_watersheds_filter.geometry,
+            locations=gdf_watersheds_filter.index,
+            color="typology",
+            hover_name="name",  # Optionnel, pour afficher le nom au survol
+            title="Typologies des bassins versants",
+            color_discrete_map=colors
+        )
+        
+        
+        # Mettre à jour la carte pour utiliser un style mapbox approprié
+        fig.update_geos(fitbounds="locations", visible=False)
+        fig.update_layout(mapbox_style="open-street-map", mapbox_zoom=6.8, mapbox_center={"lat": 48.2141667, "lon": -2.9424167})
+        #fig.update_coloraxes(colorbar=dict(visible=False))
+        
+        # Afficher la figure
+        fig.show()
+        fig.write_html(os.path.join(self.watershed_path, "typo2.html"))
+        
+
+        return fig
+    
     
     def _get_streamflow(self):
         

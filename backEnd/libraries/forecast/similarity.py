@@ -115,10 +115,10 @@ class Similarity:
     def get_similar_watersheds(self, user_watershed_id):
         
         user_watershed_typology = int(self.clusters.loc[user_watershed_id].typology)        
-        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)    
-        print(self.similar_watersheds)
+        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)        
+        
     
-    def timeseries_similarity(self, user_watershed, watersheds, version, similar_watersheds):
+    def timeseries_similarity(self, user_watershed, watersheds, version):
         
         """
         Calculate temporal similarity between the user-selected watershed and regional historical watersheds.
@@ -126,62 +126,67 @@ class Similarity:
                 
         # Keep only watersheds that share the same typology
         try:
-            watersheds = {key: value for key, value in watersheds.items() if key in similar_watersheds}
+            watersheds = {key: value for key, value in watersheds.items() if key in self.similar_watersheds}
         except:
             pass
          
         for variable in self.variables:
+            
+            try:
                         
-            # Storing the variable correlation matrix in a dataframe
-            var_corr_matrix = pd.DataFrame()
-            
-            # Time series serving as a reference for the selected variable.
-            user_watershed_df, years = self._timeseries_preprocessing(user_watershed,
-                                                                       variable,
-                                                                       self.TimeProperties,
-                                                                       version,
-                                                                       which='user')
-            user_watershed_df = self._set_similarity_period(user_watershed_df, self.TimeProperties.date, variable)
-            self.user_similarity_period = self.TimeProperties._similarity_period
-            
-            for comp_watershed_id, comp_watershed in watersheds.items():
-                try:
-                    # Storing the correlation coefficients and years in a list
-                    similarity_coefficients = []
-                    similarity_years = []
-                    
-                    #  Time series serving as a comparison for the selected variable
-                    comp_watershed_df, _ = self._timeseries_preprocessing(comp_watershed,
-                                                                       variable,
-                                                                       self.TimeProperties,
-                                                                       version,
-                                                                       which='comparison')
-                    for year in years:                        
-
-                        df = self._set_similarity_period(comp_watershed_df, year, variable)
-        
-                        try:
-                            # ----- SIMILARITY CALCULATION -----
-                            common_indexes = self._get_common_index(user_watershed_df, df)
-                            comp_serie = df.Q[df.Q.index.strftime('%m-%d').isin(common_indexes)]
-                            
-                            similarity = self.Indicator.calculate_similarity(user_watershed_df.Q, comp_serie)
-                            similarity_coefficients.append(similarity)
-                            similarity_years.append(year.year)
-                            # ----- SIMILARITY CALCULATION -----
-                        except Exception as e:
-                            print(f"Error processing year {year}, watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
-                    
-                    # Fill the variable correlation matrix
-                    tmp_matrix = pd.DataFrame(similarity_coefficients, index=similarity_years)
-                    tmp_matrix.columns = [comp_watershed_id]
-                    var_corr_matrix = pd.concat([var_corr_matrix, tmp_matrix], axis=1, sort=True)
+                # Storing the variable correlation matrix in a dataframe
+                var_corr_matrix = pd.DataFrame()
                 
-                except Exception as e:
-                    print(f"Error processing watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
+                # Time series serving as a reference for the selected variable.
+                user_watershed_df, years = self._timeseries_preprocessing(user_watershed,
+                                                                           variable,
+                                                                           self.TimeProperties,
+                                                                           version,
+                                                                           which='user')
+                user_watershed_df = self._set_similarity_period(user_watershed_df, self.TimeProperties.date, variable)
+                self.user_similarity_period = self.TimeProperties._similarity_period
+                
+                for comp_watershed_id, comp_watershed in watersheds.items():
+                    try:
+                        # Storing the correlation coefficients and years in a list
+                        similarity_coefficients = []
+                        similarity_years = []
+                        
+                        #  Time series serving as a comparison for the selected variable
+                        comp_watershed_df, _ = self._timeseries_preprocessing(comp_watershed,
+                                                                           variable,
+                                                                           self.TimeProperties,
+                                                                           version,
+                                                                           which='comparison')
+                        for year in years:                        
+    
+                            df = self._set_similarity_period(comp_watershed_df, year, variable)
             
-            # Store all variable correlation matrix in the general results dictionary
-            self.correlation_matrix[variable] = var_corr_matrix
+                            try:
+                                # ----- SIMILARITY CALCULATION -----
+                                common_indexes = self._get_common_index(user_watershed_df, df)
+                                comp_serie = df.Q[df.Q.index.strftime('%m-%d').isin(common_indexes)]
+                                
+                                similarity = self.Indicator.calculate_similarity(user_watershed_df.Q, comp_serie)
+                                similarity_coefficients.append(similarity)
+                                similarity_years.append(year.year)
+                                # ----- SIMILARITY CALCULATION -----
+                            except Exception as e:
+                                print(f"Error processing year {year}, watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
+                        
+                        # Fill the variable correlation matrix
+                        tmp_matrix = pd.DataFrame(similarity_coefficients, index=similarity_years)
+                        tmp_matrix.columns = [comp_watershed_id]
+                        var_corr_matrix = pd.concat([var_corr_matrix, tmp_matrix], axis=1, sort=True)
+                    
+                    except Exception as e:
+                        print(f"Error processing watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
+                
+                # Store all variable correlation matrix in the general results dictionary
+                self.correlation_matrix[variable] = var_corr_matrix
+            
+            except:
+                print(f"No data for the variable {variable} at the date {self.TimeProperties.date}")
     
             
     def _timeseries_preprocessing(self, watershed, variable, time_properties, version, which):
