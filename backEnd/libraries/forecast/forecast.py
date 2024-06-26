@@ -6,6 +6,7 @@ Created on Thu Sep 28 16:26:03 2023
 """
 
 # Modules
+import os
 import pandas as pd
 import numpy as np
 from datetime import timedelta
@@ -41,7 +42,7 @@ class Forecast():
         self.Q_station_forecast = []
     
     
-    def from_scenarios_extract_timeseries(self, watersheds, scenarios, simulation_date, user_Qi):
+    def from_scenarios_extract_timeseries(self, data_path, scenarios, simulation_date, user_Qi):
                         
         # Loop through each combination of watershed and year
         for (year, watershed_id), coeff in scenarios.items():
@@ -51,7 +52,7 @@ class Forecast():
                     print('There is no prospective data for the year {y}'.format(y=year))
                 else:
                     # Extract watershed timeseries (streamflow, recharge, runoff and volume)
-                    df_watershed = self._extract_timeseries(watersheds, watershed_id)
+                    df_watershed = self._extract_timeseries(data_path, watershed_id)
                     
                     # Time series smoothing for noise reduction
                     #df_watershed = self._timeseries_smoothing(df_watershed)
@@ -129,15 +130,29 @@ class Forecast():
         return df_forecast
     
         
-    def _extract_timeseries(self, watersheds, watershed_id):
-        streamflow = watersheds[watershed_id]['hydrometry']['specific_discharge']
-        recharge = watersheds[watershed_id]['climatic']['recharge']
-        runoff = watersheds[watershed_id]['climatic']['runoff']
-        storage = recharge + runoff - streamflow
+    def _extract_timeseries(self, data_path, watershed_id):
+        
+        streamflow_path = os.path.join(data_path, "hydrometry", "specific_discharge", "{}.csv".format(watershed_id)) 
+        with open(streamflow_path) as file:
+            streamflow = pd.read_csv(file, index_col="t")
+            streamflow.index = pd.to_datetime(streamflow.index)
+        
+        recharge_path = os.path.join(data_path, "climatic", "surfex", "recharge", "{}.csv".format(watershed_id)) 
+        with open(recharge_path) as file:
+            recharge = pd.read_csv(file, index_col="t")
+            recharge.index = pd.to_datetime(recharge.index)
+        
+        runoff_path = os.path.join(data_path, "climatic", "surfex", "runoff", "{}.csv".format(watershed_id)) 
+        with open(runoff_path) as file:
+            runoff = pd.read_csv(file, index_col="t")
+            runoff.index = pd.to_datetime(runoff.index)
+            
+        storage = recharge + runoff - streamflow 
         
         df = pd.merge(streamflow, recharge, left_index=True, right_index=True, suffixes=('_streamflow', '_recharge'))
         df = pd.merge(df, runoff, left_index=True, right_index=True, suffixes=('', '_runoff'))
         df = pd.merge(df, storage, left_index=True, right_index=True, suffixes=('_runoff', '_storage'))
+
         return df
     
     

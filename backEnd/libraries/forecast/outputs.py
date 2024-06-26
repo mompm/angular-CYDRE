@@ -42,9 +42,11 @@ class Outputs():
         self.stations = stations
         self.watershed_name = watershed_name
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
-        self.watershed_area = cydre_app.watersheds[self.watershed_id]['hydrometry']['area']
-        self.streamflow = cydre_app.watersheds[self.watershed_id]['hydrometry']['specific_discharge']
-        self.precipitation = cydre_app.watersheds[self.watershed_id]['climatic']['precipitation']
+        #self.watershed_area = cydre_app.watersheds[self.watershed_id]['hydrometry']['area']
+        self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
+        #self.streamflow = cydre_app.watersheds[self.watershed_id]['hydrometry']['specific_discharge']
+        self.streamflow = cydre_app.UserConfiguration.user_streamflow
+        #self.precipitation = cydre_app.watersheds[self.watershed_id]['climatic']['precipitation']
         self.selected_date = selected_date
         self.simulation_date = cydre_app.date
         self.similarity_period = cydre_app.Similarity.user_similarity_period

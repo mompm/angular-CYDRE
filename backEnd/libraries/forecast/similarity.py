@@ -39,43 +39,35 @@ class Similarity:
         self.TimeProperties = TI.TimeManagement(simulation_date)
         self.Indicator = IN.Indicator(self.params) # algorithmic parameters
         self.variables = ['specific_discharge', 'recharge']#, 'water_table_depth']
+        self.variables_definition = {'specific_discharge': 'hydrometry',
+                                     'recharge': 'climatic/surfex',
+                                     'runoff': 'climatic/surfex',
+                                     'water_table_depth':'piezometry'}
         self.correlation_matrix = {}
         
         
-    def spatial_similarity(self, watersheds):
+    def spatial_similarity(self, hydraulic_path):
         
-        _result_df = self._join_hs1D_results(watersheds, parameters=['K1', 'D', 'K2/K1'])
-        self.clusters = self._watershed_clustering(_result_df)
-        self.watershed_similarity = self._watershed_similarity(_result_df)
+        self.hydraulic_properties = self.__get_hydraulic_properties(hydraulic_path, parameters=['K1', 'D', 'K2/K1'])
+        self.clusters = self.__watershed_clustering(self.hydraulic_properties)
+        self.watershed_similarity = self.__watershed_similarity(self.hydraulic_properties)
         
-        for ws in self.clusters.index:
-            watersheds[ws]['typology'] = int(self.clusters.loc[ws].typology)
+        #for ws in self.clusters.index:
+         #   watersheds[ws]['typology'] = int(self.clusters.loc[ws].typology)
     
     
-    def _join_hs1D_results(self, watersheds, parameters):
+    def __get_hydraulic_properties(self, hydraulic_path, parameters):
         
-        # Join all calibrated modeled results in one dictionnary
-        hs1d_results = {}
-        
-        for ws in watersheds.keys():
-            
-            try:
-                watershed_exploration = watersheds[ws]['hydraulicprop']['results']
-                hs1d_results[ws] = watershed_exploration
-            except:
-                #print(f"There is no exploration results for the watershed: {ws}")
-                pass
-
-        # Prepare watershed clustering 
-        concatenated_df = pd.concat(hs1d_results.values(), keys=hs1d_results.keys())
-        result_df = concatenated_df.loc[(slice(None), parameters), 'median']
-        result_df = result_df.unstack(level=1)
-        result_df = np.log10(result_df)
-        
-        return result_df
+        df = pd.read_csv(os.path.join(hydraulic_path, 'hydraulic_properties.csv'), delimiter=';', decimal=",")
+        df = df.set_index("ID")
+        df.columns = ['name', 'K1', 'Theta1.d', 'K2', 'Theta2.d', 'D', 'K2/K1']
+        df = df[parameters]
+        df = df.sort_index()
+                
+        return df
     
         
-    def _watershed_clustering(self, df):
+    def __watershed_clustering(self, df):
         
         # Watershed clustering
         # Note: We use scaling so that each variable has equal importance when fitting
@@ -95,7 +87,7 @@ class Similarity:
         return df
         
     
-    def _watershed_similarity(self, df):
+    def __watershed_similarity(self, df):
         
         # Calculer la distance euclidienne entre les lignes du DataFrame
         distance_matrix = pdist(df.values, metric='euclidean')
@@ -118,18 +110,12 @@ class Similarity:
         self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)        
         
     
-    def timeseries_similarity(self, user_watershed, watersheds, version, similar_watersheds):
+    def timeseries_similarity(self, data_path, user_watershed_id, similar_watersheds):
         
         """
         Calculate temporal similarity between the user-selected watershed and regional historical watersheds.
         """
-                
-        # Keep only watersheds that share the same typology
-        try:
-            watersheds = {key: value for key, value in watersheds.items() if key in similar_watersheds}
-        except:
-            pass
-         
+
         for variable in self.variables:
             
             try:
@@ -138,33 +124,26 @@ class Similarity:
                 var_corr_matrix = pd.DataFrame()
                 
                 # Time series serving as a reference for the selected variable.
-                user_watershed_df, years = self._timeseries_preprocessing(user_watershed,
-                                                                           variable,
-                                                                           self.TimeProperties,
-                                                                           version,
-                                                                           which='user')
-                user_watershed_df = self._set_similarity_period(user_watershed_df, self.TimeProperties.date, variable)
+                user_watershed_df, years = self.__timeseries_preprocessing(data_path, variable, user_watershed_id, which="user")
+                user_watershed_df = self.__set_similarity_period(user_watershed_df, self.TimeProperties.date, variable)
                 self.user_similarity_period = self.TimeProperties._similarity_period
                 
-                for comp_watershed_id, comp_watershed in watersheds.items():
+                for comp_watershed_id in similar_watersheds:
                     try:
                         # Storing the correlation coefficients and years in a list
                         similarity_coefficients = []
                         similarity_years = []
                         
                         #  Time series serving as a comparison for the selected variable
-                        comp_watershed_df, _ = self._timeseries_preprocessing(comp_watershed,
-                                                                           variable,
-                                                                           self.TimeProperties,
-                                                                           version,
-                                                                           which='comparison')
+                        comp_watershed_df, _ = self.__timeseries_preprocessing(data_path, variable, comp_watershed_id, which='comparison')
+                        
                         for year in years:                        
     
-                            df = self._set_similarity_period(comp_watershed_df, year, variable)
+                            df = self.__set_similarity_period(comp_watershed_df, year, variable)
             
                             try:
                                 # ----- SIMILARITY CALCULATION -----
-                                common_indexes = self._get_common_index(user_watershed_df, df)
+                                common_indexes = self.__get_common_index(user_watershed_df, df)
                                 comp_serie = df.Q[df.Q.index.strftime('%m-%d').isin(common_indexes)]
                                 
                                 similarity = self.Indicator.calculate_similarity(user_watershed_df.Q, comp_serie)
@@ -172,7 +151,7 @@ class Similarity:
                                 similarity_years.append(year.year)
                                 # ----- SIMILARITY CALCULATION -----
                             except Exception as e:
-                                print(f"Error processing year {year}, watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
+                                print(f"Error processing year {year}, watershed {comp_watershed_id}, variable {variable}: {e}")
                         
                         # Fill the variable correlation matrix
                         tmp_matrix = pd.DataFrame(similarity_coefficients, index=similarity_years)
@@ -180,28 +159,40 @@ class Similarity:
                         var_corr_matrix = pd.concat([var_corr_matrix, tmp_matrix], axis=1, sort=True)
                     
                     except Exception as e:
-                        print(f"Error processing watershed {comp_watershed['hydrometry']['name']}, variable {variable}: {e}")
+                        print(f"Error processing watershed {comp_watershed_id}, variable {variable}: {e}")
                 
                 # Store all variable correlation matrix in the general results dictionary
                 self.correlation_matrix[variable] = var_corr_matrix
             
             except:
                 print(f"No data for the variable {variable} at the date {self.TimeProperties.date}")
+        
     
-            
-    def _timeseries_preprocessing(self, watershed, variable, time_properties, version, which):
-                
-        self.preprocessor = PR.PreProcessor(watershed, time_properties)
-        self.preprocessor.preprocess_watershed_data(variable)
-        df = self.preprocessor.df
+    def __timeseries_preprocessing(self, data_path, variable, watershed_id, which):
+        
+        variable_folder = self.variables_definition[variable]
+        file_path = os.path.join(data_path, variable_folder, variable, "{}.csv".format(watershed_id)) 
+        with open(file_path) as file:
+            data = pd.read_csv(file, index_col="t")
+            data.index = pd.to_datetime(data.index)  
+            data = self.__timeseries_normalization(data)
+            data = self.__timeseries_smoothing(data)
         
         years = None
         
         if which == 'user':
             self._extract_variable_parameters(variable)
-            years = self.TimeProperties.get_nyears(df)
+            years = self.TimeProperties.get_nyears(data)
         
-        return df, years
+        return data, years
+    
+    
+    def __timeseries_normalization(self, df):
+        return (df - df.mean()) / df.std()
+    
+    
+    def __timeseries_smoothing(self, df, window=1, min_periods=1):
+        return df.rolling(window=window, min_periods=min_periods).mean()
     
     
     def _extract_variable_parameters(self, variable):
@@ -210,66 +201,20 @@ class Similarity:
         indicator_params = self.params.getgroup(variable).getgroup("Calculation")
         self.Indicator = IN.Indicator(indicator_params)
             
+    
+    def __set_similarity_period(self, df, date, variable):
         
-    def _set_similarity_period(self, df, date, variable):
+        # Convert to hydrological year
+        df = self.TimeProperties.convert_to_HY(df)
         
-        user_watershed_df = self.preprocessor.set_similarity_period(df, date, variable)
+        # Period to calculate similarity of time series
+        df = self.TimeProperties.similarity_period(df, date)
+        
+        # Convert the dataframe based on the variable-specific time step
+        df = self.TimeProperties.time_step_conversion(df, variable)
+        
+        return df
     
-        return user_watershed_df
     
-    
-    def _get_common_index(self, user_watershed_df, df):
+    def __get_common_index(self, user_watershed_df, df):
         return df.index.strftime('%m-%d').intersection(user_watershed_df.index.strftime('%m-%d'))
-
-    
-    def plot_correlation_chronicles(self, user_watershed_df, user_watershed, df,
-                                    comp_watershed, year, watersheds, variable, score):
-        
-        plt.style.use('seaborn-dark-palette')
-        plt.rcParams.update({'font.family':'Arial'})
-        plt.figure(figsize=(12, 8))
-        
-        # Labels
-        user_legend = f'{user_watershed.hydrometry.name} - {self.TimeProperties.date.year}'
-        comp_legend = f'{comp_watershed.hydrometry.name} - {year}'
-        
-        # Plot the data on the first subplot with a linear scale
-        plt.subplot(2, 1, 1)
-        plt.plot(user_watershed_df.index, user_watershed_df, color='navy', label=user_legend, linewidth=2)
-        plt.plot(user_watershed_df.index, df, color='red', label=comp_legend)
-        if variable == 'specific_discharge' or variable == 'recharge':
-            plt.ylabel('Flow (m/s)', fontsize=18)
-        elif variable == 'water_table_depth':
-            plt.ylabel('Depth (m)', fontsize=18)
-        plt.tick_params(axis='both', labelsize=16)
-        plt.xticks([])
-        plt.legend(fontsize=14)
-        plt.title(variable, fontsize=20)
-    
-        # Add legend with watershed names and correlation coefficient
-        #plt.text(0.10, 0.90, f'Coefficient: {score:.2f}', transform=plt.gca().transAxes,
-         #        ha='center', va='top', color='black', fontsize=16,
-          #       bbox=dict(facecolor='white', edgecolor='white', boxstyle='round,pad=0.5'))
-    
-        # Plot the data on the second subplot with a logarithmic scale
-        plt.subplot(2, 1, 2)
-        plt.plot(user_watershed_df.index, user_watershed_df, color='navy', label=user_legend, linewidth=2)
-        plt.plot(user_watershed_df.index, df, color='red', label=comp_legend)
-        plt.yscale('log')  # Set y-axis to logarithmic scale
-        if variable == 'specific_discharge' or variable == 'recharge':
-            plt.ylabel('Flow (m/s)', fontsize=18)
-        elif variable == 'water_table_depth':
-            plt.ylabel('Depth (m)', fontsize=18)
-        plt.tick_params(axis='both', labelsize=16)
-        date_formatter = mdates.DateFormatter('%m-%d')
-        plt.gca().xaxis.set_major_formatter(date_formatter)
-        #plt.xticks(selected_ticks, selected_ticks.strftime('%m-%d'), rotation=45, ha='right')
-        
-        # Adjust layout to prevent overlapping
-        plt.tight_layout()
-    
-        # Show the plot
-        filename = str(round(score,2))+'_'+comp_watershed.watershed_id+'_'+str(year)+'.tiff'
-        folder = os.path.join(os.getenv("CYDRE"), "Cydre", "test", "sim_analysis", variable)
-        #if score > 0.5:
-        plt.savefig(os.path.join(folder, filename), dpi=100, format="tiff", bbox_inches='tight', pad_inches=0.1)

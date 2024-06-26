@@ -4,7 +4,7 @@ Created on Thu Jun  1 16:06:06 2023
 
 @author: Nicolas Cornette
 """
-
+import sys
 # Python modules
 import os
 import time
@@ -26,14 +26,11 @@ start = time.time()
 #%% PREPARATION
 
 # Initialize Cydre application, loading input parameters, datasets, etc.
-init = IN.Initialization(app_root)
-cydre_app = init.cydre_initialization()
-initial_date = init.params.getgroup("General").getparam("date").getvalue()
 data_path = os.path.join(app_root, 'data')
 hydro_path = os.path.join(data_path, 'hydrometry', 'discharge')
 surfex_path = os.path.join(data_path, 'climatic', 'surfex')
 piezo_path = os.path.join(data_path, 'piezometry')
-#output_path = "C:/Users/nicol/OneDrive - Université de Rennes/IR_CYDRE/figures/Projections"
+hydraulic_path = os.path.join(data_path, 'hydraulicprop')
 output_path = os.path.join(app_root, 'outputs', 'projections')
 
 # Hydrological stations
@@ -42,7 +39,7 @@ lambert93_to_wgs84 = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", alway
 x_wgs84, y_wgs84 = lambert93_to_wgs84.transform(stations["x_outlet"], stations["y_outlet"])
 geometry_stations = [Point(xy) for xy in zip(x_wgs84, y_wgs84)]
 gdf_stations = gpd.GeoDataFrame(stations, geometry=geometry_stations, crs="EPSG:4326")
-
+#sys.exit()
 # Watersheds boundaries
 gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds.shp'))
 gdf_watersheds = gdf_watersheds.set_index('index')
@@ -53,17 +50,20 @@ geometry_piezometry = [Point(xy) for xy in zip(piezo_stations['X_WGS84'], piezo_
 gdf_piezometry = gpd.GeoDataFrame(piezo_stations, geometry=geometry_piezometry, crs="EPSG:4326")
 
  # Watershed identifier
+init = IN.Initialization(app_root, stations)
+cydre_app = init.cydre_initialization()
+initial_date = init.params.getgroup("General").getparam("date").getvalue()
+
 watershed_id = cydre_app.UserConfiguration.user_watershed_id
 watershed_name = stations[stations['ID'] == watershed_id].station_name.values[0]
-
 
 #%% CYDRE APPLICATION
 
 # Run the Cydre application
-cydre_app.run_spatial_similarity() 
-cydre_app.run_timeseries_similarity(cydre_app.Similarity.similar_watersheds)
+cydre_app.run_spatial_similarity(hydraulic_path) 
+cydre_app.run_timeseries_similarity(data_path, cydre_app.Similarity.similar_watersheds)
 cydre_app.select_scenarios(cydre_app.Similarity.correlation_matrix)
-df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast()
+df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
 
 #%% VISUALIZATION AND RESULTS STORAGE
