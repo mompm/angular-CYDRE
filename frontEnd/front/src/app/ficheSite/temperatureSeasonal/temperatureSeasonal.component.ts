@@ -218,8 +218,22 @@ function generateColors(numColors: number): string[] {
             xaxis: { type: 'category',  'tickvals' : this.tickvals,'ticktext' : this.ticktext,tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black' }, 'gridwidth' : 0.01, 'gridcolor' : 'rgba(0,0,0,0.1)'},
             yaxis: { title: 'Température de l\'air [°C]', font: {family: "Segoe UI Semibold", size: 16, color: "black"},tickfont: { size: 14, family: 'Segoe UI Semibold', color: 'black'} ,showticklabels : true,gridwidth : 0.01, gridcolor : 'rgba(0,0,0,0.1)' },
             annotations: [
-                { text: 'Mis à jour le : DATE', showarrow: false, xref: 'paper', yref: 'paper', x: 0.5, y: 1.15, font: {"family": "Segoe UI Semilight Italic", "size": 18, "color": "#999"} },
-                { text: 'Source : Météo France', showarrow: false, xref: 'paper', yref: 'paper', x: 0.5, y: -0.20, font: { "size":14, "color":"gray", "family":'Segoe UI Semilight' } }
+                { text: 'Mis à jour le : DATE', 
+                  showarrow: false, 
+                  xref: 'paper', 
+                  yref: 'paper', 
+                  x: 0.5, 
+                  y: 1.15, 
+                  font: {"family": "Segoe UI Semilight Italic", "size": 18, "color": "#999"} 
+                },
+                { text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray; font-family: Segoe UI Semilight; font-size: 14px;">Source : Météo France</a>', 
+                  showarrow: false, 
+                  xref: 'paper', 
+                  yref: 'paper', 
+                  x: 0.5, 
+                  y: -0.20, 
+                  font: { "size":14, "color":"gray", "family":'Segoe UI Semilight' } 
+                }
             ],
             // Ajoutez les paramètres de mise en page saisonnière ici
             margin: { t: 125 },

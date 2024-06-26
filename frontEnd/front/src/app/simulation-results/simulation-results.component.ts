@@ -307,7 +307,13 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
             }
             this.yMin = Math.min(...yValuesWithinObservedPeriod);
-            this.yMin = Math.min(this.yMin, this.results.m10-1);
+            this.results.indicators.forEach((indicator: { type: string; value : number; results: any; color :string})=> {
+              let fixedValue = indicator.type === "1/10 du module";
+              if(fixedValue){
+                this.yMin = Math.min(this.yMin, indicator.value);  
+              }
+              });
+            console.log('tt',this.yMin);
             this.yMax = Math.max(...yValuesWithinObservedPeriod);
             
             if(line.name == 'Q10'){
@@ -354,8 +360,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                     observationsY.unshift(null); // Add null to the beginning of observationsY
                 }
               }
-              console.log(this.simulationStartDate);
-              console.log(observationsY);
             }else if (line.name.includes('Projection')){
               var trace: Plotly.Data = {
                 x: this.XaxisPredictions,
@@ -435,14 +439,25 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   }
 
   updateLayout() {
-    let range ;
+    let range: number[];
     let type ;
     if (this.on) {
-      range = [this.yMin, this.yMax];
       type = 'linear';
+      if (this.yMin > this.yMax) {
+        range = [this.yMax, this.yMin];
+      }else{
+        range = [(this.yMin-0.01), this.yMax];
+      }
   } else {
-      range = [Math.log10(this.yMin), Math.log10(this.yMax)];
       type = 'log';
+      const yMinLog = Math.log10((this.yMin-0.01)); 
+      const yMaxLog = Math.log10(this.yMax);
+      if (this.yMin > this.yMax) {
+        range = [yMaxLog, yMinLog];
+      }else{
+        range = [yMinLog, yMaxLog];
+      }
+      
   }
     this.layout = {
       hovermode: "x unified",
@@ -476,7 +491,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         showline: false,
         ticks: 'inside',
         type: type as AxisType,
-        rangemode: 'tozero',
+        //rangemode: 'tozero',
         range: range
       },
       shapes: this.simulationStartDate && this.simulationEndDate ? [{

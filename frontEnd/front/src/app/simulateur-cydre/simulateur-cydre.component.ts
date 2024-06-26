@@ -216,17 +216,17 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     const selectedOption = event.option.value;
     this.sharedService.setSelectedValue(selectedOption.index);
     this.selectedStation = selectedOption.index;
-    const test = this.stations.find(station => station.index === selectedOption.index)?.name;
+    const name = this.stations.find(station => station.index === selectedOption.index)?.name;
     const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
     if (select){
       this.selectedStationBSS = select;
       this.sharedService.setSelectedValueBSS(select);
     }
-    if (test){
-      this.selectedStationName = test;
-      this.sharedService.setSelectedStationName(test);
+    if (name){
+      this.selectedStationName = name;
+      this.sharedService.setSelectedStationName(name);
     }
-    console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
+    console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, name);
   }
 
   isOptionDisabled(option: { index: string, station_name: string }): boolean {

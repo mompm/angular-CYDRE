@@ -36,8 +36,9 @@ import * as Plotly from 'plotly.js-dist';
     DataGDFWatershed : dataGDFWatersheds[] = [];
     myControl = new FormControl();
     filteredOptions!: Observable<{ index: string, station_name: string }[]>;
-    selectedWatershedID: string = '';
-    selectedWatershedBSS: string = '';
+    selectedWatershedID: string  = '';
+    selectedStationName: string = '';
+    selectedWatershedBSS: string  ='';
 
   
   
@@ -63,6 +64,10 @@ import * as Plotly from 'plotly.js-dist';
       const ID =  this.sharedService.getSelectedValue();
       if (ID){
         this.selectedWatershedID =  ID
+      }
+      const NAME = this.sharedService.getSelectedStationName();
+      if( NAME){
+        this.selectedStationName = NAME;
       }
       const BSS = this.sharedService.getSelectedValueBSS();
       if (BSS){
@@ -143,9 +148,14 @@ import * as Plotly from 'plotly.js-dist';
       this.sharedService.setSelectedValue(selectedOption.index);
       this.selectedWatershedID = selectedOption.index;
       const select = this.DataGDFStation.find(station => station.index === selectedOption.index)?.BSS_ID;
+      const name = this.DataGDFStation.find(station => station.index === selectedOption.index)?.name;
       if (select){
         this.selectedWatershedBSS = select;
         this.sharedService.setSelectedValueBSS(select);
+      }
+      if (name){
+        this.selectedStationName = name;
+        this.sharedService.setSelectedStationName(name);
       }
       if (this.list_of_disabled_options.includes(selectedOption.index)){
         this.correspondance = false;

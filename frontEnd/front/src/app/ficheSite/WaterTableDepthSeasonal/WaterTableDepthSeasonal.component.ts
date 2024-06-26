@@ -203,6 +203,7 @@ function generateColors(numColors: number): string[] {
     }
 
     Depth_Seasonal() {
+      const hyperlien = `https://ades.eaufrance.fr/Fiche/PtEau?Code=${this.DataDepth[1]}`;
         const targetYears: number[] = this.yearSelectionChange;
         const  { TabDepthByDaily, YearTabDepthByDaily, lastUpdate } = this.processedDepth();
         const { resultArray, q10, q50, q90 } = this.calculateQuantiles(TabDepthByDaily);
@@ -275,7 +276,7 @@ function generateColors(numColors: number): string[] {
                         color: "#999"
                     } 
                 },
-                {   text: 'Source : ADES', 
+                {   text: `<a href="${hyperlien}" style="color:gray; font-family: 'Segoe UI Semilight'; font-size: 14px;">Source : ADES</a>`, 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 

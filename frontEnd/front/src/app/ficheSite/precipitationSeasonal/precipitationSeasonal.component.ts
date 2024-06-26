@@ -281,7 +281,7 @@ function generateColors(numColors: number): string[] {
                     y: 1.15, 
                     font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
                 },
-                {   text: 'Source : Météo France', 
+                {   text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray; font-family: Segoe UI Semilight; font-size: 14px;">Source : Météo France</a>', 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 
@@ -297,7 +297,9 @@ function generateColors(numColors: number): string[] {
             paper_bgcolor: "rgba(0,0,0,0)",
             legend: { orientation: "h", yanchor: "top", y: 1.1, xanchor: "right", x: 1 }
         }
+        
     };
+    
         const startYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[1].years : 'N/A';
         const endYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[TabPrecipitationByDaily.length - 1].years : 'N/A';
         // Construction du libellé pour la moyenne
@@ -357,9 +359,41 @@ function generateColors(numColors: number): string[] {
         const hydrographWidth = 0.40 * window.innerWidth;
         Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout, { responsive: true });
         Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+      }
 
+      /**
+       * Fonction pour générer les annotations avec condition
+       */
+      generateAnnotations() {
+        const annotations = [
+            {   
+                text: 'Mis à jour le : DATE', 
+                showarrow: false, 
+                xref: 'paper', 
+                yref: 'paper', 
+                x: 0.5, 
+                y: 1.15, 
+                font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
+            },
+            {   
+                text: 'Source : Météo France', 
+                showarrow: false, 
+                xref: 'paper', 
+                yref: 'paper', 
+                x: 0.5, 
+                y: -0.20, 
+                font: {family:'Segoe UI Semilight', size:14, color:"gray"} 
+            }
+        ];
         
-      
+        // Ajouter le lien hypertexte à l'annotation concernée
+        for (const annotation of annotations) {
+            if (annotation.text.includes('Source : Météo France')) {
+                annotation.text = '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray">Source : Météo France</a>';
+            }
+        }
+        
+        return annotations;
       }
   
 
