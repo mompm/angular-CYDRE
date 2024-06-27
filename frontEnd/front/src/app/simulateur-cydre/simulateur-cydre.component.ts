@@ -160,6 +160,9 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     return obj;
 }
   onStartSimulation() {
+    if(this.showResults){
+      this.showResults = false;
+    }
     //affiche le poppup error si la station selection est dans list_of_disabled_options
     if (this.sharedService.isWatersheddisabled(this.selectedStation)){
       this.dialog.open(ErrorDialog);
