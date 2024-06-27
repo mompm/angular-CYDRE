@@ -42,9 +42,13 @@ login_manager.init_app(app)
 # Application path
 app_root = os.path.dirname(os.path.abspath("api.py"))
 
-hydrometry_path = os.path.join(app_root,'data', 'hydrometry')
-surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
-piezometry_path = os.path.join(app_root, 'data', 'piezometry')
+data_path = os.path.join(app_root, 'data')
+hydrometry_path = os.path.join(data_path, 'hydrometry', 'discharge')
+surfex_path = os.path.join(data_path, 'climatic', 'surfex')
+piezo_path = os.path.join(data_path, 'piezometry')
+hydraulic_path = os.path.join(data_path, 'hydraulicprop')
+output_path = os.path.join(app_root, 'outputs', 'projections')
+
 # -- Read hydrological and piezometric stations csv files and watersheds boundaries
 
 # Hydrological stations
@@ -159,23 +163,6 @@ def get_simulations():
 
     # Renvoyer les données sous forme de JSON
     return jsonify(results)
-
-@app.route('/osur/getxmlnames', methods=['GET'])
-@cross_origin()
-def xmlList():
-    return flask.jsonify(["cydre_inputs", "PARADIS_inputs"])
-
-@app.route('/osur/getxml/PARADIS_inputs', methods=['GET'])
-@cross_origin()
-def paradis():
-    xmlPath="PARADIS_A14_TRANSITION_MATRICE_1000.xml"
-    return flask.send_file(xmlPath, mimetype='application/xml')
-
-@app.route('/osur/getxml/cydre_inputs', methods=['GET'])
-@cross_origin()
-def cydre():
-    xmlPath="cydre_params.xml"
-    return flask.send_file(xmlPath, mimetype='application/xml')
 
 
 @app.route('/osur/getoldBSS', methods=['GET'])
@@ -322,7 +309,7 @@ def get_stationdata(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(hydrometry_path, 'discharge', csv_filename)
+        csv_file_path = os.path.join(hydrometry_path, csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             # Initialiser une liste pour stocker les données JSON
@@ -452,7 +439,7 @@ def get_water_table_depth(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{bss_id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(piezometry_path, csv_filename)
+        csv_file_path = os.path.join(piezo_path, csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             
@@ -481,6 +468,7 @@ def get_water_table_depth(id):
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
+
 @app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
 @cross_origin()
 def delete_simulation(simulation_id):
@@ -502,7 +490,7 @@ def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
         # Initialiser l'app cydre
-        init = INI.Initialization(app_root)  
+        init = INI.Initialization(app_root, stations)  
         cydre_app = init.cydre_initialization()
         
         # Mettre à jour les paramètres de l'application en fonction des entrées
@@ -571,7 +559,7 @@ def run_spatial_similarity(simulation_id):
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
         # Lancer le calcul des similarités spatiales
-        cydre_app.run_spatial_similarity(spatial=True)
+        cydre_app.run_spatial_similarity(hydraulic_path, spatial=True)
         # Convertir les données nécessaires aux étapes suivantes ou au résulats en JSON
         clusters_json = cydre_app.Similarity.clusters.to_json()
         similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
@@ -611,7 +599,7 @@ def run_timeseries_similarity(simulation_id):
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
         # Lancer le calcul des similarités temporelles, en s'appuyant sur les résultats des similarités spatiales
-        cydre_app.run_timeseries_similarity(json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
+        cydre_app.run_timeseries_similarity(data_path, json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
         print(corr_matrix)
@@ -683,7 +671,7 @@ def select_scenarios(simulation_id):
             recharge_df.reset_index(drop=True, inplace=True)
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
         print(selected_scenarios)
 
         for key, value in selected_scenarios.items():
@@ -801,7 +789,7 @@ def getGraph(simulation_id):
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         similar_watersheds = json.loads(similar_watersheds)
 
-        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
+        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         #Créer le graphe 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
@@ -912,7 +900,7 @@ def update_indicator(simulation_id):
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         similar_watersheds = json.loads(similar_watersheds)
 
-        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
+        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
@@ -1069,8 +1057,8 @@ class Graph():
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
         self.streamflow_proj = cydre_app.df_streamflow_forecast
         self.watershed_name = watershed_name
-        self.watershed_area = cydre_app.watersheds[self.watershed_id]['hydrometry']['area']
-        self.streamflow = cydre_app.watersheds[self.watershed_id]['hydrometry']['specific_discharge']
+        self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
+        self.streamflow = cydre_app.UserConfiguration.user_streamflow
         self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
         self.projection_period = cydre_app.Forecast.forecast_period
         self.station_forecast = cydre_app.df_station_forecast

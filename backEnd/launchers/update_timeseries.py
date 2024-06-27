@@ -24,14 +24,12 @@ import libraries.preprocessing.data.piezometry as piezometry
 # Intermediary outputs (formatted database)
 out_path = os.path.join(app_root, "outputs")
 surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
+hydro_path = os.path.join(app_root, 'data', 'hydrometry')
 piezo_path = os.path.join(app_root, 'data', 'piezometry')
-
 sys.exit()
-
 test = surfex.Surfex(surfex_path)
 test.update_reanalysis()
 
-sys.exit()
 #%% Update the new data structure
 
 # Load datasets
@@ -41,6 +39,7 @@ watersheds = toolbox.load_object(out_path, 'data.pkl')
 for ws in watersheds.keys():
     
     try:
+        test = surfex.Surfex(surfex_path)
         test.update_watershed_data(surfex_path, watersheds[ws]["geographic"]["geometry"])
         
         if not 'climatic' in watersheds:
@@ -53,9 +52,17 @@ for ws in watersheds.keys():
         watersheds[ws]['climatic']['precipitation'] = test.precipitation
         watersheds[ws]['climatic']['etp'] = test.etp
         watersheds[ws]['climatic']['temperature'] = test.temperature
+        
+        test.recharge.to_csv(os.path.join(surfex_path, 'recharge', ws+'.csv'))
+        test.runoff.to_csv(os.path.join(surfex_path, 'runoff', ws+'.csv'))
+        test.precipitation.to_csv(os.path.join(surfex_path, 'precipitation', ws+'.csv'))
+        test.etp.to_csv(os.path.join(surfex_path, 'etp', ws+'.csv'))
+        test.temperature.to_csv(os.path.join(surfex_path, 'temperature', ws+'.csv'))
     except:
         print(f"Error with {ws}")
 
+
+# Hydrometric data
 for ws in watersheds.keys():    
     try:
         test2 = hydrometry.Hydrometry(bh_id = ws)
@@ -69,11 +76,16 @@ for ws in watersheds.keys():
         watersheds[ws]['hydrometry']['outlet'] = test2.outlet
         watersheds[ws]['hydrometry']['discharge'] = test2.discharge
         watersheds[ws]['hydrometry']['specific_discharge'] = test2.specific_discharge
+        
+        test2.discharge.to_csv(os.path.join(hydro_path, 'discharge', ws+'.csv'))
+        test2.specific_discharge.to_csv(os.path.join(hydro_path, 'specific_discharge', ws+'.csv'))
+        
         print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
     except:
         print(f"Error with {ws}")
         
 
+# Piezometric data
 for ws in watersheds.keys():
     try:
         test3 = piezometry.Piezometry(ws, piezo_path)
@@ -89,18 +101,24 @@ for ws in watersheds.keys():
         watersheds[ws]['piezometry']['data'] = test3.data
         watersheds[ws]['piezometry']['water_table_level'] = test3.water_table_level
         watersheds[ws]['piezometry']['water_table_depth'] = test3.water_table_depth
+        
+        test3.data.to_csv(os.path.join(piezo_path, test3.bss_id+'.csv'))
+        
         print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
     except:
         print(f"Error with {ws}")
         
 #%% Test
-#for ws in watersheds.keys():
- #   print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
- #   print(ws, ':' ,watersheds[ws]['climatic']['temperature'].index[-1])
- #   try:
- #       print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
- #   except:
-  #      pass
+count = 0
+for ws in watersheds.keys():
+    #print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
+    #print(ws, ':' ,watersheds[ws]['climatic']['temperature'].index[-1])
+    #print(watersheds[ws]['climatic']['temperature'].iloc[-1].values[0])
+    try:
+        print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
+        count = count + 1
+    except:
+        pass
 
 #%% Save regional object
 toolbox.save_object(watersheds, out_path, 'data.pkl')
