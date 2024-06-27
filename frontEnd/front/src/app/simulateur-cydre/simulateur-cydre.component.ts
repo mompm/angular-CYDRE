@@ -44,6 +44,7 @@ togglePanel() {
   isModalOpen: boolean = false;
   simulation_id = ""
   parameters = {}
+  fetchingResults  : boolean =false;
   
   list_of_disabled_options: string[] = [
     'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
@@ -67,6 +68,13 @@ togglePanel() {
       return value.toString();
     }
 };
+  userIsScientificOrDev(){
+    return this.authService.isScientificOrDev
+  }
+  userIsDev(){
+    return this.authService.isDev
+  }
+
 
   async ngOnInit() {
     
@@ -74,7 +82,6 @@ togglePanel() {
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
     this.selectedStationBSS = this.sharedService.getSelectedValueBSS();
-
     //récupérer les données de la simulation choisie si on vient de l'historique
     if(localStorage.getItem('showLastSimul')=="true"){
       if(localStorage.getItem('lastSimulationId')){
@@ -118,7 +125,7 @@ togglePanel() {
         startWith(''),
         map(value => this._filter(value || '')),
       );
-
+      console.log(this.filteredOptions)
       // Définir la valeur initiale de l'input
       const initialOption = this.stations.find(station => station.index === this.sharedService.getSelectedValue());
       //this.selectedWatershed = this.sharedService.getSelectedValue();
@@ -156,6 +163,19 @@ togglePanel() {
     return obj;
 }
 
+async updateSimulationsBeta() {
+  this.filteredOptions.subscribe(async (stationsArray) => {
+    for (const station of stationsArray) {
+      console.log("Updating station : " + station.index);
+      try {
+        await this.jsonService.updateSimualtionsBetaDatabase(station.index);
+      } catch (error) {
+        console.error(`Failed to update station ${station.index}`, error);
+      }
+    }
+  });
+}
+
 handleParametersChanged(parameters: any) {
   this.parameters = parameters;
   console.log('Parameters received in parent:', this.parameters);
@@ -168,6 +188,7 @@ handleParametersChanged(parameters: any) {
     }
     //sinon start simulation 
     else{
+      this.fetchingResults = true;
       if(this.showParametersPanel){
       this.parametersPanel.getFormValues();
       }
@@ -201,6 +222,8 @@ try{
         this.progressMessages.push('Erreur lors de la simulation.');
         console.error(error);
       }
+      this.fetchingResults = false;
+
     }
   }
 
@@ -218,6 +241,16 @@ try{
 
   onOptionSelected(event: any) {
     const selectedOption = event.option.value;
+    this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response)=>{
+      this.results=this.deepParseJson(response);
+      this.showResults = true;
+      console.log("results:",this.results)
+      console.log("Showresults:",this.showResults)
+
+    });
+
+
+    
     this.sharedService.setSelectedValue(selectedOption.index);
     this.selectedStation = selectedOption.index;
     const test = this.stations.find(station => station.index === selectedOption.index)?.name;
@@ -230,6 +263,8 @@ try{
       this.selectedStationName = test;
       this.sharedService.setSelectedStationName(test);
     }
+
+
     console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
   }
 

@@ -22,6 +22,10 @@ private baseUrl = 'http://localhost:5000';
 
   constructor(private http: HttpClient){}
 
+	async updateSimualtionsBetaDatabase(station : string):Promise<any>{
+		return lastValueFrom(this.http.post("api/updateSimulationsBeta", {station : station}))
+	}
+
 	getGDFWatersheds(): Promise<Array<dataGDFWatersheds>> {
 		return lastValueFrom(this.http.get<Array<dataGDFWatersheds>>("osur/GetGDFWatersheds"));
 	  }
@@ -192,4 +196,7 @@ private baseUrl = 'http://localhost:5000';
 		return this.http.get<any[]>(`${this.baseUrl}/api/simulations`,{ withCredentials: true });
 	}
 
+	getBetaSimulation(index :string ): Observable<any[]>{
+		return this.http.get<any[]>(`${this.baseUrl}/api/getBetaSimulations/`+index);
+	}
 }

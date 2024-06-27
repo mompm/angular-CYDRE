@@ -95,7 +95,7 @@
         </div>
       </div>
     </div>
-    <button (click)="togglePanel()">Show Parameters</button>
+    <button [disabled]="!userIsScientificOrDev()" (click)="togglePanel()">Show Parameters</button>
     <div *ngIf="showParametersPanel">
       <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
     </div>
@@ -103,7 +103,8 @@
     <!-- Run application - lancement d'une prévision -->
     <div class="text-center">
       <div class="run-application">
-        <button type="button" class="btn btn-primary" (click)="onStartSimulation()">Lancer l'application</button>
+        <button type="button" class="btn btn-primary" [disabled]="fetchingResults" (click)="onStartSimulation()">Lancer l'application</button>
+        <button type="button" class="btn btn-primary" [hidden]="!userIsDev()" (click)="updateSimulationsBeta()">Lancer les calculs de toutes les stations</button>
         <!-- Bulle warning pour le lancement de l'application' -->
         <button mat-icon-button class="button_info" aria-label="Run prevision" [matMenuTriggerFor]="dateInfoPopup4">
           <mat-icon class="warning-icon">warning</mat-icon>

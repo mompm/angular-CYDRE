@@ -184,16 +184,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.indicators.splice(index,1);
     this.layout?.shapes!.splice(index,1);
     this.results.indicators = this.jsonService.removeIndicator(this.simulation_id!, type)
-  //suppression dans la base de données (l'erreur est gérée dans le back si l'indicateur n'a  pas encore été stocké)
-    // this.jsonService.removeIndicator(this.simulation_id!, type).subscribe({
-    //   next: (response) => {
-    //     this.results.indicators = response;
-    //     console.log('Indicator removed successfully', response);
-    //   },
-    //   error: (error) => {
-    //     console.error('Failed to remove indicator', error);
-    //   }
-    // });
     this.updateIndicatorShapes();
     return this.indicators
   }
@@ -502,48 +492,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
     }
 }
-
-
-//   showTypologyMap(){
-//     const figData: any[] = [];
-//     this.jsonService.getGDFStations().then(data => {
-//       const filteredStations = data.filter(station => 
-//         this.results.results.similarity.similar_watersheds.includes(station.index)
-//       );
-
-//       const x: any[] = [];
-//       const y: any[] = [];
-//       const text: any[] = []; 
-
-//       for (let i = 0; i < filteredStations.length; i++) {
-//           x.push(Number(filteredStations[i].x_outlet)); 
-//           y.push(Number(filteredStations[i].y_outlet)); 
-//           text.push(`${filteredStations[i].station_name}`);
-//       }
-//       figData.push({
-//         type: 'scattermapbox',
-//         lon: x,
-//         lat: y,
-//         mode: 'markers',
-//         hoverinfo: 'text',
-//         hovertext: text,
-//         name: '',
-//     });
-//       const figlayout = {
-//         mapbox: {
-//           style: 'open-street-map',
-//           center: { lat: 48.2141667, lon: -2.9424167 },
-//           zoom: 6.8
-//         },
-//         paper_bgcolor: 'rgba(0,0,0,0)',
-//         margin: { l: 0, r: 0, t: 0, b: 0 },
-//         width:0.40 * window.innerWidth,
-//         height : document.getElementById("matrice")!.clientHeight
-//       };
- 
-//       Plotly.newPlot('map', figData, figlayout);
-//   })
-// }
 
         matriceRecharge(): void {
           //const recharge = this.results.results.similarity.corr_matrix.recharge;
