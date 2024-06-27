@@ -136,7 +136,7 @@
   </div>
 
   <!-- Affichage des résultats de la simulation -->
-  <app-simulation-results *ngIf="results && showResults" [simulation_id]="simulation_id" [results]="results" [watershedName]="selectedStationName" [showResults]="true" ></app-simulation-results>
+  <app-simulation-results *ngIf="results && showResults" [simulation_id]="simulation_id" [results]="results" [watershedName]="selectedStationName" [watershedID] ="selectedStation" [showResults]="true" ></app-simulation-results>
 
 <!-- Fin du container -->
 </div>

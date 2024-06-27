@@ -71,12 +71,17 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
   @Input() watershedName: string | null | undefined;
+  @Input() watershedID: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
   maxPredictedValue : number[] = [];
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
+  hoverDateObservations : any[]= []; 
+  hoverDatePredictions : any[] = [];
+  hoverdataPredictions : any[] = [];
+  hoverdataObservations: any[] = [];
   
   indicators: Array<Indicator> = [];
 
@@ -276,7 +281,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       //mettre à jour les données de axes x des observation et prediction 
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
       this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date);
-
+      this.hoverDateObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
+      this.hoverDatePredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date);
 
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
@@ -313,7 +319,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 this.yMin = Math.min(this.yMin, indicator.value);  
               }
               });
-            console.log('tt',this.yMin);
             this.yMax = Math.max(...yValuesWithinObservedPeriod);
             
             if(line.name == 'Q10'){
@@ -331,10 +336,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             else if ( line.name == 'Q50'){
               q50X = this.XaxisPredictions;
               q50Y = line.y;
+              this.hoverdataPredictions = line.y;
             }
             else if (line.name == 'observations'){
               observationsX = this.XaxisObservations;
               observationsY = line.y;
+              this.hoverdataObservations = line.y;
               // Get the lengths of XaxisObservations and observationsY
               let lengthX = observationsX.length;
               let lengthY = observationsY.length;
@@ -403,6 +410,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           mode: 'lines',
           type: 'scatter',
           name: 'projection médiane',
+          hovertemplate: 'projection médiane: %{y:.6f} m³/s<extra></extra>',
           showlegend : true,
           line: { color: 'blue', width: 1 , dash: 'dot' }, 
         };
@@ -416,7 +424,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           type: 'scatter',
           name: 'observation',
           showlegend : true,
-          // hoverinfo : 'none',
+          hovertemplate: 'observation: %{y:.6f} m³/s<extra></extra>',
           line: { color: 'black', width: 1 }, 
         };
         this.traces.push(observationsTrace); 
@@ -440,75 +448,77 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   updateLayout() {
     let range: number[];
-    let type ;
+    let type;
     if (this.on) {
-      type = 'linear';
-      if (this.yMin > this.yMax) {
-        range = [this.yMax, this.yMin];
-      }else{
-        range = [(this.yMin-0.01), this.yMax];
-      }
-  } else {
-      type = 'log';
-      const yMinLog = Math.log10((this.yMin-0.01)); 
-      const yMaxLog = Math.log10(this.yMax);
-      if (this.yMin > this.yMax) {
-        range = [yMaxLog, yMinLog];
-      }else{
-        range = [yMinLog, yMaxLog];
-      }
-      
-  }
-    this.layout = {
-      hovermode: "x unified",
-      title: {
-        text: this.watershedName + " - "+ this.results.results.corr_matrix.length + " événements",
-        font: {size: 17},
-      },
-      legend: {
-        orientation: 'h',
-        font: {size: 12},
-        x: 0.5,
-        xanchor: 'center',
-        y: 1.2,
-        yanchor: 'top',
-      },
-      xaxis: {
-        title: '',
-        showgrid: false,
-        zeroline: false,
-        tickformat: '%d-%m-%Y',
-        tickmode: 'auto' as 'auto',
-        tickangle: 45,
-        ticks: 'inside',
-        titlefont: {size: 12},
-        nticks: 10,
-        range: [this.startDate, this.endDate]
-      },
-      yaxis: {
-        title: 'Débit (m3/s)',
-        titlefont: {size: 12},
-        showline: false,
-        ticks: 'inside',
-        type: type as AxisType,
-        //rangemode: 'tozero',
-        range: range
-      },
-      shapes: this.simulationStartDate && this.simulationEndDate ? [{
-        type: 'line',
-        name:'date de simulation',
-        x0: this.simulationStartDate,
-        x1: this.simulationStartDate,
-        y0: 0.001,
-        y1: this.yMax,
-        line: { 
-          color: 'gray',
-          width: 2,
-          dash: 'dot'
+        type = 'linear';
+        if (this.yMin > this.yMax) {
+            range = [this.yMax, this.yMin];
+        } else {
+            range = [(this.yMin - 0.01), this.yMax];
         }
-      }] : [],
+    } else {
+        type = 'log';
+        const yMinLog = Math.log10((this.yMin - 0.01));
+        const yMaxLog = Math.log10(this.yMax);
+        if (this.yMin > this.yMax) {
+            range = [yMaxLog, yMinLog];
+        } else {
+            range = [yMinLog, yMaxLog];
+        }
+    }
+
+    this.layout = {
+        hovermode: "x unified",
+        title: {
+            text: this.watershedID + " | " + this.watershedName,
+            font: { size: 17 },
+        },
+        legend: {
+            orientation: 'h',
+            font: { size: 12 },
+            x: 0.5,
+            xanchor: 'center',
+            y: 1.2,
+            yanchor: 'top',
+        },
+        xaxis: {
+            title: '',
+            showgrid: false,
+            zeroline: false,
+            tickformat: '%d-%m-%Y',
+            tickmode: 'auto' as 'auto',
+            tickangle: 45,
+            ticks: 'inside',
+            titlefont: { size: 12 },
+            nticks: 10,
+            range: [this.startDate, this.endDate],
+            hoverformat: '%Y- %b %d',
+        },
+        yaxis: {
+            title: 'Débit (m3/s)',
+            titlefont: { size: 12 },
+            showline: false,
+            ticks: 'inside',
+            type: type as AxisType,
+            range: range
+        },
+        shapes: this.simulationStartDate && this.simulationEndDate ? [{
+            type: 'line',
+            name: 'date de simulation',
+            x0: this.simulationStartDate,
+            x1: this.simulationStartDate,
+            y0: 0.001,
+            y1: this.yMax,
+            line: {
+                color: 'gray',
+                width: 2,
+                dash: 'dot'
+            }
+        }] : [],
     };
+    
 }
+
   
   showPlot() {
   if(document.getElementById('previsions')){
