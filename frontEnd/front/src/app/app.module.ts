@@ -69,6 +69,7 @@ import {MatInputModule} from '@angular/material/input';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
 import { ParametersPanelComponent } from './parameters-panel/parameters-panel.component';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 
 
@@ -147,6 +148,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatStepperModule,
     MatSelectModule,
     MatDialogModule,
+    MatExpansionModule,
     MatMenuModule,
     MatSlideToggleModule,
     NgxSliderModule,

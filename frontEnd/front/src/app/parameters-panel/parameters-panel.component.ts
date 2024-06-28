@@ -1,5 +1,5 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, EventEmitter, OnInit, Input, Output } from '@angular/core';
+import { AbstractControl, FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { ParametersService } from '../service/parameters.service';
 
 @Component({
@@ -8,56 +8,70 @@ import { ParametersService } from '../service/parameters.service';
   styleUrls: ['./parameters-panel.component.scss']
 })
 export class ParametersPanelComponent implements OnInit {
-  dataForm!: FormGroup;
-  possibleValues: any = {};
-  @Output() parametersChanged = new EventEmitter<any>();
+  @Input() config: any; // Configuration JSON pour les paramètres
+  @Input() formGroup!: FormGroup; // Groupe de formulaires parent
+  form: FormGroup = new FormGroup({}); // Formulaire pour les paramètres
+  @Output() parametersChanged = new EventEmitter<any>(); // Événement émis lorsque les paramètres changent
 
-  constructor(private fb: FormBuilder, private parametersService: ParametersService) { }
+  constructor(private parametersService: ParametersService, private fb: FormBuilder) {}
 
   ngOnInit(): void {
-    this.parametersService.getDefaultParameters().subscribe(data => {
-      this.possibleValues = data;
-      this.initializeForm(data);
-    });
+    if (this.config && this.formGroup) {
+      this.form = this.formGroup;
+    } else {
+      this.parametersService.getDefaultParameters().subscribe(data => {
+        this.config = data;
+        this.form = this.buildForm(this.config);
+  
+        // Écoute les changements de valeurs et les émet
+        this.form.valueChanges.subscribe(values => {
+          this.parametersChanged.emit(values);
+        });
+      });
+    }
+  }
+  
+
+  // Crée un groupe de formulaires basé sur la configuration JSON
+  buildForm(config: any): FormGroup {
+    const group: any = {};
+
+    for (const key in config) {
+      if (this.isGroup(config[key])) {
+        group[key] = this.buildForm(config[key]); // Appel récursif pour les groupes imbriqués
+      } else {
+        group[key] = new FormControl(config[key].value); // Crée un contrôle pour les paramètres individuels
+      }
+    }
+
+    return this.fb.group(group);
   }
 
-  initializeForm(data: any): void {
-    this.dataForm = this.fb.group({
-      General: this.fb.group({
-        datasets: [data.General.datasets.value, Validators.required],
-        version: [data.General.version.value, Validators.required]
-      }),
-      Similarity: this.fb.group({
-        recharge: this.createGroup(data.Similarity.recharge),
-        runoff: this.createGroup(data.Similarity.runoff),
-        specific_discharge: this.createGroup(data.Similarity.specific_discharge),
-        water_table_depth: this.createGroup(data.Similarity.water_table_depth),
-        spatial: this.fb.group({n_clusters :[data.Similarity.spatial.n_clusters.value, Validators.required]})
-      }),
-    });
+  // Soumet le formulaire et affiche les valeurs dans la console
+  onSubmit(): void {
+    console.log(this.form.value);
   }
 
-  createGroup(data: any): FormGroup {
-    return this.fb.group({
-      Calculation: this.fb.group({
-        maximal_percentage: [data.Calculation.maximal_percentage.value, Validators.required],
-        metric: [data.Calculation.metric.value, Validators.required],
-        minimal_threshold: [data.Calculation.minimal_threshold.value, Validators.required],
-        n_scenarios: [data.Calculation.n_scenarios.value, Validators.required],
-        scale: [data.Calculation.scale.value, Validators.required],
-        selection_method: [data.Calculation.selection_method.value, Validators.required]
-      }),
-      Time: this.fb.group({
-        ndays_before_forecast: [data.Time.ndays_before_forecast.value, Validators.required],
-        similarity_period_calculation: [data.Time.similarity_period_calculation.value, Validators.required],
-        time_step: [data.Time.time_step.value, Validators.required]
-      })
-    });
+  // Récupère les clés de l'objet JSON
+  objectKeys(obj: any): string[] {
+    return Object.keys(obj);
   }
 
+  // Vérifie si un objet est un groupe
+  isGroup(obj: any): boolean {
+    return typeof obj === 'object' && !Array.isArray(obj) && !obj.hasOwnProperty('type');
+  }
+
+  // Récupère le groupe de formulaires pour une clé donnée
+  getFormGroup(key: string): FormGroup | null {
+    const control = this.form.get(key);
+    return control instanceof FormGroup ? control : null;
+  }
+
+  // Sauvegarde les paramètres (méthode non utilisée actuellement)
   saveParameters(): void {
-    if (this.dataForm.valid) {
-      this.parametersService.updateParameters(this.dataForm.value).subscribe(response => {
+    if (this.form.valid) {
+      this.parametersService.updateParameters(this.form.value).subscribe(response => {
         console.log('Parameters updated', response);
       });
     } else {
@@ -65,8 +79,28 @@ export class ParametersPanelComponent implements OnInit {
     }
   }
 
+  // Émet les valeurs du formulaire actuel
   getFormValues() {
-    this.parametersChanged.emit(this.dataForm.value);
+    this.parametersChanged.emit(this.form.value);
   }
-  
+
+  // Détermine le type d'input à utiliser basé sur le type de paramètre
+  getInputType(type: string): string {
+    switch (type) {
+      case 'int':
+      case 'double':
+        return 'number'; // Utilise un input de type "number" pour les entiers et les doubles
+      case 'string':
+      default:
+        return 'text'; // Utilise un input de type "text" pour les chaînes de caractères
+    }
+  }
+
+  // Détermine la valeur minimale pour un paramètre basé sur possible_values
+  getMinValue(possibleValues: string[]): number | null {
+    if (possibleValues && possibleValues.length && possibleValues[0] === '&gt;=0') {
+      return 0; // Retourne 0 si possible_values contient ">=0"
+    }
+    return null;
+  }
 }

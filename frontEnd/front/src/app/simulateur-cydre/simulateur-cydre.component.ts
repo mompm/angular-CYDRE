@@ -242,7 +242,7 @@ try{
   onOptionSelected(event: any) {
     const selectedOption = event.option.value;
     this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response)=>{
-      this.results=this.deepParseJson(response);
+      this.results = this.deepParseJson(response);
       this.showResults = true;
       console.log("results:",this.results)
       console.log("Showresults:",this.showResults)
