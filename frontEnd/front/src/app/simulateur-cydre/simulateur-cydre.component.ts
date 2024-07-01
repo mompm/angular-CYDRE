@@ -182,6 +182,8 @@ handleParametersChanged(parameters: any) {
   // Add your logic to handle the parameters and start the simulation
 }
   async onStartSimulation() {
+    let params = {}
+    let UserID = 0
     //affiche le poppup error si la station selection est dans list_of_disabled_options
     if (this.sharedService.isWatersheddisabled(this.selectedStation)){
       this.dialog.open(ErrorDialog);
@@ -189,25 +191,37 @@ handleParametersChanged(parameters: any) {
     //sinon start simulation 
     else{
       this.fetchingResults = true;
-      if(this.showParametersPanel){
-      this.parametersPanel.getFormValues();
+      if(this.authService.isLoggedIn){
+        UserID = Number(localStorage.getItem("UserID"))
       }
-    const params = {
-      Parameters :{
-        user_watershed_id: this.selectedStation,
-        user_horizon: this.sliderValue,
-        date: this.simulationDate,
-        ...this.parameters,
-      },
-      UserID : localStorage.getItem("UserID")
-    };
+
+    if(this.showParametersPanel){
+      this.parametersPanel.getFormValues();
+      params = {
+        Parameters :{
+          ...this.parameters,
+        },
+        UserID : UserID
+
+      }
+    }else{
+        params = {
+          Parameters :{
+            user_watershed_id: this.selectedStation,
+            user_horizon: this.sliderValue,
+            date: this.simulationDate,
+          },
+          UserID:UserID
+      }
+
+    }
     console.log("localStorage UserID" , localStorage.getItem("UserID"))
 
     this.progressMessages = [];
     this.progressValue = 0;
     this.currentProgressMessage = 'Initialisation de la simulation...';
 
-try{
+  try{
     let data = await this.jsonService.runSimulation(params, this.updateProgress.bind(this))
 
         if (data) {
@@ -226,7 +240,6 @@ try{
 
     }
   }
-
 
 
   saveSimulationId(simulationId: string) {

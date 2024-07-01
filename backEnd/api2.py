@@ -1,20 +1,19 @@
-from datetime import datetime
 import json
-import time
 import uuid
 import flask
 from flask import jsonify, request
 from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
-import flask_login
 from sqlalchemy.orm.attributes import flag_modified
+from datetime import datetime
+
 
 import numpy as np
 from sqlalchemy.ext.declarative import declarative_base
 
 
-from sqlalchemy import JSON, Column, DateTime, Integer, String, cast, func, text, update
+from sqlalchemy import JSON, Column, DateTime, Integer, String, func, text, update
 from werkzeug.security import generate_password_hash, check_password_hash
 
 import os,csv 
@@ -27,8 +26,9 @@ from shapely.geometry import mapping , Point
 import libraries.forecast.initialization as INI
 import libraries.forecast.outputs as OU
 import plotly.graph_objects as go
-
 import xml.etree.ElementTree as ET
+
+
 
 
 # Configuration
@@ -145,6 +145,16 @@ class Simulation(db.Model):
     SimulationDate = db.Column(DateTime, default=func.now())
     Indicators = db.Column(db.JSON, default= [])
     Results = db.Column(db.JSON, nullable = True, default = {})
+
+    # Définition du modèle pour SQLAlchemy
+class SimulationsBeta(db.Model):
+    __tablename__ = 'SimulationsBeta'
+    SimulationID = db.Column(db.String(36), primary_key=True)
+    Parameters = db.Column(db.JSON, nullable=True)
+    SimulationDate = db.Column(DateTime, default=func.now())
+    Indicators = db.Column(db.JSON, default= [])
+    Results = db.Column(db.JSON, nullable = True, default = {})
+
 
 
 @app.route('/api/simulations', methods=['GET'])
@@ -484,27 +494,50 @@ def delete_simulation(simulation_id):
         return jsonify({"Succes":"Simulation deleted succesfully"}),200
     except Exception as e:
         return jsonify({"Error":str(e)}),500
+    
+def extract_param_names(params, prefix=""):
+    param_names = []
+    for key, value in params.items():
+        current_path = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            param_names.extend(extract_param_names(value, current_path))
+        else:
+            param_names.append(current_path)
+    # print(param_names)
+    return param_names
 
 
 def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
         # Initialiser l'app cydre
-        init = INI.Initialization(app_root, stations)  
+        init = INI.Initialization(app_root,stations)
         cydre_app = init.cydre_initialization()
-        
+        param_names=extract_param_names(params=params)
+        # print('param names: ', param_names)
         # Mettre à jour les paramètres de l'application en fonction des entrées
-        param_names = ['user_watershed_id', 'user_horizon', 'date']
+        # param_names = ['user_watershed_id', 'user_horizon', 'date']
         param_paths = init.get_parameters_path(param_names)
-        init.params.find_and_replace_param(param_paths[0], params.get('user_watershed_id'))
-        init.params.find_and_replace_param(param_paths[1], params.get('user_horizon'))
-        init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
-        
+        # print('param paths : ',param_paths)
+        param_paths_dict = {name: path for name, path in zip(param_names, param_paths) if path and name!='watershed_name'}
+        # print('param_paths_dict', param_paths_dict)
+        # init.params.find_and_replace_param(param_paths[0], params.get('watershed'))
+        # init.params.find_and_replace_param(param_paths[1], int(params.get('slider')))
+        # init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
+        for name in param_paths_dict.keys():
+            path = param_paths_dict.get(name)
+            if path != []:
+                keys = name.split('.')
+                value = params
+                for key in keys:
+                    value = value[key]
+                init.params.find_and_replace_param(path, value)
         cydre_app = init.create_cydre_app()
         return cydre_app
     except Exception as e :
         app.logger.error("Erreur lors de la création de l'app: ",str(e))
         return e
+
 
 @app.route('/api/run_cydre', methods=['POST'])
 @cross_origin()
@@ -1341,8 +1374,6 @@ class Graph():
         mod = df.mean()
         mod10 = mod/10
         return mod, mod10
-
-    
 
 @app.route('/api/parameters/<default>', methods=['GET'])
 def get_parameters(default):

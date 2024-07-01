@@ -1,6 +1,8 @@
 .container {
     max-width: 90%;
     margin: auto;
+    position: relative;
+    padding-top: 20px; /* Assurez-vous qu'il y ait suffisamment d'espace en haut pour le switch */
   }
   
   .my-4 {
@@ -376,3 +378,17 @@ mat-form-field.second-dropdown{
 .warning-icon{
     color: #d51717;
 }
+
+.header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+  }
+  
+  .toggle-switch {
+    margin-bottom: 10px; /* Ajout d'un espace en dessous du switch */
+  }
+  
+  
+  
+  

@@ -32,8 +32,6 @@ class Indicator():
         self.x = ref_df.values
         self.y = comp_df.values
         self.w = np.array((ref_df.index - ref_df.index.min()).days / (ref_df.index.max() - ref_df.index.min()).days)
-        print("x size : " ,len(self.x))
-        print("y size : " ,len(self.y))
 
         
         # Timeseries normalization

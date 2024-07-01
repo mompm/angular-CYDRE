@@ -217,7 +217,6 @@ class TimeManagement():
             DESCRIPTION.
 
         """
-
         if self.similarity_period_calculation == 'period':
 
             # first date

@@ -1,55 +1,57 @@
-<div class ="container">
+<div class="container">
+  <!-- Toggle Switch en haut à droite -->
+  <div class="header">
+    <div class="toggle-switch">
+      <mat-slide-toggle [(ngModel)]="showParametersPanel" labelPosition="before">Show Parameters</mat-slide-toggle>
+    </div>
+  </div>
 
   <!-- Sélection de la station hydrologique -->
-  <div>
+  <div *ngIf="!showParametersPanel">
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <!-- <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button> -->
-      <!-- Bulle d'info pour la sélection des stations hydrologiques -->
       <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
         <mat-icon class="info-icon">info</mat-icon>
       </button>
       <mat-menu #dateInfoPopup="matMenu" xPosition="after">
         <ng-template matMenuContent>
           <div class="info-tooltip">
-          <p><strong>Info : </strong>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
+            <p><strong>Info : </strong>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
           </div>
         </ng-template>
       </mat-menu>
     </div>
-  <div>
-    <div class="choix_station_div">
-        <div>
-            <form class="dropdown-form">
-                <mat-form-field class="first-dropdown">
-                    <mat-label>Station</mat-label>
-                    <input type="text"
-                        placeholder="Sélectionner une station"
-                        aria-label="Number"
-                        matInput
-                        [formControl]="myControl"
-                        [matAutocomplete]="auto">
-                    <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
-                        <mat-option *ngFor="let option of filteredOptions | async" 
-                                    [value]="option" 
-                                    [disabled]="isOptionDisabled(option)" 
-                                    [ngClass]="{'disabled-option': isOptionDisabled(option)}">
-                            {{ option.index }} - {{ option.station_name }}
-                        </mat-option>
-                    </mat-autocomplete>
-                </mat-form-field>
-            </form>
-        </div>
-        <div class="button-links">
-            <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/'+ selectedStation + '/fiche'" target="_blank" class="button_link_hydroportail">
-                <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail">
-            </a>
-            <a mat-button [href]="'https://ades.eaufrance.fr/Fiche/PtEau?Code='+ selectedStationBSS" target="_blank" class="button_link_ades">
-                <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="ADES">
-            </a>
-        </div>   
-    </div>
     
+    <div class="choix_station_div">
+      <form class="dropdown-form">
+        <mat-form-field class="first-dropdown">
+          <mat-label>Station</mat-label>
+          <input type="text"
+                 placeholder="Sélectionner une station"
+                 aria-label="Number"
+                 matInput
+                 [formControl]="myControl"
+                 [matAutocomplete]="auto">
+          <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
+            <mat-option *ngFor="let option of filteredOptions | async" 
+                        [value]="option" 
+                        [disabled]="isOptionDisabled(option)" 
+                        [ngClass]="{'disabled-option': isOptionDisabled(option)}">
+              {{ option.index }} - {{ option.station_name }}
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+      </form>
+      <div class="button-links">
+        <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/'+ selectedStation + '/fiche'" target="_blank" class="button_link_hydroportail">
+          <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail">
+        </a>
+        <a mat-button [href]="'https://ades.eaufrance.fr/Fiche/PtEau?Code='+ selectedStationBSS" target="_blank" class="button_link_ades">
+          <img src="https://ades.eaufrance.fr/Spip?p=squelettes/images/logo-ades.png" alt="ADES">
+        </a>
+      </div>
+    </div>
+
     <!-- Conditions de la prévision -->
     <div class="card mb-4">
       <div class="card-header">
@@ -60,31 +62,29 @@
           <div class="col">
             <div class="forecast_horizon">
               <h5>Echéance de la prévision (jours)</h5>
-              <!-- Bulle info pour l'échéance de la prévision' -->
               <button mat-icon-button class="button_info" aria-label="Echeance de la prevision" [matMenuTriggerFor]="dateInfoPopup2">
                 <mat-icon class="info-icon">info</mat-icon>
               </button>
               <mat-menu #dateInfoPopup2="matMenu" xPosition="after">
                 <ng-template matMenuContent>
                   <div class="info-tooltip">
-                  <p><strong>Info : </strong>L'échéance n'intervient pas sur le calcul des prévisions. Elle intervient sur le calcul des indicateurs opérationnels (valeur du débit, franchissement d'un seuil sécheresse, nombre de jours sous un seuil sécheresse, etc...).</p>
+                    <p><strong>Info : </strong>L'échéance n'intervient pas sur le calcul des prévisions. Elle intervient sur le calcul des indicateurs opérationnels (valeur du débit, franchissement d'un seuil sécheresse, nombre de jours sous un seuil sécheresse, etc...).</p>
                   </div>
                 </ng-template>
               </mat-menu>
-              <!-- Bulle warning pour l'échéance de la prévision' -->
               <button mat-icon-button class="button_info" aria-label="Echeance de la prevision" [matMenuTriggerFor]="dateInfoPopup3">
                 <mat-icon class="warning-icon">warning</mat-icon>
               </button>
               <mat-menu #dateInfoPopup3="matMenu" xPosition="after">
                 <ng-template matMenuContent>
                   <div class="warning-tooltip">
-                  <p><strong>Attention : </strong>Lorsque l'échéance est importante l'incertitude sur les projections augmente</p>
+                    <p><strong>Attention : </strong>Lorsque l'échéance est importante l'incertitude sur les projections augmente</p>
                   </div>
                 </ng-template>
               </mat-menu>
             </div>
             <div class="slider">
-            <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
+              <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
             </div>
           </div>
           <div class="col">
@@ -95,53 +95,52 @@
         </div>
       </div>
     </div>
-    <button [disabled]="!userIsScientificOrDev()" (click)="togglePanel()">Show Parameters</button>
-    <div *ngIf="showParametersPanel">
-      <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
-    </div>
-    
-    <!-- Run application - lancement d'une prévision -->
-    <div class="text-center">
-      <div class="run-application">
-        <button type="button" class="btn btn-primary" [disabled]="fetchingResults" (click)="onStartSimulation()">Lancer l'application</button>
-        <button type="button" class="btn btn-primary" [hidden]="!userIsDev()" (click)="updateSimulationsBeta()">Lancer les calculs de toutes les stations</button>
-        <!-- Bulle warning pour le lancement de l'application' -->
-        <button mat-icon-button class="button_info" aria-label="Run prevision" [matMenuTriggerFor]="dateInfoPopup4">
-          <mat-icon class="warning-icon">warning</mat-icon>
-        </button>
-        <mat-menu #dateInfoPopup4="matMenu" xPosition="after">
-          <ng-template matMenuContent>
-            <div class="warning-tooltip">
-            <p><strong>Attention : </strong>Lorsque vous lancez une prévision, l'affichage n'est pas immédiat. Il faut attendre entre 15s et 1min avant que les calculs soient terminés. Une barre de progession informe de l'évolution des calculs.</p>
-            </div>
-          </ng-template>
-        </mat-menu>
-      </div>
-      <!-- <div class="mt-2">
-        <small class="form-text text-muted">Les calculs durent entre 15s et 1min</small>
-      </div> -->
-    </div>
+  </div>
 
-    <!-- Barre de progression -->
-    <div *ngIf="progressMessages.length">
-      <h5>Calcul des prévisions</h5>
-      <p>{{ currentProgressMessage }}</p>
-      <div class= "progress-container">
+  <!-- Parameters Panel -->
+  <div *ngIf="showParametersPanel">
+    <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
+  </div>
+
+  <!-- Run application - lancement d'une prévision -->
+  <div class="text-center">
+    <div class="run-application">
+      <button type="button" class="btn btn-primary" [disabled]="fetchingResults" (click)="onStartSimulation()">Lancer l'application</button>
+      <button mat-icon-button class="button_info" aria-label="Run prevision" [matMenuTriggerFor]="dateInfoPopup4">
+        <mat-icon class="warning-icon">warning</mat-icon>
+      </button>
+      <mat-menu #dateInfoPopup4="matMenu" xPosition="after">
+        <ng-template matMenuContent>
+          <div class="warning-tooltip">
+            <p><strong>Attention : </strong>Lorsque vous lancez une prévision, l'affichage n'est pas immédiat. Il faut attendre entre 15s et 1min avant que les calculs soient terminés. Une barre de progression informe de l'évolution des calculs.</p>
+          </div>
+        </ng-template>
+      </mat-menu>
+    </div>
+  </div>
+
+  <!-- Barre de progression -->
+  <div *ngIf="progressMessages.length">
+    <h5>Calcul des prévisions</h5>
+    <p>{{ currentProgressMessage }}</p>
+    <div class="progress-container">
       <div class="progress">
-        <div 
-          class="progress-bar" 
-          role="progressbar" 
-          [style.width.%]="progressValue" 
-          [attr.aria-valuenow]="progressValue" 
-          aria-valuemin="0" 
-          aria-valuemax="100">
+        <div class="progress-bar" 
+             role="progressbar" 
+             [style.width.%]="progressValue" 
+             [attr.aria-valuenow]="progressValue" 
+             aria-valuemin="0" 
+             aria-valuemax="100">
         </div>
       </div>
     </div>
   </div>
 
   <!-- Affichage des résultats de la simulation -->
-  <app-simulation-results *ngIf="results && showResults" [simulation_id]="simulation_id" [results]="results" [watershedName]="selectedStationName" [showResults]="true" ></app-simulation-results>
-
-<!-- Fin du container -->
+  <app-simulation-results *ngIf="results && showResults" 
+                          [simulation_id]="simulation_id" 
+                          [results]="results" 
+                          [watershedName]="selectedStationName" 
+                          [showResults]="true">
+  </app-simulation-results>
 </div>
