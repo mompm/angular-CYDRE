@@ -22,6 +22,7 @@ import * as e from 'express';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
+  stations: any[] = [];
   selectedMatrix: string = 'all';
   on: boolean = false;
   private resizeListener : ()=> void;
@@ -29,9 +30,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     //listener permettant de redimensionner la map et le graphe en fonction de la taille de fenêtre
     this.resizeListener = () => {
-      const mapwidth = 0.40 * window.innerWidth;
-      const mapHeight = document.getElementById("matrice")!.clientHeight ;
-      Plotly.relayout('map', { width: mapwidth, height: mapHeight});
+      //const mapwidth = 0.40 * window.innerWidth;
+      //const mapHeight = document.getElementById("matrice")!.clientHeight ;
+      //Plotly.relayout('map', { width: mapwidth, height: mapHeight});
 
       const previsionGraphWidth = window.innerWidth * 0.80;
       Plotly.relayout('previsions', { width: previsionGraphWidth});
@@ -92,7 +93,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   
 
   ngOnInit(): void {
-    //récupération de l'id de la simulation si on vient de l'historique
     this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
 
     try{
@@ -127,6 +127,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }catch(error){
       console.log("Problème lors du chargement des indicateurs:"+error)
     }
+    if(this.results.results.similarity){
+      this.initGDFStations();
+    }
 
 
     try{//création des matrices de similarités
@@ -146,6 +149,15 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(){//à la destruction du composant
     window.removeEventListener('resize', this.resizeListener);//détruire le listener
+  }
+
+  initGDFStations() {
+    this.jsonService.getGDFStations().then(data => {
+      this.stations = data;
+      this.cdr.detectChanges();
+      this.matriceRecharge();
+      this.matriceSpecificDischarge();
+    });
   }
 
   
@@ -475,10 +487,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     };
 }
   
-  
-
-
-  showPlot() {//afficher le graphique
+  showPlot() {
   if(document.getElementById('previsions')){
       Plotly.newPlot('previsions', this.traces, this.layout);
       const annotation: Partial<Plotly.Annotations> = {
@@ -494,8 +503,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 }
 
         matriceRecharge(): void {
-          //const recharge = this.results.results.similarity.corr_matrix.recharge;
+          if (this.stations.length > 0){
           const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
+          const columnNames = columns.map((columnId: any) => {
+            const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+            const name = station ? station.name : "Unknown"; // Default to "Unknown" if station is not found
+            return `${columnId} - ${name}`;
+          });
+      
           const data = this.results.results.similarity.corr_matrix.recharge.data;
           const index = this.results.results.similarity.corr_matrix.recharge.index;
 
@@ -517,7 +532,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           const DataMatrice: any[] = [];
           DataMatrice.push({
             z: modifiedData,
-            x: columns,
+            x: columnNames,
             y: index,
             type: 'heatmap',
             colorscale: colorscale,
@@ -534,11 +549,25 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           const width = caseWidth * columns.length; // Largeur totale de la figure
 
           const figLayout: Partial<Layout> = {
-              title: 'Recharge des nappes',
+            title: {
+              text: '<b>Recharge des nappes</b>',
+              yanchor: 'bottom',  // Ancrage vertical en bas
+              xanchor: 'center',  // Ancrage horizontal au centre par défaut
+              x: 0.5,  // Position horizontale centrée (valeur entre 0 et 1)
+              y: 0.05,
+              font: {  
+                size: 25,  
+                color: 'black', 
+                family: 'Arial, sans-serif',  
+            } 
+          },
               xaxis: {
                   tickangle: -90,
-                  side: 'bottom',
-                  automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
+                  side: 'top',
+                  automargin: true,
+                  tickfont: {  
+                    size: 14  
+                } 
               },
               yaxis: {
                   tickmode: 'array',
@@ -550,76 +579,98 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                   l: 50,  // marge gauche
                   r: 50   // marge droite
               },
-              height: height + 200, // Ajuster pour inclure les marges
-              width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
+              height: height + 200, 
+              width: width + 300, 
+           
           };
 
           Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
         }
+      }
 
+      matriceSpecificDischarge(): void {
+        if (this.stations.length > 0){
+          const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns; 
+          const columnNames = columns.map((columnId: any) => {
+            const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+            const name = station ? station.name : "Unknown"; // Default to "Unknown" if station is not found
+            return `${columnId} - ${name}`;
+          });
+      
+          const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
+          const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
 
-        matriceSpecificDischarge(): void {
-        //const recharge = this.results.results.similarity.corr_matrix.specific_discharge;
-        const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns;
-        const data = this.results.results.similarity.corr_matrix.specific_discharge.data;
-        const index = this.results.results.similarity.corr_matrix.specific_discharge.index;
+          // Remplacer les 1 par null dans le tableau de données
+          const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
+          const colorscale = [
+            ['0.0', 'rgb(165,0,38)'],
+            ['0.111111111111', 'rgb(215,48,39)'],
+            ['0.222222222222', 'rgb(244,109,67)'],
+            ['0.333333333333', 'rgb(253,174,97)'],
+            ['0.444444444444', 'rgb(254,224,144)'],
+            ['0.555555555556', 'rgb(224,243,248)'],
+            ['0.666666666667', 'rgb(171,217,233)'],
+            ['0.777777777778', 'rgb(116,173,209)'],
+            ['0.888888888889', 'rgb(69,117,180)'],
+            ['1.0', 'rgb(49,54,149)']
+          ];
 
-        // Remplacer les 1 par null dans le tableau de données
-        const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-        const colorscale = [
-          ['0.0', 'rgb(165,0,38)'],
-          ['0.111111111111', 'rgb(215,48,39)'],
-          ['0.222222222222', 'rgb(244,109,67)'],
-          ['0.333333333333', 'rgb(253,174,97)'],
-          ['0.444444444444', 'rgb(254,224,144)'],
-          ['0.555555555556', 'rgb(224,243,248)'],
-          ['0.666666666667', 'rgb(171,217,233)'],
-          ['0.777777777778', 'rgb(116,173,209)'],
-          ['0.888888888889', 'rgb(69,117,180)'],
-          ['1.0', 'rgb(49,54,149)']
-        ];
+          const DataMatrice: any[] = [];
+          DataMatrice.push({
+            z: modifiedData,
+            x: columnNames,
+            y: index,
+            type: 'heatmap',
+            colorscale: colorscale,
+            reversescale: true,
+            showscale: true,
+            xgap: 1,
+            ygap: 1
+          });
 
-        const DataMatrice: any[] = [];
-        DataMatrice.push({
-          z: modifiedData,
-          x: columns,
-          y: index,
-          type: 'heatmap',
-          colorscale: colorscale,
-          reversescale: true,
-          showscale: true,
-          xgap: 1,
-          ygap: 1
-        });
+          // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+          const caseHeight = 10; // Hauteur de chaque case en pixels
+          const caseWidth = 20;  // Largeur de chaque case en pixels
+          const height = caseHeight * index.length; // Hauteur totale de la figure
+          const width = caseWidth * columns.length; // Largeur totale de la figure
 
-        // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
-        const caseHeight = 10; // Hauteur de chaque case en pixels
-        const caseWidth = 20;  // Largeur de chaque case en pixels
-        const height = caseHeight * index.length; // Hauteur totale de la figure
-        const width = caseWidth * columns.length; // Largeur totale de la figure
+          const figLayout: Partial<Layout> = {
+            title: {
+              text: '<b>Débits de cours d\'eau</b>',
+              yanchor: 'bottom',  
+              xanchor: 'center', 
+              x: 0.5,  
+              y: 0.05,
+              font: {  
+                size: 25,  
+                color: 'black', 
+                family: 'Arial, sans-serif',  
+            }  
+          },
+              xaxis: {
+                  tickangle: -90,
+                  side: 'top',
+                  automargin: true,
+                  tickfont: {  
+                    size: 14 
+                }        
+              },
+              yaxis: {
+                  tickmode: 'array',
+                  autorange: 'reversed'
+              },
+              margin: {
+                  t: 50,  // marge supérieure
+                  b: 100,  // marge inférieure pour éviter la coupe des labels
+                  l: 50,  // marge gauche
+                  r: 50   // marge droite
+              },
+              height: height + 200,
+              width: width + 300,
+          };
 
-        const figLayout: Partial<Layout> = {
-            title: 'Débits de cours d\'eau',
-            xaxis: {
-                tickangle: -90,
-                side: 'bottom',
-                automargin: true // Permet d'ajuster automatiquement la marge pour éviter la coupe
-            },
-            yaxis: {
-                tickmode: 'array',
-                autorange: 'reversed'
-            },
-            margin: {
-                t: 50,  // marge supérieure
-                b: 100,  // marge inférieure pour éviter la coupe des labels
-                l: 50,  // marge gauche
-                r: 50   // marge droite
-            },
-            height: height + 200, // Ajuster pour inclure les marges
-            width: width + 300 // Ajuster pour inclure les marges et éviter la coupe des labels
-        };
-
-        Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+          Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+          }
         }
 
 
@@ -658,9 +709,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateLayout();
       this.showPlot();
       this.updateIndicatorShapes();
-      // this.showTypologyMap();
       this.matriceRecharge();
       this.matriceSpecificDischarge();
+      //this.showTypologyMap();
   }
 
   renderMatrix() {
@@ -712,48 +763,81 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               return !line.name.includes('Projection');
           });
 
-          // Extraction des dates uniques (x) dans l'intervalle [startDate, endDate]
+          // Extraction des dates uniques dans l'intervalle [startDate, endDate]
           const dates = new Set<string>();
-          filteredData.forEach((line: { x: string[]; y: number[] }) => {
-              line.x.forEach(date => {
-                  const currentDate = new Date(date);
-                  if (currentDate >= startDate && currentDate <= endDate) {
-                      dates.add(date);
-                  }
-              });
+
+          // Traitement des observations avec this.XaxisObservations
+          this.XaxisObservations.forEach((date: Date) => {
+              if (date >= startDate && date <= endDate) {
+                  dates.add(date.toISOString().split('T')[0]); // Convertir en chaîne de caractères formatée
+              }
           });
 
-          // Tri des dates pour avoir un ordre chronologique
-          const sortedDates = Array.from(dates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-          sortedDates.reverse();
-          
-          // Préparer l'objet pour stocker les données en colonnes avec dates
+          // Traitement des prédictions avec XaxisPredictions
+          this.XaxisPredictions.forEach((date: Date) => {
+              if (date >= startDate && date <= endDate) {
+                  dates.add(date.toISOString().split('T')[0]); // Convertir en chaîne de caractères formatée
+              }
+          });
+
+          // Conversion du Set en tableau de dates uniques
+          let uniqueDates = Array.from(dates);
+    
+          // Récupération des indices correspondant aux dates uniques pour les observations
+          const observationDateIndices = this.XaxisObservations
+              .map((date, index) => (uniqueDates.includes(date.toISOString().split('T')[0]) ? index : -1))
+              .filter(index => index !== -1);
+
+          // Récupération des indices correspondant aux dates uniques pour les prédictions
+          const predictionDateIndices = this.XaxisPredictions
+              .map((date, index) => (uniqueDates.includes(date.toISOString().split('T')[0]) ? index : -1))
+              .filter(index => index !== -1);
+
+          // Initialisation de columnData
           const columnData: { [date: string]: { [columnName: string]: any } } = {};
-          sortedDates.forEach(date => {
+          uniqueDates.forEach(date => {
               columnData[date] = {
                   Q90: '',
                   Q50: '',
                   Q10: '',
-                  observation: ''
+                  observations: ''
               };
           });
-
-          // Boucler sur les données filtrées pour regrouper les valeurs par date
-          filteredData.forEach((line: { name: string; x: string[]; y: number[] }) => {
-              line.x.forEach((date, index) => {
-                  if (columnData[date]) {
-                      columnData[date][line.name] = line.y[index];
-                  }
-              });
-          });
-
+          
+          // Remplissage de columnData avec les valeurs de y
+          filteredData.forEach((line: { name: string; y: any[]; }) => {
+              let dateIndices;
+              let columnName: string; // Déclaration explicite du type string
+          
+              if (line.name === 'observations') {
+                  dateIndices = observationDateIndices;
+                  columnName = 'observations';
+              } else {
+                  dateIndices = predictionDateIndices;
+                  columnName = line.name; // Suppose que les noms sont 'Q90', 'Q50', 'Q10'
+              }
+          
+              dateIndices.forEach(index => {
+                const date = line.name === 'observations' ? this.XaxisObservations[index].toISOString().split('T')[0] : this.XaxisPredictions[index].toISOString().split('T')[0];
+                if (columnData[date]) {
+                    if (line.y[index] !== undefined) { // Vérifier si la valeur de y existe pour cet index
+                        columnData[date][columnName] = line.y[index];
+                    }
+                }
+            });
+        });
+          
+          //console.log(columnData);
+                  
+          
           // Construire le CSV avec en-têtes
           let csv = 'Date,Q90,Q50,Q10,observations\n';
-          sortedDates.forEach(date => {
+          uniqueDates.forEach(date => {
               // Reformater la date au format souhaité (ISO 8601 : YYYY-MM-DD)
               const formattedDate = new Date(date).toISOString().split('T')[0];
               csv += `${formattedDate},${columnData[date]['Q90']},${columnData[date]['Q50']},${columnData[date]['Q10']},${columnData[date]['observations']}\n`;
           });
+        
 
           // Créer le Blob à partir du CSV
           const blob = new Blob([csv], { type: 'text/csv' });
@@ -781,6 +865,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
           // Révoquer l'URL du Blob pour libérer la mémoire
           window.URL.revokeObjectURL(url);
+          
       }
 
   }

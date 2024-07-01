@@ -42,14 +42,17 @@ app.config['SECRET_KEY'] = 'une_cle_secrete_tres_complexe'
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'login'
 
 # Application path
 app_root = os.path.dirname(os.path.abspath("api.py"))
 
-hydrometry_path = os.path.join(app_root,'data', 'hydrometry')
-surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
-piezometry_path = os.path.join(app_root, 'data', 'piezometry')
+data_path = os.path.join(app_root, 'data')
+hydrometry_path = os.path.join(data_path, 'hydrometry', 'discharge')
+surfex_path = os.path.join(data_path, 'climatic', 'surfex')
+piezo_path = os.path.join(data_path, 'piezometry')
+hydraulic_path = os.path.join(data_path, 'hydraulicprop')
+output_path = os.path.join(app_root, 'outputs', 'projections')
+
 # -- Read hydrological and piezometric stations csv files and watersheds boundaries
 
 # Hydrological stations
@@ -79,10 +82,8 @@ for i in gdf_watersheds.index:
     gdf_watersheds.loc[i, 'max_lon'] = maxx
     gdf_watersheds.loc[i, 'max_lat'] = maxy
 
-Base = declarative_base()
 
 class Users(db.Model, UserMixin):
-    __tablename__="Users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -99,7 +100,7 @@ class Users(db.Model, UserMixin):
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
-@app.route('/api/login', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -110,13 +111,13 @@ def login():
         return jsonify({'message': 'Logged in successfully', 'username': username, 'role': user.role, "UserID":user.id}), 200
     return jsonify({'error': 'Invalid username or password'}), 401
 
-@app.route('/api/logout', methods=['POST'])
+@app.route('/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
     return jsonify({'message': 'Logged out successfully'}), 200
 
-@app.route('/api/users', methods=['POST'])
+@app.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
     if not data or 'username' not in data or 'password' not in data or 'role' not in data:
@@ -133,12 +134,7 @@ def create_user():
     db.session.commit()
     return jsonify({'message': 'User successfully registered'}), 201
 
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    users = Users.query.all()
-    json_users = [{"Username":user.username, "UserID":user.id} for user in users]
-    return json_users
-
+Base = declarative_base()
 
 # Définition du modèle pour SQLAlchemy
 class Simulation(db.Model):
@@ -150,20 +146,14 @@ class Simulation(db.Model):
     Indicators = db.Column(db.JSON, default= [])
     Results = db.Column(db.JSON, nullable = True, default = {})
 
-class SimulationsBeta(db.Model):
-    __tablename__ = 'SimulationsBeta'
-    SimulationID = db.Column(db.String(36), primary_key=True)
-    Parameters = db.Column(db.JSON, nullable=True)
-    SimulationDate = db.Column(DateTime, default=func.now())
-    Indicators = db.Column(db.JSON, default= [])
-    Results = db.Column(db.JSON, nullable = True, default = {})
 
 @app.route('/api/simulations', methods=['GET'])
 @login_required
+@cross_origin
 def get_simulations():
     # Assurez-vous que l'utilisateur est connecté et récupérez son ID
     user_id = current_user.id
-    # print(user_id)
+
     # Récupérer les simulations correspondant à cet utilisateur
     simulations = Simulation.query.filter_by(UserID=user_id).all()
 
@@ -177,23 +167,6 @@ def get_simulations():
 
     # Renvoyer les données sous forme de JSON
     return jsonify(results)
-
-@app.route('/osur/getxmlnames', methods=['GET'])
-@cross_origin()
-def xmlList():
-    return flask.jsonify(["cydre_inputs", "PARADIS_inputs"])
-
-@app.route('/osur/getxml/PARADIS_inputs', methods=['GET'])
-@cross_origin()
-def paradis():
-    xmlPath="PARADIS_A14_TRANSITION_MATRICE_1000.xml"
-    return flask.send_file(xmlPath, mimetype='application/xml')
-
-@app.route('/osur/getxml/cydre_inputs', methods=['GET'])
-@cross_origin()
-def cydre():
-    xmlPath="cydre_params.xml"
-    return flask.send_file(xmlPath, mimetype='application/xml')
 
 
 @app.route('/osur/getoldBSS', methods=['GET'])
@@ -336,7 +309,7 @@ def get_stationdata(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(hydrometry_path, 'discharge', csv_filename)
+        csv_file_path = os.path.join(hydrometry_path, csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             # Initialiser une liste pour stocker les données JSON
@@ -466,7 +439,7 @@ def get_water_table_depth(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{bss_id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(piezometry_path, csv_filename)
+        csv_file_path = os.path.join(piezo_path, csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             
@@ -495,6 +468,7 @@ def get_water_table_depth(id):
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
+
 @app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
 @cross_origin()
 def delete_simulation(simulation_id):
@@ -510,43 +484,22 @@ def delete_simulation(simulation_id):
         return jsonify({"Succes":"Simulation deleted succesfully"}),200
     except Exception as e:
         return jsonify({"Error":str(e)}),500
-    
-def extract_param_names(params, prefix=""):
-    param_names = []
-    for key, value in params.items():
-        current_path = f"{prefix}.{key}" if prefix else key
-        if isinstance(value, dict):
-            param_names.extend(extract_param_names(value, current_path))
-        else:
-            param_names.append(current_path)
-    # print(param_names)
-    return param_names
+
 
 def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
         # Initialiser l'app cydre
-        init = INI.Initialization(app_root)  
+        init = INI.Initialization(app_root, stations)  
         cydre_app = init.cydre_initialization()
-        param_names=extract_param_names(params=params)
-        # print('param names: ', param_names)
+        
         # Mettre à jour les paramètres de l'application en fonction des entrées
-        # param_names = ['user_watershed_id', 'user_horizon', 'date']
+        param_names = ['user_watershed_id', 'user_horizon', 'date']
         param_paths = init.get_parameters_path(param_names)
-        # print('param paths : ',param_paths)
-        param_paths_dict = {name: path for name, path in zip(param_names, param_paths) if path and name!='watershed_name'}
-        # print('param_paths_dict', param_paths_dict)
-        # init.params.find_and_replace_param(param_paths[0], params.get('watershed'))
-        # init.params.find_and_replace_param(param_paths[1], int(params.get('slider')))
-        # init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
-        for name in param_paths_dict.keys():
-            path = param_paths_dict.get(name)
-            if path != []:
-                keys = name.split('.')
-                value = params
-                for key in keys:
-                    value = value[key]
-                init.params.find_and_replace_param(path, value)
+        init.params.find_and_replace_param(param_paths[0], params.get('user_watershed_id'))
+        init.params.find_and_replace_param(param_paths[1], params.get('user_horizon'))
+        init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
+        
         cydre_app = init.create_cydre_app()
         return cydre_app
     except Exception as e :
@@ -606,8 +559,7 @@ def run_spatial_similarity(simulation_id):
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
         # Lancer le calcul des similarités spatiales
-        cydre_app.run_spatial_similarity(spatial=True)
-
+        cydre_app.run_spatial_similarity(hydraulic_path, spatial=True)
         # Convertir les données nécessaires aux étapes suivantes ou au résulats en JSON
         clusters_json = cydre_app.Similarity.clusters.to_json()
         similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
@@ -647,10 +599,10 @@ def run_timeseries_similarity(simulation_id):
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
         # Lancer le calcul des similarités temporelles, en s'appuyant sur les résultats des similarités spatiales
-        cydre_app.run_timeseries_similarity(json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
+        cydre_app.run_timeseries_similarity(data_path, json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
-        # print(corr_matrix)
+        print(corr_matrix)
         # with open('dataframe_output.txt', 'w') as file:
         #     for index, row in corr_matrix.iterrows():
         #         file.write(f"{row['Nom']}, {row['Age']}, {row['Ville']}\n")
@@ -719,17 +671,17 @@ def select_scenarios(simulation_id):
             recharge_df.reset_index(drop=True, inplace=True)
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-        # print(selected_scenarios)
+        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        print(selected_scenarios)
 
         for key, value in selected_scenarios.items():
             if key == "specific_discharge":
                 specific_discharge = value.to_json(orient='split')
-                # print(specific_discharge)
+                print(specific_discharge)
             elif key == "recharge":
                 recharge = value.to_json(orient='split')
-                # print(recharge)
-                # print("fin recharge")
+                print(recharge)
+                print("fin recharge")
 
         # Chemin JSON de la mise à jour
         scenarios_grouped_path = '$.scenarios_grouped'
@@ -837,7 +789,7 @@ def getGraph(simulation_id):
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         similar_watersheds = json.loads(similar_watersheds)
 
-        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
+        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         #Créer le graphe 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
@@ -948,7 +900,7 @@ def update_indicator(simulation_id):
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         similar_watersheds = json.loads(similar_watersheds)
 
-        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
+        cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
@@ -1105,8 +1057,8 @@ class Graph():
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
         self.streamflow_proj = cydre_app.df_streamflow_forecast
         self.watershed_name = watershed_name
-        self.watershed_area = cydre_app.watersheds[self.watershed_id]['hydrometry']['area']
-        self.streamflow = cydre_app.watersheds[self.watershed_id]['hydrometry']['specific_discharge']
+        self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
+        self.streamflow = cydre_app.UserConfiguration.user_streamflow
         self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
         self.projection_period = cydre_app.Forecast.forecast_period
         self.station_forecast = cydre_app.df_station_forecast
@@ -1378,8 +1330,8 @@ class Graph():
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'm10':self.mod10
         }
-        # print(data['last_date'])
-        # print(data['first_date'])
+        print(data['last_date'])
+        print(data['first_date'])
 
         return data
 
@@ -1389,6 +1341,7 @@ class Graph():
         mod = df.mean()
         mod10 = mod/10
         return mod, mod10
+
     
 
 @app.route('/api/parameters/<default>', methods=['GET'])
@@ -1458,8 +1411,6 @@ def parse_xml_to_dict(element, default):
 
 @app.route ("/api/updateSimulationsBeta", methods=['POST'])
 def updateSimulationsBeta():
-    db.session.execute('TRUNCATE TABLE SimulationsBeta')
-    db.session.commit()
 
     disabled_stations =  [
     'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
@@ -1503,7 +1454,7 @@ def updateSimulationsBeta():
                 db.session.commit()
                 #Init cydre app
                 # print("start app")
-                init = INI.Initialization(app_root)  
+                init = INI.Initialization(app_root,stations)  
                 cydre_app = init.cydre_initialization()
                 param_names = ['user_watershed_id', 'user_horizon', 'date']
                 param_paths = init.get_parameters_path(param_names)
@@ -1515,7 +1466,7 @@ def updateSimulationsBeta():
 
 
                 #Run spatial similarity
-                cydre_app.run_spatial_similarity(spatial=True)
+                cydre_app.run_spatial_similarity(hydraulic_path,spatial=True)
                 # print("ran spatial")
                 clusters_json = cydre_app.Similarity.clusters.to_json()
                 similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
@@ -1540,7 +1491,7 @@ def updateSimulationsBeta():
                 db.session.commit()
 
                 #Run timeseries similarity
-                cydre_app.run_timeseries_similarity(cydre_app.Similarity.similar_watersheds)
+                cydre_app.run_timeseries_similarity(data_path,cydre_app.Similarity.similar_watersheds)
                 corr_matrix = cydre_app.Similarity.correlation_matrix
 
                 # La transformer en JSON pour la stocker
@@ -1580,7 +1531,7 @@ def updateSimulationsBeta():
                 db.session.execute(stmt)
                 db.session.commit()
 
-                scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(spatial=True, corr_matrix=corr_matrix)
+                scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix=corr_matrix)
                 # print(selected_scenarios)
 
                 for key, value in selected_scenarios.items():
@@ -1625,7 +1576,7 @@ def updateSimulationsBeta():
                 
                 db.session.commit()
 
-                cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast()
+                cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
                 #Créer le graphe 
                 results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,cydre_app.Similarity.user_similarity_period,cydre_app.Similarity.similar_watersheds,

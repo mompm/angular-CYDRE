@@ -37,14 +37,35 @@
   align-items: center;
 }
 
+
 .heatmapcontainer {
   display: flex; /* Utilise flexbox pour la disposition */
   width: 100%; /* Prend toute la largeur disponible */
   height: 100%; /* Prend toute la hauteur disponible */
-  align-items: center;
+  align-items: flex-end; /* Aligne les éléments au bas du conteneur */
+  justify-content: space-between; /* Sépare les graphiques avec un espace */
 }
 
+.heatmap {
+  width: 48%; /* Ajuste la largeur de chaque graphique pour qu'ils tiennent côte à côte */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-left: 5%;
+  margin-right: 5%;
+}
 
+.heatmap-content {
+  flex-grow: 1; 
+  width: 100%;
+}
+
+.heatmap-title {
+  text-align: center;
+  margin-top: 5px; 
+  font-size: 16px; 
+  font-weight: bold;
+}
 
 
 .containerIndicatiors {

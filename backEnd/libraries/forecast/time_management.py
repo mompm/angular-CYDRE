@@ -6,6 +6,7 @@ Created on Thu Jun 15 16:58:55 2023
 """
 
 # Modules
+import os
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -43,19 +44,31 @@ class TimeManagement():
         ) if self.similarity_period_calculation == 'ndays' else None
 
 
-    def define_simulation_date(params, version, user_watershed):
+    def define_simulation_date(params, data_path, version, user_watershed_id, bss_id):
 
         # Check data availability
-        streamflow = user_watershed['hydrometry']['specific_discharge'] 
-        date_streamflow = streamflow.index[-1]
+        #streamflow = user_watershed['hydrometry']['specific_discharge'] 
+        streamflow_path = os.path.join(data_path, "hydrometry", "specific_discharge", "{}.csv".format(user_watershed_id)) 
+        with open(streamflow_path) as file:
+            streamflow = pd.read_csv(file, index_col="t")
+            streamflow.index = pd.to_datetime(streamflow.index)
+            date_streamflow = streamflow.index[-1]
         #check_streamflow = (today_date - date_streamflow).days <= conditions
         
-        recharge = user_watershed['climatic']['recharge'] 
-        date_recharge = recharge.index[-1]
+        #recharge = user_watershed['climatic']['recharge'] 
+        recharge_path = os.path.join(data_path, "climatic", "surfex", "recharge", "{}.csv".format(user_watershed_id)) 
+        with open(recharge_path) as file:
+            recharge = pd.read_csv(file, index_col="t")
+            recharge.index = pd.to_datetime(recharge.index)
+            date_recharge = recharge.index[-1]
         #check_recharge = (today_date - date_recharge).days <= conditions
         
-        piezo = user_watershed['piezometry']['water_table_depth']
-        date_piezo = piezo.index[-1]
+        piezo_path = os.path.join(data_path, "piezometry", "{}.csv".format(bss_id)) 
+        with open(piezo_path) as file:
+            piezo = pd.read_csv(file, index_col="t")
+            piezo.index = pd.to_datetime(piezo.index)
+        #piezo = user_watershed['piezometry']['water_table_depth']
+            date_piezo = piezo.index[-1]
 
         if version == 'application':
             
@@ -80,10 +93,14 @@ class TimeManagement():
             NDAYS_BELOW_CONDITIONS = 4 # days
             CONDITIONS = 3 # mm
             
-            precipitation = user_watershed['climatic']['precipitation']
-            rolling_precipitation = precipitation['Q'].rolling(window=NDAYS_BELOW_CONDITIONS).max()
-            check_conditions = rolling_precipitation <= CONDITIONS
+            precipitation_path = os.path.join(data_path, "climatic", "surfex", "precipitation", "{}.csv".format(user_watershed_id)) 
+            with open(precipitation_path) as file:
+                precipitation = pd.read_csv(file, index_col="t")
+                precipitation.index = pd.to_datetime(precipitation.index)
+            #precipitation = user_watershed['climatic']['precipitation']
+                rolling_precipitation = precipitation['Q'].rolling(window=NDAYS_BELOW_CONDITIONS).max()
             
+            check_conditions = rolling_precipitation <= CONDITIONS
             precipitation['conditions'] = check_conditions
             
             # Recalculate the simulation date if necessary
@@ -108,7 +125,11 @@ class TimeManagement():
             NDAYS_BELOW_CONDITIONS = 4 # days
             CONDITIONS = 3 # mm
             
-            precipitation = user_watershed['climatic']['precipitation']
+            #precipitation = user_watershed['climatic']['precipitation']
+            precipitation_path = os.path.join(data_path, "climatic", "surfex", "precipitation", "{}.csv".format(user_watershed_id)) 
+            with open(precipitation_path) as file:
+                precipitation = pd.read_csv(file, index_col="t")
+                precipitation.index = pd.to_datetime(precipitation.index)
             rolling_precipitation = precipitation['Q'].rolling(window=NDAYS_BELOW_CONDITIONS).max()
             check_conditions = rolling_precipitation <= CONDITIONS
             

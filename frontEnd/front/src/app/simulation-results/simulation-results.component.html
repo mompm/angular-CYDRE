@@ -168,13 +168,12 @@
     <!-- Interprétation des prévisions - matrices de corrélation -->
     <div class="card my-4">
       <div class="card-header">
-          <div class="align-tooltip">
-            Interprétation des prévisions par l'analyse de similarité
-            <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
-          </div>
+        <div class="align-tooltip">
+          Interprétation des prévisions par l'analyse de similarité
+          <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+        </div>
       </div>
       <div class="form-group">
-        <!-- <label for="matrixSelect"> <h5>Choix des matrices de similarités:  </h5></label> -->
         <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
           <option value="recharge">Recharge des nappes</option>
           <option value="discharge">Débits de cours d'eau</option>
@@ -182,11 +181,18 @@
         </select>
       </div>
       <div class="heatmapcontainer">
-        <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" id="matriceRecharge" style="width: 100%; height: 100%;"></div>
-        <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" id="matriceSpecificDischarge" style="width: 100%; height: 100%;"></div>
-      </div>
-    </div>
+        <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmap">
+          <div class="heatmap-content" id="matriceRecharge"></div>
 
+        </div>
+        <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" class="heatmap">
+          <div class="heatmap-content" id="matriceSpecificDischarge"></div>
+
+        </div>
+      </div>
+      
+    </div>
+    
     <!-- <div class="card my-4">
       <div class="card-header">
         <h3>Interprétation - Analyse de similarité</h3>

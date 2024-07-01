@@ -18,11 +18,13 @@ import tools.Parameters.Parameters.ParametersGroup as pg
 class Initialization():
     
     
-    def __init__(self, app_root):
+    def __init__(self, app_root, stations):
         
         self.app_root = app_root
+        self.data_path = os.path.join(self.app_root, 'data')
+        self.stations = stations
         self.version = None
-        self.data_path = None
+        self.output_path = None
         self.params = None
         self.watersheds = None
     
@@ -30,13 +32,13 @@ class Initialization():
     def cydre_initialization(self):
         
         # Define the path for loading data within the specified directory.
-        self.data_path = self.prepare_data_path(self.app_root)
+        self.output_path = self.prepare_data_path(self.app_root)
 
         # Retrieve XML parameters for the forecast.
         self.params = self.load_xml_parameters()
 
         # Load and process watershed data
-        self.watersheds = self.load_and_process_watershed_data()
+        #self.watersheds = self.load_and_process_watershed_data()
 
         # Create an instance of CydreForecastApp with the prepared watershed data and forecast parameters.
         cydre_app = self.create_cydre_app()
@@ -45,10 +47,10 @@ class Initialization():
     
     
     def prepare_data_path(self, app_root):
-        data_path = os.path.join(app_root, "outputs")
-        toolbox.create_folder(data_path)
+        output_path = os.path.join(app_root, "outputs")
+        toolbox.create_folder(output_path)
         
-        return data_path
+        return output_path
     
     
     def load_xml_parameters(self):
@@ -81,7 +83,7 @@ class Initialization():
         # Il faudrait peut-être revoir cette partie pour que l'actualisation quotidienne des séries temporelles se fasse ici
         # Peut-être revoir aussi le format des données (ici objet python/dictionnaire d'instances, est-ce la meilleure solution ?)
         datasets_filename = self.params.getgroup('General').getparam('datasets').getvalue()
-        HistoricalData = HI.HistoricalData(path=self.data_path, filename=datasets_filename)
+        HistoricalData = HI.HistoricalData(path=self.output_path, filename=datasets_filename)
         watersheds = HistoricalData.data
        # watershed_bugs = ['J2514010', 'J2614010', 'J3024010', 'J3204020', 'J3323020','J3403010', 'J3631810',
         #                  'J3733010', 'J4313010', 'J4712010', 'J4742010',
@@ -101,7 +103,7 @@ class Initialization():
             #self.watersheds...
             print('--- Update database ----')
 
-        return CY.Cydre(self.watersheds, self.params, self.version)
+        return CY.Cydre(self.stations, self.data_path, self.params, self.version)
 
 
     def get_parameters_path(self, param_names):
