@@ -28,6 +28,8 @@ import libraries.forecast.outputs as OU
 import plotly.graph_objects as go
 import xml.etree.ElementTree as ET
 
+from collections import OrderedDict
+
 
 
 
@@ -1407,11 +1409,21 @@ class Graph():
         mod10 = mod/10
         return mod, mod10
 
+class OrderedDictEncoder(json.JSONEncoder):
+    def encode(self, obj):
+        if isinstance(obj, OrderedDict):
+            return json.dumps(obj, default=self.default, sort_keys=False, indent=4)
+        return super().encode(obj)
+
 @app.route('/api/parameters/<default>', methods=['GET'])
 def get_parameters(default):
     root = parse_xml('./launchers/run_cydre_params.xml')
-    params = parse_xml_to_dict(root, default)
-    return jsonify(params)  
+    params = parse_xml_to_ordered_dict(root, default.lower() == 'true')
+    response = app.response_class(
+        response=json.dumps(params, cls=OrderedDictEncoder),
+        mimetype='application/json'
+    )
+    return response
 
 @app.route('/api/parameters', methods=['POST'])
 def update_parameters():
@@ -1426,7 +1438,7 @@ def parse_xml(file_path):
 
 def xml_to_dict(root, default):
     params = {}
-    if(default):
+    if default:
         for param in root.iter('Parameter'):
             params[param.get('name')] = param.find('default_value').text
     else:
@@ -1440,17 +1452,17 @@ def update_xml(file_path, data):
     for key, value in data.items():
         element = root.find(".//*[@name='{}']/value".format(key))
         if element is not None:
-            print("on change ",key)
+            print("on change ", key)
             element.text = value
     tree.write(file_path)
 
-def parse_xml_to_dict(element, default):
-    """Convertit un élément XML en un dictionnaire imbriqué en incluant les possible_values."""
-    result = {}
+def parse_xml_to_ordered_dict(element, default):
+    """Convertit un élément XML en un OrderedDict imbriqué en incluant les possible_values."""
+    result = OrderedDict()
     if len(element) > 0:
         for child in element:
             if child.tag == 'ParametersGroup':
-                result[child.attrib['name']] = parse_xml_to_dict(child, default)
+                result[child.attrib['name']] = parse_xml_to_ordered_dict(child, default)
             elif child.tag == 'Parameter':
                 param_name = child.attrib['name']
                 description = child.find('description').text.strip().replace('\n', ' ').replace('\t', ' ')
@@ -1460,16 +1472,16 @@ def parse_xml_to_dict(element, default):
                     param_value = child.find('default_value').text
                 else:
                     param_value = child.find('value').text
-                
+
                 possible_values = child.find('possible_values').text
                 possible_values_list = possible_values.split('; ') if possible_values else []
 
-                result[param_name] = {
+                result[param_name] = OrderedDict({
                     'value': param_value,
                     'possible_values': possible_values_list,
-                    'description' : description,
-                    'type' : param_type
-                }
+                    'description': description,
+                    'type': param_type
+                })
     return result
 
 @app.route ("/api/updateSimulationsBeta", methods=['POST'])

@@ -24,7 +24,13 @@
       <!-- Template pour les champs individuels -->
       <ng-template #singleField>
         <mat-form-field appearance="fill">
-          <mat-label>{{ key }}</mat-label>
+          <mat-label>{{ key }}
+            <span matTooltip="{{ config[key].description }}" matTooltipPosition="above" matTooltipClass="tooltip-class">
+              <mat-icon>info</mat-icon>
+            </span>
+          </mat-label>
+          <!-- Ajout du tooltip avec la description -->
+          
           <!-- Affiche un select si possible_values existe et n'est pas ">=0" -->
           <ng-container *ngIf="config[key].possible_values && config[key].possible_values.length && config[key].possible_values[0] !== '&gt;=0'; else simpleInput">
             <mat-select [formControlName]="key">

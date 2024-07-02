@@ -8,7 +8,7 @@ import { ParametersService } from '../service/parameters.service';
   styleUrls: ['./parameters-panel.component.scss']
 })
 export class ParametersPanelComponent implements OnInit {
-  @Input() config: any; // Configuration JSON pour les paramètres
+  @Input() config: any = {}; // Configuration JSON pour les paramètres
   @Input() formGroup!: FormGroup; // Groupe de formulaires parent
   form: FormGroup = new FormGroup({}); // Formulaire pour les paramètres
   @Output() parametersChanged = new EventEmitter<any>(); // Événement émis lorsque les paramètres changent
@@ -21,6 +21,7 @@ export class ParametersPanelComponent implements OnInit {
     } else {
       this.parametersService.getDefaultParameters().subscribe(data => {
         this.config = data;
+        console.log(this.config)
         this.form = this.buildForm(this.config);
   
         // Écoute les changements de valeurs et les émet
