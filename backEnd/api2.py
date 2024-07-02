@@ -543,10 +543,15 @@ def create_cydre_app(params):
 @cross_origin()
 def run_cydre():
     data = request.json
-
     # Validation de base des données entrantes
     if not data or 'UserID' not in data or 'Parameters' not in data:
         return jsonify({'error': 'Missing required fields'}), 400
+
+    if data['UserID'] == 0:
+        user = Users.query.filter_by(username="default").first()
+        user_id = user.id
+    else :
+        user_id = data['UserID']
 
     try:
         # Création de l'identifiant de simulation unique
@@ -555,7 +560,7 @@ def run_cydre():
         # Enregistrement initial dans la base de données
         new_simulation = Simulation(
             SimulationID=simulation_id,
-            UserID=data['UserID'],
+            UserID=user_id,
             Parameters=data['Parameters'],
             Indicators = [],
             Results = {"similarity": {"clusters":{},
