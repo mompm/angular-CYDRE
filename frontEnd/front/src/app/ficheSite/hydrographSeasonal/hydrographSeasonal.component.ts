@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges, OnDestroy } from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy, HostListener } from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -58,9 +58,16 @@ export class hydrographSeasonal implements OnDestroy{
    */
   constructor(private dataService: DataService, private jsonService: JsonService) {
     this.resizeListener = () => {
-        const hydrographWidth = 0.40 * window.innerWidth;
-        Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
-      }
+      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+      const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
+      Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
+    }
+  }
+  
+  // You should add the resize event listener to call the resizeListener method when the window is resized
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.resizeListener();
   }
 
   /**
@@ -263,7 +270,8 @@ export class hydrographSeasonal implements OnDestroy{
       y: resultArray.map(item => item.q50),
       mode: 'lines',
       name: labelmedian,
-      line: { color: 'black', width: 1.5, dash: 'dot' }
+      line: { color: 'black', width: 1.5, dash: 'dot' },
+      hovertemplate: 'moyenne: %{y:.3f} m3/s<extra></extra>',
     });
 
     // Trace de l'invariant
@@ -292,26 +300,26 @@ export class hydrographSeasonal implements OnDestroy{
           line: {
             color: colors[i], 
             width: 1.5
-          }
+          },
+          hovertemplate: `${year}: %{y:.3f} m3/s<extra></extra>`,
         };
         this.fig.data.push(trace); // Ajouter la trace à this.fig.data
       }
     }
 
     // Mettre à jour l'annotation pour afficher la date de mise à jour actuelle
-    if (this.lastUpdate instanceof Date) {
+   
       const currentDate = `${this.lastUpdate.getDate().toString().padStart(2, '0')}-${(this.lastUpdate.getMonth() + 1).toString().padStart(2, '0')}-${this.lastUpdate.getFullYear()}`;
       const updatedAnnotation = this.fig.layout.annotations.find((annotation: any) => annotation.text.includes('Mis à jour le :'));
       if (updatedAnnotation) {
         updatedAnnotation.text = `Mis à jour le : ${currentDate}`;
       }
-    }
-    else {
-      console.log("ehnon...")
-    }
+    
 
     // Tracer la figure Plotly
-    const hydrographWidth = 0.40 * window.innerWidth;
+    //const hydrographWidth = 0.40 * window.innerWidth;
+    const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+    const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
     Plotlydist.newPlot('plotlyDiv', this.fig.data, this.fig.layout, { responsive: true });
     Plotlydist.relayout('plotlyDiv', { width: hydrographWidth });
     

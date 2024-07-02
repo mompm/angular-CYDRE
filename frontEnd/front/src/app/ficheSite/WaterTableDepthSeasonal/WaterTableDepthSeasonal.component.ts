@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy, HostListener} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -63,11 +63,18 @@ function generateColors(numColors: number): string[] {
      * @param jsonService 
      */
     constructor(private dataService: DataService,private jsonService: JsonService) {
-      this.resizeListener= () => {
-        const hydrographWidth = 0.40 * window.innerWidth;
-        Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
-      };
+    this.resizeListener = () => {
+      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+      const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
+      Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
     }
+  }
+  
+  // You should add the resize event listener to call the resizeListener method when the window is resized
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.resizeListener();
+  }
 
     /**
      * 
@@ -319,7 +326,8 @@ function generateColors(numColors: number): string[] {
           y: resultArray.map(item => item.q50),
           mode: 'lines',
           name: labelmedian,
-          line: { color: 'black', width: 1.5, dash : 'dot' }
+          line: { color: 'black', width: 1.5, dash : 'dot' },
+          hovertemplate: 'moyenne: %{y:.3f} m<extra></extra>',
         });
   
         //trace invariant
@@ -347,7 +355,8 @@ function generateColors(numColors: number): string[] {
             line: {
               color: colors[i], // Utilisation des couleurs générées par Chroma.js
               width: 1.5
-            }
+            },
+            hovertemplate: `${year}: %{y:.3f} m<extra></extra>`,
           };
           this.fig.data.push(trace); // Ajouter la trace à this.fig.data
         }
@@ -363,7 +372,9 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        const hydrographWidth = 0.40 * window.innerWidth;
+        //const hydrographWidth = 0.40 * window.innerWidth;
+        const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+        const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
         Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout, { responsive: true });
         Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
         
