@@ -45,6 +45,7 @@ import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatTreeNestedDataSource, MatTreeModule} from '@angular/material/tree';
 import {MatIconModule} from "@angular/material/icon";
 import {MatButtonModule} from "@angular/material/button";
+import { MatTooltipModule } from '@angular/material/tooltip';
 import {MatTableModule} from "@angular/material/table";
 import { MatTabsModule } from '@angular/material/tabs';
 import {MatStepperModule} from '@angular/material/stepper';
@@ -143,6 +144,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatStepperModule,
     MatSelectModule,
     MatDialogModule,
+    MatTooltipModule,
     MatMenuModule,
     MatSlideToggleModule,
     NgxSliderModule,

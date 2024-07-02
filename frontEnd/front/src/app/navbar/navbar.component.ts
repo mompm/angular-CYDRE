@@ -79,19 +79,19 @@ export class NavbarComponent {
   }
 
   openDialog() {
-    this.dialog.open(DocumentationPopup, {});
+    this.dialog.open(DocumentationPopupNav, {});
   }
 }
 
 @Component({
-  selector: 'documentationPopup',
-  templateUrl: './documentationPopup.html',
-  styleUrls: ['./documentationPopup.scss'],
+  selector: 'documentationPopupNav',
+  templateUrl: './documentationPopupNav.html',
+  styleUrls: ['./documentationPopupNav.scss'],
   standalone: true,
   imports: [MatTabsModule, CommonModule, MatButtonModule],
 })
-export class DocumentationPopup {
-  constructor(public dialogRef: MatDialogRef<DocumentationPopup>) {}
+export class DocumentationPopupNav {
+  constructor(public dialogRef: MatDialogRef<DocumentationPopupNav>) {}
 
   onClose(): void {
     this.dialogRef.close();
