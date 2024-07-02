@@ -226,7 +226,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   }
 
   updateIndicatorShapes() {
-    if(document.getElementById('previsions')){
+    if(document.getElementById('previsions') && this.layout){
       // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
       this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'date de simulation') || [];
     

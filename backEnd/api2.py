@@ -100,7 +100,7 @@ class Users(db.Model, UserMixin):
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
-@app.route('/login', methods=['POST'])
+@app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
     username = data.get('username')
@@ -111,7 +111,7 @@ def login():
         return jsonify({'message': 'Logged in successfully', 'username': username, 'role': user.role, "UserID":user.id}), 200
     return jsonify({'error': 'Invalid username or password'}), 401
 
-@app.route('/logout', methods=['POST'])
+@app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
@@ -1450,7 +1450,7 @@ def updateSimulationsBeta():
     
     try:
             data = request.get_json()
-            if not data or not isinstance(data, dict) or 'station' not in data:
+            if not data or 'station' not in data:
                 return jsonify({'Error': 'Invalid input'}), 400
 
             station = data.get('station')
@@ -1706,6 +1706,18 @@ def getBetaSimulations(index):
         return jsonify({"results":simulation.Results,"indicators": simulation.Indicators}), 200
     except Exception as e:
         return jsonify({"Error": str(e)}), 500
+    
+@app.route("/api/resetDatabase", methods=['POST'])
+def resetDatabase():
+    try:
+        # Supprimer toutes les entrées de la table SimulationsBeta
+        db.session.execute(text('TRUNCATE TABLE SimulationsBeta'))
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Database reset successfully"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
