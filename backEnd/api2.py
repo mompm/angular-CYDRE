@@ -84,6 +84,7 @@ for i in gdf_watersheds.index:
 
 
 class Users(db.Model, UserMixin):
+    __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -494,6 +495,32 @@ def delete_simulation(simulation_id):
         return jsonify({"Succes":"Simulation deleted succesfully"}),200
     except Exception as e:
         return jsonify({"Error":str(e)}),500
+    
+@app.route('/api/delete_default_simulation', methods=['POST'])
+@cross_origin()
+def delete_default_simulation():
+    try:
+        # Retrieve the default user
+        default_user = Users.query.filter_by(username="default").first()
+        if not default_user:
+            return jsonify({"Error": "Default user not found"}), 404
+
+        # Get the user ID
+        default_user_id = default_user.id
+
+        # Find the simulation to delete
+        simulation = Simulation.query.filter_by(UserID=default_user_id).first()
+
+        if not simulation:
+            return jsonify({"Success": "No default simulation to delete"}), 201
+
+        # Delete the simulation
+        db.session.delete(simulation)
+        db.session.commit()
+        return jsonify({"Success": "Simulation deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"Error": str(e)}), 500
+
     
 def extract_param_names(params, prefix=""):
     param_names = []

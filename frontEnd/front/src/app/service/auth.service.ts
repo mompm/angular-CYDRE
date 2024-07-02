@@ -11,7 +11,9 @@ export class AuthService {
   private authUrl = 'http://localhost:5000';
   private loggedIn = new BehaviorSubject<boolean>(false);
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private http: HttpClient, private router: Router) {
+    this.checkLoginStatus();
+  }
 
   // Méthode pour initier la connexion
   login(username: string, password: string): Observable<any> {
@@ -19,10 +21,10 @@ export class AuthService {
       tap(response => {
         if (response.username) {
           this.loggedIn.next(true);
-          localStorage.setItem('username', response.username);
-          localStorage.setItem('role', response.role);
-          localStorage.setItem('UserID', response.UserID)
-          localStorage.removeItem('lastSimulationId');
+          sessionStorage.setItem('username', response.username);
+          sessionStorage.setItem('role', response.role);
+          sessionStorage.setItem('UserID', response.UserID)
+          sessionStorage.removeItem('lastSimulationId');
         }
       })
     );
@@ -39,10 +41,10 @@ export class AuthService {
 
   // Effacer la session client
   private clearClientSession(): void {
-    localStorage.removeItem('username');
-    localStorage.removeItem('role');
-    localStorage.removeItem('UserID');
-    localStorage.removeItem('lastSimulationId');
+    sessionStorage.removeItem('username');
+    sessionStorage.removeItem('role');
+    sessionStorage.removeItem('UserID');
+    sessionStorage.removeItem('lastSimulationId');
     this.loggedIn.next(false);
     this.router.navigate(['/login']);
   }
@@ -54,12 +56,12 @@ export class AuthService {
 
   // Récupérer le nom d'utilisateur
   get username(): string | null {
-    return localStorage.getItem('username');
+    return sessionStorage.getItem('username');
   }
 
   // Récupérer le rôle de l'utilisateur
   get role(): string | null {
-    return localStorage.getItem('role');
+    return sessionStorage.getItem('role');
   }
 
   // Vérifier si l'utilisateur est un développeur
@@ -75,5 +77,14 @@ export class AuthService {
   // Vérifier si l'utilisateur est un scientifique ou un développeur
   get isScientificOrDev(): boolean {
     return this.role === 'scientifique' || this.role === 'dev';
+  }
+
+  private checkLoginStatus(): void {
+    const userID = sessionStorage.getItem('UserID');
+    if (userID) {
+      this.loggedIn = new BehaviorSubject<boolean>(true);;
+    } else {
+      this.loggedIn = new BehaviorSubject<boolean>(false);;
+    }
   }
 }

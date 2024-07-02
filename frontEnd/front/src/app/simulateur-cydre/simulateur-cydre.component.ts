@@ -9,6 +9,7 @@ import { DataService } from '../service/data.service';
 import {MatDialog} from '@angular/material/dialog';
 import { AuthService } from '../service/auth.service';
 import { ParametersPanelComponent } from '../parameters-panel/parameters-panel.component';
+import { Router } from '@angular/router';
 
 
 
@@ -24,7 +25,9 @@ togglePanel() {
   this.showParametersPanel = !this.showParametersPanel;
 }
 
-  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog) { }
+  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog,
+    private router : Router
+  ) { }
   @ViewChild('fileInput')
   fileInput!: ElementRef<HTMLInputElement>;
   selectedFile: File | null = null;
@@ -77,15 +80,18 @@ togglePanel() {
 
 
   async ngOnInit() {
+    if (!this.authService.isLoggedIn) {
+      this.router.navigate(['/login']);
+    }
     
     this.initGDFStations();
     this.selectedStation = this.sharedService.getSelectedValue();
     this.selectedStationName =this.sharedService.getSelectedStationName();
     this.selectedStationBSS = this.sharedService.getSelectedValueBSS();
     //récupérer les données de la simulation choisie si on vient de l'historique
-    if(localStorage.getItem('showLastSimul')=="true"){
-      if(localStorage.getItem('lastSimulationId')){
-        let data = await this.jsonService.getResults(localStorage.getItem('lastSimulationId')!);
+    if(sessionStorage.getItem('showLastSimul')=="true"){
+      if(sessionStorage.getItem('lastSimulationId')){
+        let data = await this.jsonService.getResults(sessionStorage.getItem('lastSimulationId')!);
             if (data) {
               this.simulation_id = data.simulation_id;
               this.results = this.deepParseJson(data);
@@ -96,7 +102,7 @@ togglePanel() {
             this.progressMessages.push('Erreur lors du chargement la simulation.');
                     }
       }
-      localStorage.removeItem("showLastSimul");
+      sessionStorage.removeItem("showLastSimul");
     }
 
   ngOnDestroy() {
@@ -109,7 +115,7 @@ togglePanel() {
 }
 
   private deleteSimulation(simulation_id:string) {
-    this.http.post(`http://localhost:5000/api/delete_simulation/${simulation_id}`, {}).subscribe({
+    this.http.post(`http://localhost:5000/api/delete_default_simulation`, {}).subscribe({
       next: (response) => console.log('Simulation deleted successfully'),
       error: (error) => console.error('Failed to delete simulation', error)
     });
@@ -192,7 +198,7 @@ handleParametersChanged(parameters: any) {
     else{
       this.fetchingResults = true;
       if(this.authService.isLoggedIn){
-        UserID = Number(localStorage.getItem("UserID"))
+        UserID = Number(sessionStorage.getItem("UserID"))
       }
 
     if(this.showParametersPanel){
@@ -215,7 +221,7 @@ handleParametersChanged(parameters: any) {
       }
 
     }
-    console.log("localStorage UserID" , localStorage.getItem("UserID"))
+    console.log("sessionStorage UserID" , sessionStorage.getItem("UserID"))
 
     this.progressMessages = [];
     this.progressValue = 0;
@@ -243,7 +249,7 @@ handleParametersChanged(parameters: any) {
 
 
   saveSimulationId(simulationId: string) {
-    localStorage.setItem('lastSimulationId', simulationId);
+    sessionStorage.setItem('lastSimulationId', simulationId);
   }
   
   updateProgress(message: string, progress: number) {

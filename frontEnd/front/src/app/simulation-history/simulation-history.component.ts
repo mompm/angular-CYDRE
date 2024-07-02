@@ -23,8 +23,8 @@ export class SimulationHistoryComponent implements OnInit {
   }
 
   goToSimulation(simulationId: string) {
-    localStorage.setItem('lastSimulationId', simulationId)
-    localStorage.setItem('showLastSimul', "true")
+    sessionStorage.setItem('lastSimulationId', simulationId)
+    sessionStorage.setItem('showLastSimul', "true")
 
     this.router.navigate(['/simulator']);
 
@@ -37,8 +37,8 @@ export class SimulationHistoryComponent implements OnInit {
       next: (response: any) => console.log('Simulation deleted successfully'),
       error: (error : any) => console.error('Failed to delete simulation', error)
     });
-    if(localStorage.getItem('lastSimulationId')==simulationId){
-      localStorage.removeItem('lastSimulationId');
+    if(sessionStorage.getItem('lastSimulationId')==simulationId){
+      sessionStorage.removeItem('lastSimulationId');
     }
     // Retirer la simulation du tableau après la suppression réussie
     this.simulations = this.simulations.filter(simulation => simulation.SimulationID !== simulationId);

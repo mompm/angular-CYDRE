@@ -93,7 +93,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   
 
   ngOnInit(): void {
-    this.simulation_id = localStorage.getItem('lastSimulationId')?localStorage.getItem('lastSimulationId'):null
+    this.simulation_id = sessionStorage.getItem('lastSimulationId')?sessionStorage.getItem('lastSimulationId'):null
 
     try{
       if(this.results.results.data){//générer les traces du graphe
@@ -257,9 +257,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
 
   async updateResults() {
-    if(localStorage.getItem('lastSimulationId')){
+    if(sessionStorage.getItem('lastSimulationId')){
       //mettre à jour tous les indicateurs que l'on a modifié  
-      this.results.indicators = await this.jsonService.updateIndicatorsValue(localStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true))
+      this.results.indicators = await this.jsonService.updateIndicatorsValue(sessionStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true))
       this.fillIndicators
     }
     
