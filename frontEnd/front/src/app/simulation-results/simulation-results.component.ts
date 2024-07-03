@@ -89,10 +89,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   maxPredictedValue : number[] = [];
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
-
-  
   indicators: Array<Indicator> = [];
-
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -163,6 +160,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.matriceSpecificDischarge();
     });
   }
+
 
   
 
