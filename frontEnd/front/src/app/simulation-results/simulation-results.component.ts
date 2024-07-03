@@ -77,6 +77,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
+  @Input() watershedID: string | null | undefined;
+
   watershedName: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
@@ -150,7 +152,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       }else{
         console.log("Données manquantes lors du chargement de la matrice de corrélation")
       }
-    }catch(error){
+    }}catch(error){
       console.log("Problème lors du chargement de la matrice de corrélation:"+error)
     }
 

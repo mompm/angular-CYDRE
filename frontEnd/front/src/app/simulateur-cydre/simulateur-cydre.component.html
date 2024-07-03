@@ -139,6 +139,7 @@
   <!-- Affichage des résultats de la simulation -->
   <app-simulation-results *ngIf="results && showResults" 
                           [simulation_id]="simulation_id" 
+                          [watershedID] ="selectedStation"
                           [results]="results" 
                           [showResults]="true">
   </app-simulation-results>

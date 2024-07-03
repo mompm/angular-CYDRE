@@ -284,7 +284,7 @@ handleParametersChanged(parameters: any) {
     }
 
 
-    console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
+    // console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
   }
 
   isOptionDisabled(option: { index: string, station_name: string }): boolean {
