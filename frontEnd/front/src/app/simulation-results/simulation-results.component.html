@@ -154,13 +154,16 @@
             </div>
             <div class="containerIndicatior">
               <p class="moyenneIndicators">{{ (indicator.results.prop_alert_all_series || 0) * 100 | number: '1.1-1' }} %</p>
-              <br>
+              <p class="resultIndicators"> - </p>
               <p class="descriptionIndicators">Probabilité</p>
+              <button mat-button class="boutonindicator" matTooltip="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
             <div class="containerIndicatior">
-              <p class="moyenneIndicators">{{ (indicator.results.volume50 || 0) | number: '1.0-0' }} m³</p>
-              <p class="resultIndicators" >[{{ (min(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.0-0' }} - {{
-                (max(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.0-0' }}]</p>
+              <p class="moyenneIndicators">{{ getVolumeAsInt(indicator.results.volume50) }} m³</p>
+              <p class="resultIndicators" >[{{ getVolumeAsInt(min(indicator.results.volume10,indicator.results.volume90)) }} - {{
+                getVolumeAsInt(max(indicator.results.volume10,indicator.results.volume90))}}]</p>
               <p class="descriptionIndicators">Volume manquant</p>
               <button mat-button class="boutonindicator" matTooltip="Volume manquant pour compenser le dépassement du seuil">
                 <mat-icon>help</mat-icon>

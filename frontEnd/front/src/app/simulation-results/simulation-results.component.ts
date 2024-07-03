@@ -160,6 +160,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.matriceSpecificDischarge();
     });
   }
+  getVolumeAsInt(volume: number): number {
+    return Math.floor(volume || 0);
+  }
 
 
   
@@ -315,7 +318,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   
   
   updateGraphData(): void {
-   
     if (this.showResults && this.results.results.data.graph) {
       //mettre à jour les données de axes x des observation et prediction 
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
