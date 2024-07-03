@@ -40,6 +40,7 @@ import { RessourceComponent } from './modeling/ressource/ressource.component';
 import { MapComponent } from './modeling/localisation/map/map.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FooterComponent } from './footer/footer.component';
+import { AnotherDialog } from './documentTuto/documentTuto'; 
 import { MatSliderModule } from '@angular/material/slider';
 import {MatProgressSpinnerModule} from '@angular/material/progress-spinner';
 import {MatTreeNestedDataSource, MatTreeModule} from '@angular/material/tree';
@@ -103,6 +104,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     RessourceComponent,
     MapComponent,
     FooterComponent,
+    AnotherDialog,
     CreateAccountComponent,
     SimulateurCydreComponent,
     AnalyseDeSensibiliteComponent,

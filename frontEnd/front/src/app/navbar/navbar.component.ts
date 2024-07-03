@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { AnotherDialog } from '../documentTuto/documentTuto';
 
 @Component({
   selector: 'app-navbar',
@@ -79,21 +80,8 @@ export class NavbarComponent {
   }
 
   openDialog() {
-    this.dialog.open(DocumentationPopupNav, {});
+    this.dialog.open(AnotherDialog, {});
   }
 }
 
-@Component({
-  selector: 'documentationPopupNav',
-  templateUrl: './documentationPopupNav.html',
-  styleUrls: ['./documentationPopupNav.scss'],
-  standalone: true,
-  imports: [MatTabsModule, CommonModule, MatButtonModule],
-})
-export class DocumentationPopupNav {
-  constructor(public dialogRef: MatDialogRef<DocumentationPopupNav>) {}
 
-  onClose(): void {
-    this.dialogRef.close();
-  }
-}

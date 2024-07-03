@@ -10,6 +10,7 @@ import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {MatTabsModule} from '@angular/material/tabs';
+import { AnotherDialog } from './documentTuto/documentTuto';
 
 @Component({
   selector: 'app-root',
@@ -35,23 +36,11 @@ export class AppComponent implements OnInit{
     this.openDialog();
   }
   openDialog() {
-    this.dialog.open(Appdialog);
+    this.dialog.open(AnotherDialog);
   }
 
 }
 
-  @Component({
-    selector: 'app-dialog',
-    templateUrl: './app-dialog.html',
-    styleUrls: ['./app-dialog.scss'],
-    standalone: true,
-    imports: [MatTabsModule, CommonModule, MatButtonModule],
-  })
-  export class Appdialog {
-    constructor(public dialogRef: MatDialogRef<Appdialog>) {}
+  
 
-    onClose(): void {
-      this.dialogRef.close();
-    }
 
-}
