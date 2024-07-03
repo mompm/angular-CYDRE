@@ -1,6 +1,7 @@
 import { Options } from '@angular-slider/ngx-slider/options';
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
+import {MatTooltipModule} from '@angular/material/tooltip';
 import { CommonModule } from '@angular/common';
 import { Component, Input, OnDestroy, OnInit, SimpleChange, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
@@ -10,7 +11,6 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
 import { Layout, PlotData } from 'plotly.js';
 import { JsonService } from '../service/json.service';
-import { switchMap } from 'rxjs';
 import { AxisType } from 'plotly.js-dist';
 import * as Papa from 'papaparse';
 import { index, string } from 'mathjs';
@@ -22,9 +22,11 @@ import * as e from 'express';
   styleUrls: ['./simulation-results.component.scss']
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
+  tooltipTextsEstimationValue: string[] = [];
   stations: any[] = [];
   selectedMatrix: string = 'all';
   on: boolean = false;
+  matricecolumn: boolean = false;
   range: number[] = [];
   type : any = "log";
   private resizeListener : ()=> void;
@@ -32,12 +34,17 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     //listener permettant de redimensionner la map et le graphe en fonction de la taille de fenêtre
     this.resizeListener = () => {
-      //const mapHeight = document.getElementById("matrice")!.clientHeight ;
-      //Plotly.relayout('map', { width: mapwidth, height: mapHeight});
-      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
-      const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
-      Plotly.relayout('matriceRecharge',{width :matricewidth});
-      Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+      if(this.matricecolumn){
+        const matricewidth = 0.50 * window.innerWidth;
+        Plotly.relayout('matriceRecharge',{width :matricewidth});
+        Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+      }else{
+        const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+        const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
+        Plotly.relayout('matriceRecharge',{width :matricewidth});
+        Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+      }
+
       
 
       const previsionGraphWidth = window.innerWidth * 0.80;
@@ -88,10 +95,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
-
-  
   indicators: Array<Indicator> = [];
-
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -166,6 +170,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       console.log("Problème lors du chargement des indicateurs:"+error)
     }
     if(this.results.results.similarity){
+      const columns = this.results?.results?.similarity?.corr_matrix?.specific_discharge?.columns;
+      this.matricecolumn = columns && columns.length > 15;
       this.initGDFStations();
     }
 
@@ -197,13 +203,27 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.matriceSpecificDischarge();
     });
   }
+  getVolumeAsInt(volume: number): number {
+    return Math.floor(volume || 0);
+  }
+
 
   
 
   fillIndicators() {//ajouter les indicateurs de la base de données au tableau du front
     this.indicators = [];  // Réinitialiser le tableau des indicateurs
+    this.tooltipTextsEstimationValue = [] 
+    // Supposons que `this.simulationData` contient le tableau des indicateurs
     this.results.indicators.forEach((indicator: { type: string; value : number; results: any; color :string})=> {
-        let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
+                // `data` est un objet avec `results`, `type`, et `value`
+                let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
+                if(fixedValue){
+                  let Q50Value = indicator.results.proj_values.Q50;
+                  Q50Value = parseFloat(Q50Value.toFixed(2));
+                  const lastDate = this.results.results.data.last_date || ''; 
+                  const tooltipText = `Valeur du débit au ${lastDate} m³/s. . Cela représente une évolution de  ${Q50Value} %`; 
+                  this.tooltipTextsEstimationValue.push(tooltipText);
+                }
                 this.indicators.push({
                     type: indicator.type,
                     value: indicator.value,
@@ -211,10 +231,13 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                     fixed: fixedValue,
                     modified:false
                 });
+                console.log(indicator);
             });
     this.showPlot();
     this.updateIndicatorShapes(); // Mettre à jour les représentations visuelles des indicateurs
-  }
+
+
+}
 
   onToggleChange() {
     this.updateComponentsWithResults(this.results);
@@ -268,6 +291,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
       this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'date de simulation') || [];
       this.indicators.forEach(indicator => {
+          
         // Crée une nouvelle shape pour chaque indicateur
         this.layout!.shapes!.push({
           type: 'line',
@@ -666,7 +690,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             type: 'heatmap',
             colorscale: colorscale,
             reversescale: true,
-            showscale: true,
+            showscale: false,
             xgap: 1,
             ygap: 1
           });
@@ -712,11 +736,21 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               width: width + 300, 
            
           };
+          //mettre en vertical si matrice trop grande 
+          if(columns.length > 15 ){
+            this.matricecolumn = true;
+            const matricewidth = 0.50 * window.innerWidth;
+            Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
+            Plotly.relayout('matriceRecharge',{width :matricewidth});
+          }
+          else{
+            this.matricecolumn = false;
+            const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+            const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
+            Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
+            Plotly.relayout('matriceRecharge',{width :matricewidth});
+          }
 
-          const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
-          const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
-          Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
-          Plotly.relayout('matriceRecharge',{width :matricewidth});
         }
       }
 
@@ -755,7 +789,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             type: 'heatmap',
             colorscale: colorscale,
             reversescale: true,
-            showscale: true,
+            showscale: false,
             xgap: 1,
             ygap: 1
           });
@@ -801,10 +835,21 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               width: width + 300,
           };
 
-          const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
-          const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
-          Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
-          Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+          if(columns.length > 15 ){
+            this.matricecolumn = true;
+            const matricewidth = 0.50 * window.innerWidth;
+            Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+            Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+  
+          }else{
+            this.matricecolumn = false;
+            const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+            const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
+            Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+            Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+          }
+
+
           }
         }
 

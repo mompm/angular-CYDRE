@@ -1,4 +1,6 @@
 import { Component, OnInit, OnDestroy , ViewChild, ElementRef} from '@angular/core';
+import {MatButtonModule} from '@angular/material/button';
+import {MatTooltipModule} from '@angular/material/tooltip';
 import { Options } from '@angular-slider/ngx-slider';
 import { JsonService } from '../service/json.service';
 import { HttpClient } from '@angular/common/http';
