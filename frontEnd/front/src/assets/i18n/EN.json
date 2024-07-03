@@ -8,11 +8,10 @@
     "bannerIntro": "Digital tool for seasonal forecasting of river flows across Brittany",
     "homeIntro": "Home works !",
     "home": "Home",
-    "data": "Data and Modeling",
     "settings": "Settings",
-    "login": "Log in",
-    "logout": "Log out",
-    "createAccount": "Create Account",
+    "login": "LOG IN",
+    "logout": "LOG OUT",
+    "createAccount": "CREATE ACCOUNT",
     "select_modeling": "Sélection du bassin versant",
     "homeTitle": "Presentation of the <span class=\"highlight\"> CYDRE </span> project",
     "ficheSiteTitle": "Site sheet",
@@ -56,7 +55,6 @@
     "discard": "Discard",
     "selectOption": "Select an option",
     "limitBassin": "Show basin boundaries",
-    "simulatorTitle": "Cydre Simulator",
-    "analysisTitle": "Sensibility Analysis",
-    "historyTitle": "My simulations"
+    "simulatorTitle": "CYDRE SYMULATOR",
+    "historyTitle": "MY SIMULATIONS"
 }
