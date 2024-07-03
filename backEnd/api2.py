@@ -1538,7 +1538,15 @@ def updateSimulationsBeta():
                 init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
                 cydre_app = init.create_cydre_app()
                 watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
-
+                stmt = (
+                update(Simulation)
+                .where(Simulation.SimulationID == simulation_id)
+                .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.watershed_name',watershed_name)})
+                )
+            
+                # Exécution de la mise à jour
+                db.session.execute(stmt)
+                db.session.commit()
 
                 #Run spatial similarity
                 cydre_app.run_spatial_similarity(hydraulic_path,spatial=True)
@@ -1747,7 +1755,7 @@ def getBetaSimulations(index):
         if simulation is None:
             return jsonify({"Error": "No simulation found for the given index"}), 404
 
-        return jsonify({"results":simulation.Results,"indicators": simulation.Indicators}), 200
+        return jsonify({"results":simulation.Results,"indicators": simulation.Indicators, "watershed_name":simulation.Parameters["watershed_name"]}), 200
     except Exception as e:
         return jsonify({"Error": str(e)}), 500
     
