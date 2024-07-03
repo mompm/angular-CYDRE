@@ -11,14 +11,10 @@
         <ul class="navbar-nav nav-nav">
           <!-- <li><a class="navbar-underline-onglet menu-item" routerLink="/home" routerLinkActive="active" translate (click)="change()">home</a></li> -->
           <li><a class="navbar-underline-onglet menu-item" routerLink="/ficheSite" routerLinkActive="active" translate (click)="login()">ficheSiteTitle</a></li>
-          <li><a class="navbar-underline-onglet menu-item" routerLink="/simulator" routerLinkActive="active" translate (click)="data()">simulatorTitle</a></li>
-          <li *ngIf="(authService.isLoggedIn | async)"><a class="navbar-underline-onglet menu-item" routerLink="/simulationHistory" routerLinkActive="active" translate (click)="data()">historyTitle</a></li>
+          <li><a class="navbar-underline-onglet menu-item" routerLink="/simulator" routerLinkActive="active" translate (click)="simulator()">simulatorTitle</a></li>
+          <li *ngIf="(authService.isLoggedIn | async)"><a class="navbar-underline-onglet menu-item" routerLink="/simulationHistory" routerLinkActive="active" translate (click)="history()">historyTitle</a></li>
           <li *ngIf="!(authService.isLoggedIn | async)"><a class="navbar-underline-onglet menu-item" routerLink="/login" routerLinkActive="active" translate (click)="login()">login</a></li>
-
-          <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/modeling" routerLinkActive="active" translate (click)="data()">data</a></li>
-          <li *ngIf="(authService.isLoggedIn | async) && authService.isScientificOrDev"><a class="navbar-underline-onglet menu-item" routerLink="/analysis" routerLinkActive="active" translate (click)="data()">analysisTitle</a></li>
-
-          <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/settings" routerLinkActive="active" translate (click)="settings()">settings</a></li>
+          <!-- <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/settings" routerLinkActive="active" translate (click)="settings()">settings</a></li> -->
           <li *ngIf="(authService.isLoggedIn | async) && authService.isDev"><a class="navbar-underline-onglet menu-item" routerLink="/create-account" routerLinkActive="active" translate (click)="createAccount()">createAccount</a></li>
           <li *ngIf="authService.isLoggedIn | async"><a class="navbar-underline-onglet menu-item" routerLink="/login" routerLinkActive="active" translate (click)="logout()">logout</a></li>
         </ul>

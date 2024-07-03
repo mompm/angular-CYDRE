@@ -71,7 +71,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
-  @Input() watershedName: string | null | undefined;
+  watershedName: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
@@ -702,6 +702,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
+    this.watershedName = this.results.watershed_name;
   
     // Mise à jour des autres éléments
       this.fillIndicators();

@@ -11,8 +11,8 @@
     "data": "Données et Modélisation",
     "settings": "Paramètres",
     "login": "SE CONNECTER",
-    "logout": "SE DECONNECTER",
-    "createAccount": "Créer un compte",
+    "logout": "SE DÉCONNECTER",
+    "createAccount": "CRÉER UN COMPTE",
     "select_modeling": "Sélection du bassin versant",
     "homeTitle": "Présentation du projet <span class=\"highlight\">CYDRE</span>",
     "ficheSiteTitle": "FICHE DE SITE",
@@ -59,6 +59,5 @@
     "discard": "Annuler",
     "selectOption": "Choisir une option",
     "limitBassin": "Afficher les limites du bassin",
-    "analysisTitle": "Analyse de Sensibilité",
-    "historyTitle": "Mes simulations"
+    "historyTitle": "MES SIMULATIONS"
 }

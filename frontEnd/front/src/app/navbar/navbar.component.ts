@@ -68,9 +68,13 @@ export class NavbarComponent {
   settings(){
     console.log("User clicked on settings page");
   }
-  data(){
-    console.log("User clicked on modeling page");
+  simulator(){
+    console.log("User clicked on settings page");
   }
+  history(){
+    console.log("User clicked on settings page");
+  }
+  
   ficheSite(){
     console.log("User clicked on fiche de site page");
   }

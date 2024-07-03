@@ -1110,7 +1110,9 @@ def get_results(simulation_id):
             simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
             results = simulation.Results
             indicators = simulation.Indicators
-            return jsonify({"results":results,"indicators":indicators}),200
+            watershed_name = simulation.Parameters['watershed_name']
+            print(watershed_name)
+            return jsonify({"results":results,"indicators":indicators, "watershed_name":watershed_name}),200
         else:
             return jsonify({"Error":"No simulation ID given"}),500
     except Exception as e :
@@ -1397,8 +1399,6 @@ class Graph():
         'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'm10':self.mod10
         }
-        print(data['last_date'])
-        print(data['first_date'])
 
         return data
 
