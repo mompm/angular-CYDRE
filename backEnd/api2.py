@@ -1115,8 +1115,17 @@ def get_results(simulation_id):
             results = simulation.Results
             indicators = simulation.Indicators
             watershed_name = simulation.Parameters['watershed_name']
+            try:
+                userconfig = simulation.Parameters['UserConfig']
+                watershed_id = userconfig['user_watershed_id']
+            except:
+                watershed_id = simulation.Parameters['user_watershed_id']
+            
+            
             print(watershed_name)
-            return jsonify({"results":results,"indicators":indicators, "watershed_name":watershed_name}),200
+            print(watershed_id)
+
+            return jsonify({"results":results,"indicators":indicators, "watershed_name":watershed_name,"watershed_id":watershed_id}),200
         else:
             return jsonify({"Error":"No simulation ID given"}),500
     except Exception as e :

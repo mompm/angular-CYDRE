@@ -837,6 +837,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.watershedName = this.results.watershed_name;
+    this.watershedID = this.results.watershed_id;
   
     // Mise à jour des autres éléments
       this.fillIndicators();
