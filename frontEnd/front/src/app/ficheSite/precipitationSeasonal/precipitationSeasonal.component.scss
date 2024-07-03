@@ -1,0 +1,16 @@
+#container {
+    position: relative;
+    height: 650px; /* Ajuster la hauteur totale pour inclure le bouton */
+}
+#precipitationSeasonal {
+    height: 600px; /* Hauteur du graphique */
+}
+.btn-container {
+    position: absolute;
+    bottom: 10px; /* Ajuster selon vos besoins */
+    right: 10px; /* Ajuster selon vos besoins */
+}
+.btn {
+    font-size: 12px; /* Taille du bouton */
+    padding: 5px 10px; /* Ajuster le padding selon vos besoins */
+}

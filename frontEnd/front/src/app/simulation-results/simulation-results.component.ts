@@ -25,14 +25,20 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   stations: any[] = [];
   selectedMatrix: string = 'all';
   on: boolean = false;
+  range: number[] = [];
+  type : any = "log";
   private resizeListener : ()=> void;
 
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     //listener permettant de redimensionner la map et le graphe en fonction de la taille de fenêtre
     this.resizeListener = () => {
-      //const mapwidth = 0.40 * window.innerWidth;
       //const mapHeight = document.getElementById("matrice")!.clientHeight ;
       //Plotly.relayout('map', { width: mapwidth, height: mapHeight});
+      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+      const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
+      Plotly.relayout('matriceRecharge',{width :matricewidth});
+      Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+      
 
       const previsionGraphWidth = window.innerWidth * 0.80;
       Plotly.relayout('previsions', { width: previsionGraphWidth});
@@ -80,6 +86,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
+
   
   indicators: Array<Indicator> = [];
 
@@ -97,6 +104,19 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
     try{
       if(this.results.results.data){//générer les traces du graphe
+        if (Object.prototype.toString.call(this.results.results.data) === '[object String]') {
+          try {
+            // Nettoyer les valeurs non valides dans la chaîne JSON
+            let cleanedData = this.results.results.data
+            .replace(/NaN/g, 'null')
+            .replace(/Infinity/g, 'null')
+            .replace(/-Infinity/g, 'null');
+            // Essayez de convertir la chaîne nettoyée en objet JSON
+            this.results.results.data = JSON.parse(cleanedData);
+        } catch (e) {
+            console.error('La conversion de la chaîne en objet a échoué :', e);
+          }
+        }
         this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date)
         this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
       }else{
@@ -108,6 +128,22 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
     try{
       if(this.results.results.corr_matrix){ //création de la matrice de corrélation
+        if(this.results.results.data){
+              // gere si this.results.results.data est une chaine String 
+        if (Object.prototype.toString.call(this.results.results.data) === '[object String]') {
+          try {
+            // Nettoyer les valeurs non valides dans la chaîne JSON
+            let cleanedData = this.results.results.data
+            .replace(/NaN/g, 'null')
+            .replace(/Infinity/g, 'null')
+            .replace(/-Infinity/g, 'null');
+            // Essayez de convertir la chaîne nettoyée en objet JSON
+            this.results.results.data = JSON.parse(cleanedData);
+        } catch (e) {
+            console.error('La conversion de la chaîne en objet a échoué :', e);
+          }
+        }
+      console.log(this.results.results.data);
         this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;     
@@ -229,13 +265,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     if(document.getElementById('previsions') && this.layout){
       // Initialise ou réinitialise les shapes à partir de ceux existants ou requis pour la simulation
       this.layout!.shapes = this.layout!.shapes?.filter(shape => shape.name === 'date de simulation') || [];
-    
       this.indicators.forEach(indicator => {
         // Crée une nouvelle shape pour chaque indicateur
         this.layout!.shapes!.push({
           type: 'line',
-          showlegend : true,
-          name :indicator.type,
+          showlegend: true,
+          name: indicator.type,
           x0: this.simulationStartDate,
           x1: this.simulationEndDate,
           y0: indicator.value,
@@ -249,9 +284,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           yref: 'y'
         });
       });
-    
-      // Met à jour le graphe avec les nouvelles shapes
-      Plotly.relayout('previsions', { shapes: this.layout!.shapes });
+      
+      // Update le range Y 
+      this.updateAxisY();
+      this.layout!.yaxis!.range = this.range; 
+  
+      // Met à jour le graphe avec les nouvelles shapes et le nouveau range de l'axe y
+      Plotly.relayout('previsions', { shapes: this.layout!.shapes, yaxis : this.layout!.yaxis});
+      //Plotly.relayout('previsions', { shapes: this.layout!.shapes});
     }
   }
 
@@ -275,16 +315,20 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
     return dates;
   }
+
+  
   
   updateGraphData(): void {//crée les traces du graphe
    
     if (this.showResults && this.results.results.data.graph) {
       //mettre à jour les données de axes x des observation et prediction 
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
-      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date)
+      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date);
       this.traces= [];
       var q10Data: { x: Date[], y: number[] } | null = null;
       var q90Data: { x: Date[], y: number[] } | null = null;
+      var projectionData: { x: Date[], y: number[] } = { x: [], y: [] }; // Accumulateur pour les projections
+      let projectionDataReverse = true;
       let incertitudeX;
       let incertitudeY;
       let q50X ;
@@ -293,27 +337,19 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       let observationsY ;
 
       this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
-      var yValuesWithinObservedPeriod: number[] = [];
-
       this.results.results.data.graph.forEach((line: { y: any[]; name: string; mode: string; line: any;}) => {
           if ( line.y ) {
               var parsedDates = this.XaxisPredictions;
               if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
                   this.endDate = parsedDates[parsedDates.length - 1];
               }
-              for (let i = 0; i < parsedDates.length; i++) {
-                if (parsedDates[i] >= this.startDate && parsedDates[i] <= this.endDate) {
-                    yValuesWithinObservedPeriod.push(line.y[i]);
+              if (line.name != 'observations'){
+                for (let i = 0; i < parsedDates.length; i++) {
+                  if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
+                      this.maxPredictedValue.push(line.y[i]);
+                  }
                 }
-                if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
-                    this.maxPredictedValue.push(line.y[i]);
-                }
-
-            }
-            this.yMin = Math.min(...yValuesWithinObservedPeriod);
-            this.yMin = Math.min(this.yMin, this.results.m10-1);
-            this.yMax = Math.max(...yValuesWithinObservedPeriod);
-            
+              }
             if(line.name == 'Q10'){
               q10Data = { x: this.XaxisPredictions, y: line.y };
               incertitudeX = parsedDates; 
@@ -358,20 +394,21 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                     observationsY.unshift(null); // Add null to the beginning of observationsY
                 }
               }
-              console.log(this.simulationStartDate);
-              console.log(observationsY);
             }else if (line.name.includes('Projection')){
-              var trace: Plotly.Data = {
-                x: this.XaxisPredictions,
-                y: line.y,
-                showlegend : false,
-                hoverinfo :'none',
-                mode: 'lines',
-                type: 'scatter',
-                name: line.name,
-                line: { color: '#e3dcda', width: 1 , dash: 'dash' },
-              };
-              this.traces.push(trace);
+              // Regroupe les données de projection dans un tableau pour une suppression en un clic sans doublon dans la légende.
+              // Les données sont alternées entre l'ordre normal et inversé pour éviter des lignes traversantes dans le graphique .
+              if(projectionDataReverse){
+                // met en normal les données
+              projectionData.x = projectionData.x.concat(this.XaxisPredictions);
+              projectionData.y = projectionData.y.concat(line.y);
+              }else{
+                //met en reverse les données
+                projectionData.x = projectionData.x.concat([...this.XaxisPredictions].reverse());
+                projectionData.y = projectionData.y.concat([...line.y].reverse());
+              }
+              
+              projectionDataReverse = !projectionDataReverse;
+              
             }
               if (q10Data && q90Data) {
                 incertitudeX = q10Data.x.concat(q90Data.x.slice().reverse());
@@ -380,7 +417,21 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               }
             }
       });
-     
+      
+      if (projectionData.x.length > 0 && projectionData.y.length > 0) {
+        var projectionTrace: Plotly.Data = {
+          x: projectionData.x,
+          y: projectionData.y,
+          showlegend: true,
+          hoverinfo: 'none',
+          mode: 'lines',
+          type: 'scatter',
+          name: 'projection', 
+          line: { color: '#e3dcda', width: 1, dash: 'dash' },
+        };
+        this.traces.push(projectionTrace);
+      }
+        
       if (q10Data && q90Data){
         var incertitudeTrace: Plotly.Data = {
             x: incertitudeX,
@@ -403,6 +454,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           mode: 'lines',
           type: 'scatter',
           name: 'projection médiane',
+          hovertemplate: 'projection médiane: %{y:.3f} m³/s<extra></extra>',
           showlegend : true,
           line: { color: 'blue', width: 1 , dash: 'dot' }, 
         };
@@ -416,7 +468,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           type: 'scatter',
           name: 'observation',
           showlegend : true,
-          // hoverinfo : 'none',
+          hovertemplate: 'observation: %{y:.3f} m³/s<extra></extra>',
           line: { color: 'black', width: 1 }, 
         };
         this.traces.push(observationsTrace); 
@@ -426,68 +478,143 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  updateLayout() {//mettre à jour le layout du graphe
-    let range ;
-    let type ;
-    if (this.on) {
-      range = [this.yMin, this.yMax];
-      type = 'linear';
-    } else {
-      range = [Math.log10(this.yMin), Math.log10(this.yMax)];
-      type = 'log';
-    }
-    this.layout = {
-      hovermode: "x unified",
-      title: {
-        text: this.watershedName + " - "+ this.results.results.corr_matrix.length + " événements",
-        font: {size: 17},
-      },
-      legend: {
-        orientation: 'h',
-        font: {size: 12},
-        x: 0.5,
-        xanchor: 'center',
-        y: 1.2,
-        yanchor: 'top',
-      },
-      xaxis: {
-        title: '',
-        showgrid: false,
-        zeroline: false,
-        tickformat: '%d-%m-%Y',
-        tickmode: 'auto' as 'auto',
-        tickangle: 45,
-        ticks: 'inside',
-        titlefont: {size: 12},
-        nticks: 10,
-        range: [this.startDate, this.endDate]
-      },
-      yaxis: {
-        title: 'Débit (m3/s)',
-        titlefont: {size: 12},
-        showline: false,
-        ticks: 'inside',
-        type: type as AxisType,
-        rangemode: 'tozero',
-        range: range
-      },
-      shapes: this.simulationStartDate && this.simulationEndDate ? [{
-        type: 'line',
-        name:'date de simulation',
-        x0: this.simulationStartDate,
-        x1: this.simulationStartDate,
-        y0: 0.001,
-        y1: this.yMax,
-        line: { 
-          color: 'gray',
-          width: 2,
-          dash: 'dot'
+  /**
+   * met à jour ymax et ymin 
+   */
+  updateYMinMax(){
+    //met à jour ymax et ymin des incateurs
+    let indicatorValues: number[]= [];
+    this.indicators.forEach(indicator => {
+      indicatorValues.push(indicator.value);
+    })
+    const yMinindicator = Math.min(...indicatorValues);
+    const yMaxindicator = Math.max(...indicatorValues);
+
+    //met à jour ymax et ymin des données obvervations et prédictions
+    let yValuesWithinObservedPeriod: number[] = [];
+    this.results.results.data.graph.forEach((line: { y: number[]; name: string; }) => {
+        if ( line.y ) {
+            var parsedDates = this.XaxisPredictions;
+            var parsedDatesObservations = this.XaxisObservations;
+            if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
+                this.endDate = parsedDates[parsedDates.length - 1];
+            }
+            if (line.name != 'observations'){
+              for (let i = 0; i < parsedDates.length; i++) {
+                if (parsedDates[i] >= this.startDate && parsedDates[i] <= this.endDate) {
+                    yValuesWithinObservedPeriod.push(line.y[i]);
+                }
+                if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
+                    this.maxPredictedValue.push(line.y[i]);
+                }
+              }
+            }else{
+              for (let i = 0; i < parsedDatesObservations.length; i++) {
+                if (parsedDatesObservations[i] >= this.startDate && parsedDatesObservations[i] <= this.endDate) {
+                    yValuesWithinObservedPeriod.push(line.y[i]);
+                }
+            }
+          }
+          const yMingraph = Math.min(...yValuesWithinObservedPeriod);
+          const yMaxgraph = Math.max(...yValuesWithinObservedPeriod);  
+          //observe le min et max entre les données des indateurs, observations et prédictions      
+          this.yMin = Math.min(yMingraph,yMinindicator);
+          this.yMax = Math.max(yMaxgraph,yMaxindicator);
         }
-      }] : [],
+    });
+  }
+
+  /**
+   * 
+   */
+  updateAxisY(){
+    this.updateYMinMax();
+    const percentage = 0.10;
+    const adjustedYMin = this.yMin * (1 - percentage);
+    const adjustedYMax = this.yMax * (1 - percentage);
+    // Définir le type en fonction de l'état de this.on
+    this.type = this.on ? 'linear' : 'log';
+    
+    // Calculer les valeurs log si nécessaire
+    const yMin = this.on ? adjustedYMin : Math.log10(adjustedYMin);
+    const yMax = this.on ? adjustedYMax : Math.log10(adjustedYMax);
+    
+    // Vérification pour éviter l'inversion de l'axe
+    this.range = yMin > yMax ? [yMax, yMin] : [yMin, yMax];
+    
+  }
+
+  updateLayout() {
+    this.updateAxisY();
+    this.layout = {
+        hovermode: "x unified",
+        title: {
+            text: this.watershedID + " | " + this.watershedName,
+            font: { size: 17 },
+        },
+        legend: {
+            orientation: 'h',
+            font: { size: 12 },
+            x: 0.5,
+            xanchor: 'center',
+            y: 1.2,
+            yanchor: 'top',
+        },
+        xaxis: {
+            title: '',
+            showgrid: false,
+            zeroline: false,
+            tickformat: '%d-%m-%Y',
+            tickmode: 'auto' as 'auto',
+            tickangle: 45,
+            ticks: 'inside',
+            titlefont: { size: 12 },
+            nticks: 10,
+            range: [this.startDate, this.endDate],
+            hoverformat: '%d %b %Y',
+        },
+        yaxis: {
+            title: 'Débit (m3/s)',
+            titlefont: { size: 12 },
+            showline: false,
+            ticks: 'inside',
+            type: this.type as AxisType,
+            range: this.range
+        },
+        shapes: this.simulationStartDate && this.simulationEndDate ? [{
+            type: 'line',
+            name: 'date de simulation',
+            x0: this.simulationStartDate,
+            x1: this.simulationStartDate,
+            y0: 0.001,
+            y1: this.yMax,
+            line: {
+                color: 'gray',
+                width: 2,
+                dash: 'dot'
+            }
+        }] : [],
     };
+    
 }
+
   
   showPlot() {
+    // gere si this.results.results.data est une chaine String 
+    if (Object.prototype.toString.call(this.results.results.data) === '[object String]') {
+      try {
+        // Nettoyer les valeurs non valides dans la chaîne JSON
+        let cleanedData = this.results.results.data
+        .replace(/NaN/g, 'null')
+        .replace(/Infinity/g, 'null')
+        .replace(/-Infinity/g, 'null');
+        // Essayez de convertir la chaîne nettoyée en objet JSON
+        this.results.results.data = JSON.parse(cleanedData);
+    } catch (e) {
+        console.error('La conversion de la chaîne en objet a échoué :', e);
+      }
+    }
+
   if(document.getElementById('previsions')){
       Plotly.newPlot('previsions', this.traces, this.layout);
       const annotation: Partial<Plotly.Annotations> = {
@@ -584,7 +711,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
            
           };
 
+          const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+          const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
           Plotly.newPlot('matriceRecharge', DataMatrice, figLayout);
+          Plotly.relayout('matriceRecharge',{width :matricewidth});
         }
       }
 
@@ -669,7 +799,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
               width: width + 300,
           };
 
+          const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+          const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.40 * window.innerWidth;
           Plotly.newPlot('matriceSpecificDischarge', DataMatrice, figLayout);
+          Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
           }
         }
 
@@ -680,7 +813,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['results'] && changes['results'].currentValue) {
-      console.log('results changes');
       this.updateComponentsWithResults(changes['results'].currentValue);
     } 
   }
@@ -826,11 +958,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                     }
                 }
             });
-        });
-          
-          //console.log(columnData);
-                  
-          
+        });          
           // Construire le CSV avec en-têtes
           let csv = 'Date,Q90,Q50,Q10,observations\n';
           uniqueDates.forEach(date => {

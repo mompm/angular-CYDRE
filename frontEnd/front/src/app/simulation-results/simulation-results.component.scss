@@ -37,36 +37,43 @@
   align-items: center;
 }
 
-
 .heatmapcontainer {
-  display: flex; /* Utilise flexbox pour la disposition */
-  width: 100%; /* Prend toute la largeur disponible */
-  height: 100%; /* Prend toute la hauteur disponible */
-  align-items: flex-end; /* Aligne les éléments au bas du conteneur */
-  justify-content: space-between; /* Sépare les graphiques avec un espace */
+  display: flex;
+  flex-wrap: wrap; /* Permet de passer en colonne si nécessaire */
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .heatmap {
-  width: 48%; /* Ajuste la largeur de chaque graphique pour qu'ils tiennent côte à côte */
+  flex: 1 1 48%; /* Flex-grow, flex-shrink, flex-basis pour la répartition */
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-left: 5%;
-  margin-right: 5%;
+  margin: 5%;
+  max-width: 48%; /* Limite la largeur pour ne pas dépasser */
+  box-sizing: border-box; /* Inclut les marges et les paddings dans la taille */
 }
 
 .heatmap-content {
-  flex-grow: 1; 
+  flex-grow: 1;
   width: 100%;
+  overflow: auto; /* Ajoute une barre de défilement si le contenu dépasse */
+  max-height: 100%; /* Limite la hauteur */
 }
 
-.heatmap-title {
-  text-align: center;
-  margin-top: 5px; 
-  font-size: 16px; 
-  font-weight: bold;
-}
+@media (max-width: 1000px) {
+  .heatmapcontainer {
+    flex-direction: column; /* Change la direction en colonne */
+    align-items: center; /* Aligne les éléments au centre */
+  }
 
+  .heatmap {
+    width: 100%; /* Ajuste la largeur pour occuper toute la largeur */
+    margin: 0 0 20px 0; /* Ajoute une marge inférieure pour espacer les éléments */
+    max-width: 100%; /* Limite la largeur à 100% */
+  }
+}
 
 .containerIndicatiors {
   display: flex;
@@ -180,12 +187,12 @@
 }
 
 .info-icon{
-  color: #07861c;
+  //color: #07861c;
 }
 
 
 .warning-icon{
-  color: #d51717;
+  //color: #d51717;
 }
 
 .download-icon{

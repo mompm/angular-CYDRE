@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy, HostListener} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -51,6 +51,10 @@ function generateColors(numColors: number): string[] {
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
+    TabPrecipitationByDaily: any[] = []; //tableau contenant toutes les données Precipitation triés
+    YearTabPrecipitationByDaily: any[] = []; //tableau contenant les données Precipitation triés des années selectionné
+    lastUpdate: any | null;// dernière update des données des données Precipitation
+    resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = []; // tableau contenant les quantiles 
   
     /**
      * Constructeur de la classe.
@@ -59,11 +63,18 @@ function generateColors(numColors: number): string[] {
      * @param jsonService Service de gestion des JSON
      */
     constructor(private dataService: DataService, private jsonService: JsonService) {
-      this.resizeListener = () => {
-        const hydrographWidth = 0.40 * window.innerWidth;
-        Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
-      };
+    this.resizeListener = () => {
+      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+      const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
+      Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
     }
+  }
+  
+  // You should add the resize event listener to call the resizeListener method when the window is resized
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.resizeListener();
+  }
 
     /**
      * Initialisation du composant.
@@ -110,13 +121,13 @@ function generateColors(numColors: number): string[] {
      * 
      * @returns Un objet contenant les données de précipitations journalières et annuelles ainsi que la dernière date de mise à jour
      */
-    processedPrecipitation(): { TabPrecipitationByDaily: any[], YearTabPrecipitationByDaily: any[], lastUpdate: any } {
+    processedPrecipitation(): { PrecipitationByDaily: any[], YearPrecipitationByDaily: any[], Update: any } {
       const targetYears: number[] = this.yearSelectionChange;
-      const TabPrecipitationByDaily: any[] = [];
-      const YearTabPrecipitationByDaily: any[] = [];
-      let lastUpdate = null;
+      const PrecipitationByDaily: any[] = [];
+      const YearPrecipitationByDaily: any[] = [];
+      let Update = null;
 
-      // Vérification si this.dischargeStation est défini et non vide
+      // Vérification si this.PrecipitationStation est défini et non vide
       if (this.DataPrecipitation && this.DataPrecipitation.length > 0) {
         for (const entry of this.DataPrecipitation) {
           const year = new Date(entry.t).getFullYear(); // Récupérer l'année de la date
@@ -124,8 +135,8 @@ function generateColors(numColors: number): string[] {
           const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
           const currentDate = new Date(entry.t);
 
-          if (!lastUpdate || currentDate > lastUpdate|| !isNaN(parseFloat(entry.Q))) {
-            lastUpdate = currentDate; 
+          if (!Update || currentDate > Update|| !isNaN(parseFloat(entry.Q))) {
+            Update = currentDate; 
           }
           // Formater le mois et le jour avec le format "mm-dd"
           const monthDay = `${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
@@ -141,25 +152,25 @@ function generateColors(numColors: number): string[] {
     
           // Ajouter cet objet au tableau de données traitées
           if (!isNaN(parseFloat(entry.Q)) && year !== 1958) {
-            TabPrecipitationByDaily.push(newDataEntry);
+            PrecipitationByDaily.push(newDataEntry);
           }
 
         }
       } else {
-        console.error("No data available in this.dischargeStation.");
+        console.error("No data available in this.PrecipitationStation.");
       }
       
       const uniqueYears: number[] = [];
 
       // Récupérer les années uniques à partir des données traitées
-      for (const entry of TabPrecipitationByDaily) {
+      for (const entry of PrecipitationByDaily) {
           if (!uniqueYears.includes(entry.years)) {
               uniqueYears.push(entry.years);
           }
       }
 
       for (const year of uniqueYears) {
-          const yearData = TabPrecipitationByDaily.filter(entry => entry.years === year);
+          const yearData = PrecipitationByDaily.filter(entry => entry.years === year);
           let cumulativeRainfall = 0.0;
       
           // Itérer sur chaque entrée de données pour l'année donnée
@@ -170,33 +181,33 @@ function generateColors(numColors: number): string[] {
           }
       }
 
-      for (const dataEntry of TabPrecipitationByDaily) {
+      for (const dataEntry of PrecipitationByDaily) {
           if (targetYears.includes(dataEntry.years)) {
-            YearTabPrecipitationByDaily.push(dataEntry);
+            YearPrecipitationByDaily.push(dataEntry);
           }
         }
     
-      return {TabPrecipitationByDaily, YearTabPrecipitationByDaily, lastUpdate};
+      return {PrecipitationByDaily, YearPrecipitationByDaily, Update};
   }
 
   /**
    * Calcule les quantiles (10%, 50%, 90%) des précipitations journalières cumulées.
    * 
-   * @param TabPrecipitationByDaily Tableau des précipitations journalières cumulées
+   * @param PrecipitationByDaily Tableau des précipitations journalières cumulées
    * @returns Un objet contenant les quantiles calculés pour chaque jour et les quantiles globaux
    */
-  calculateQuantiles(TabPrecipitationByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
+  calculateQuantiles(PrecipitationByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
     const resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = [];
     let q10: any;
     let q50: any;
     let q90: any;
 
     
-    from(TabPrecipitationByDaily)
+    from(PrecipitationByDaily)
     .pipe(
       filter(entry => !isNaN(parseFloat(entry.cumulative_daily_rainfall))),
       groupBy(
-        TabPrecipitationByDaily => TabPrecipitationByDaily.daily,
+        PrecipitationByDaily => PrecipitationByDaily.daily,
         p => p.cumulative_daily_rainfall
       ),
       mergeMap(group => zip(of(group.key), group.pipe(toArray())))
@@ -239,8 +250,13 @@ function generateColors(numColors: number): string[] {
      */ 
     Precipitation_Seasonal() {
         const targetYears: number[] = this.yearSelectionChange;
-        const {TabPrecipitationByDaily, YearTabPrecipitationByDaily, lastUpdate} = this.processedPrecipitation();
-        const {resultArray, q10, q50, q90 } = this.calculateQuantiles(TabPrecipitationByDaily);
+        const {PrecipitationByDaily, YearPrecipitationByDaily, Update }= this.processedPrecipitation();
+        this.TabPrecipitationByDaily = PrecipitationByDaily;
+        this.YearTabPrecipitationByDaily = YearPrecipitationByDaily;
+        this.lastUpdate = Update
+        const { resultArray, q10, q50, q90 } = this.calculateQuantiles(this.TabPrecipitationByDaily);
+        this.resultArray = resultArray;
+ 
     
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
@@ -281,7 +297,7 @@ function generateColors(numColors: number): string[] {
                     y: 1.15, 
                     font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
                 },
-                {   text: 'Source : Météo France', 
+                {   text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray; font-family: Segoe UI Semilight; font-size: 14px;">Source : Météo France</a>', 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 
@@ -297,9 +313,11 @@ function generateColors(numColors: number): string[] {
             paper_bgcolor: "rgba(0,0,0,0)",
             legend: { orientation: "h", yanchor: "top", y: 1.1, xanchor: "right", x: 1 }
         }
+        
     };
-        const startYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[1].years : 'N/A';
-        const endYear = TabPrecipitationByDaily.length > 0 ? TabPrecipitationByDaily[TabPrecipitationByDaily.length - 1].years : 'N/A';
+    
+        const startYear = this.TabPrecipitationByDaily.length > 0 ? this.TabPrecipitationByDaily[1].years : 'N/A';
+        const endYear = this.TabPrecipitationByDaily.length > 0 ? this.TabPrecipitationByDaily[this.TabPrecipitationByDaily.length - 1].years : 'N/A';
         // Construction du libellé pour la moyenne
         const labelmedian = `moyenne [${startYear} - ${endYear}]`;
         const labelinvariant = `variabilité [${startYear} - ${endYear}]`;
@@ -311,7 +329,8 @@ function generateColors(numColors: number): string[] {
           y: resultArray.map(item => item.q50),
           mode: 'lines',
           name: labelmedian,
-          line: { color: 'black', width: 1.5, dash : 'dot' }
+          line: { color: 'black', width: 1.5, dash : 'dot' },
+          hovertemplate: 'moyenne: %{y:.3f} mm<extra></extra>',
         });
   
         //trace invariant
@@ -328,7 +347,7 @@ function generateColors(numColors: number): string[] {
         const colors = generateColors(lengthYear);
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
-        const df_event = YearTabPrecipitationByDaily.filter(item => item.years === year);
+        const df_event = this.YearTabPrecipitationByDaily.filter(item => item.years === year);
         if (df_event) {
           const trace = {
             x: df_event.map(item => item.daily),
@@ -338,15 +357,16 @@ function generateColors(numColors: number): string[] {
             line: {
               color: colors[i], // Utilisation des couleurs générées par Chroma.js
               width: 1.5
-            }
+            },
+            hovertemplate: `${year}: %{y:.3f} mm<extra></extra>`,
           };
           this.fig.data.push(trace); // Ajouter la trace à this.fig.data
         }
       }
       
         // Mettre à jour l'annotation pour afficher la date de mise à jour actuelle
-        if (lastUpdate){       
-          const currentDate = `${lastUpdate.getDate().toString().padStart(2, '0')}-${(lastUpdate.getMonth() + 1).toString().padStart(2, '0')}-${lastUpdate.getFullYear()}`;
+        if (this.lastUpdate){       
+          const currentDate = `${this.lastUpdate.getDate().toString().padStart(2, '0')}-${(this.lastUpdate.getMonth() + 1).toString().padStart(2, '0')}-${this.lastUpdate.getFullYear()}`;
           const updatedAnnotation = this.fig.layout.annotations.find((annotation: any) => annotation.text.includes('Mis à jour le :'));
           if (updatedAnnotation) {
             updatedAnnotation.text = `Mis à jour le : ${currentDate}`;
@@ -354,13 +374,133 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        const hydrographWidth = 0.40 * window.innerWidth;
+        //const hydrographWidth = 0.40 * window.innerWidth;
+        const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+        const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
         Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout, { responsive: true });
         Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
-
         
-      
       }
+
+      /**
+       * Fonction pour générer les annotations avec condition
+       */
+      generateAnnotations() {
+        const annotations = [
+            {   
+                text: 'Mis à jour le : DATE', 
+                showarrow: false, 
+                xref: 'paper', 
+                yref: 'paper', 
+                x: 0.5, 
+                y: 1.15, 
+                font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
+            },
+            {   
+                text: 'Source : Météo France', 
+                showarrow: false, 
+                xref: 'paper', 
+                yref: 'paper', 
+                x: 0.5, 
+                y: -0.20, 
+                font: {family:'Segoe UI Semilight', size:14, color:"gray"} 
+            }
+        ];
+        
+        // Ajouter le lien hypertexte à l'annotation concernée
+        for (const annotation of annotations) {
+            if (annotation.text.includes('Source : Météo France')) {
+                annotation.text = '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray">Source : Météo France</a>';
+            }
+        }
+        
+        return annotations;
+      }
+
+      downloadCSV(){
+        console.log(this.YearTabPrecipitationByDaily)
+        // Initialiser un objet pour stocker les données fusionnées
+        const mergedData: { [key: string]: { [year: string]: number | null, q10: number | null ,q50: number | null, q90: number | null} } = {};
+        // Initialiser les années présentes dans yearTabPrecipitation
+        const years = this.yearSelectionChange;  
+        // Ajouter les données de resultArray
+        for (const result of this.resultArray) {
+            mergedData[result.key] = {
+              q10: result.q10 !== undefined ? result.q10 : null,
+              q50: result.q50 !== undefined ? result.q50 : null,
+              q90: result.q90 !== undefined ? result.q90 : null,
+            };
+        }
+    
+        // Ajouter les données de yearTabPrecipitation
+        for (const entry of this.YearTabPrecipitationByDaily) {
+            mergedData[entry.daily][`${entry.years}`] = entry.cumulative_daily_rainfall;
+        }
+                              
+          // Initialisation de la chaîne CSV avec l'en-tête initial
+          let csv = 'Date,Q90,Q50,Q10';
+  
+          // Ajouter les années à l'en-tête CSV
+          this.yearSelectionChange.forEach(year => {
+              csv += `,${year}`;
+          });
+  
+          // Ajouter une nouvelle ligne pour le CSV
+          csv += '\n';
+  
+          // Parcours de mergedData pour construire le CSV
+          Object.keys(mergedData).forEach(date => {
+              // Reformater la date au format souhaité si nécessaire
+              const formattedDate = date; // Assurez-vous de reformater correctement la date si nécessaire
+  
+              // Extraire les valeurs q10, q50, q90
+              const q10 = mergedData[date]['q10'] !== null ? mergedData[date]['q10'] : '';
+              const q50 = mergedData[date]['q50'] !== null ? mergedData[date]['q50'] : '';
+              const q90 = mergedData[date]['q90'] !== null ? mergedData[date]['q90'] : '';
+  
+              // Construire la ligne CSV pour chaque date
+              let csvLine = `${formattedDate},${q90},${q50},${q10}`;
+  
+              // Ajouter les données spécifiques aux années
+              years.forEach(year => {
+                  const value = mergedData[date][year] !== null ? mergedData[date][year] : '';
+                  csvLine += `,${value}`;
+              });
+  
+              // Ajouter une nouvelle ligne pour le CSV
+              csvLine += '\n';
+  
+              // Ajouter la ligne au CSV final
+              csv += csvLine;
+          });
+  
+    
+              // Créer le Blob à partir du CSV
+              const blob = new Blob([csv], { type: 'text/csv' });
+    
+              // Créer l'URL du Blob
+              const url = window.URL.createObjectURL(blob);
+  
+              const fileName = `précipitation.csv`;
+    
+              // Créer un élément <a> pour le téléchargement du fichier
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+    
+              // Ajouter l'élément <a> au corps du document
+              document.body.appendChild(a);
+    
+              // Simuler un clic sur le lien pour déclencher le téléchargement
+              a.click();
+    
+              // Supprimer l'élément <a> du corps du document
+              document.body.removeChild(a);
+    
+              // Révoquer l'URL du Blob pour libérer la mémoire
+              window.URL.revokeObjectURL(url);
+              
+          }
   
 
 

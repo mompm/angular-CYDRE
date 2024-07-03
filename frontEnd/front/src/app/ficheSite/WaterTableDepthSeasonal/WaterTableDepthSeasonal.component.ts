@@ -1,4 +1,4 @@
-import { Component, Input, SimpleChanges, OnDestroy} from '@angular/core';
+import { Component, Input, SimpleChanges, OnDestroy, HostListener} from '@angular/core';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import * as Plotlydist from 'plotly.js-dist';
@@ -52,17 +52,29 @@ function generateColors(numColors: number): string[] {
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
+    TabDepthByDaily: any[] = []; //tableau contenant toutes les données Depth triés
+    YearTabDepthByDaily: any[] = []; //tableau contenant les données Depth triés des années selectionné
+    lastUpdate: any | null;// dernière update des données des données Depth
+    resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = []; // tableau contenant les quantiles 
+
     /**
      * 
      * @param dataService 
      * @param jsonService 
      */
     constructor(private dataService: DataService,private jsonService: JsonService) {
-      this.resizeListener= () => {
-        const hydrographWidth = 0.40 * window.innerWidth;
-        Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
-      };
+    this.resizeListener = () => {
+      const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+      const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
+      Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
     }
+  }
+  
+  // You should add the resize event listener to call the resizeListener method when the window is resized
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event) {
+    this.resizeListener();
+  }
 
     /**
      * 
@@ -108,11 +120,11 @@ function generateColors(numColors: number): string[] {
    * Traite les données de décharge pour les rendre utilisables par l'hydrographe.
    * @returns Un objet contenant les données de décharge quotidiennes et par année, ainsi que la dernière mise à jour.
    */
-  processedDepth(): { TabDepthByDaily: any[], YearTabDepthByDaily: any[], lastUpdate: any } {
+  processedDepth(): { DepthByDaily: any[], YearDepthByDaily: any[], Update: any } {
     const targetYears: number[] = this.yearSelectionChange;
-    const TabDepthByDaily: any[] = [];
-    const YearTabDepthByDaily: any[] = [];
-    let lastUpdate = null;
+    const DepthByDaily: any[] = [];
+    const YearDepthByDaily: any[] = [];
+    let Update = null;
       // Vérification si this.dischargeStation est défini et non vide
       if (this.DataDepth && this.DataDepth.length > 0) {
         for (const entry of this.DataDepth) {
@@ -121,8 +133,8 @@ function generateColors(numColors: number): string[] {
           const day = new Date(entry.t).getDate(); // Récupérer le jour de la date
           const currentDate = new Date(entry.t);
 
-          if (!lastUpdate || currentDate > lastUpdate|| !isNaN(parseFloat(entry.t))) {
-            lastUpdate = currentDate; 
+          if (!Update || currentDate > Update|| !isNaN(parseFloat(entry.t))) {
+            Update = currentDate; 
           }
           // Formater le mois et le jour avec le format "mm-dd"
           const monthDay = `${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
@@ -139,33 +151,33 @@ function generateColors(numColors: number): string[] {
     
           // Ajouter cet objet au tableau de données traitées
           if (!isNaN(parseFloat(entry.d))) {
-            TabDepthByDaily.push(newDataEntry);
+            DepthByDaily.push(newDataEntry);
           }
 
           if (targetYears.includes(year)) {
-            YearTabDepthByDaily.push(newDataEntry);
+            YearDepthByDaily.push(newDataEntry);
           }
         }
       }
-    return { TabDepthByDaily, YearTabDepthByDaily, lastUpdate };
+    return { DepthByDaily, YearDepthByDaily, Update };
   }
 
     /**
    * Calcule les quantiles (10ème, 50ème, et 90ème) des données de décharge.
-   * @param TabDepthByDaily Tableau des données de profondeur quotidiennes.
+   * @param DepthByDaily Tableau des données de profondeur quotidiennes.
    * @returns Un objet contenant les quantiles calculés et les données groupées par jour.
    */
-    calculateQuantiles(TabDepthByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
+    calculateQuantiles(DepthByDaily: any[]): { resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[], q10: any, q50: any, q90: any } {
       const resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = [];
       let q10: any;
       let q50: any;
       let q90: any;
 
-      from(TabDepthByDaily)
+      from(DepthByDaily)
       .pipe(
         filter(entry => !isNaN(parseFloat(entry.d))),
         groupBy(
-          TabDepthByDaily => TabDepthByDaily.daily,
+          DepthByDaily => DepthByDaily.daily,
           p => p.d
         ),
         mergeMap(group => zip(of(group.key), group.pipe(toArray())))
@@ -203,9 +215,14 @@ function generateColors(numColors: number): string[] {
     }
 
     Depth_Seasonal() {
+      const hyperlien = `https://ades.eaufrance.fr/Fiche/PtEau?Code=${this.DataDepth[1]}`;
         const targetYears: number[] = this.yearSelectionChange;
-        const  { TabDepthByDaily, YearTabDepthByDaily, lastUpdate } = this.processedDepth();
-        const { resultArray, q10, q50, q90 } = this.calculateQuantiles(TabDepthByDaily);
+        const  { DepthByDaily, YearDepthByDaily, Update } = this.processedDepth();
+        this.TabDepthByDaily = DepthByDaily;
+        this.YearTabDepthByDaily = YearDepthByDaily;
+        this.lastUpdate = Update;
+        const { resultArray, q10, q50, q90 } = this.calculateQuantiles(DepthByDaily);
+        this.resultArray = resultArray;
 
         const resultArraysKeys = resultArray.map(entry => entry.key);
         const variabilityX = resultArraysKeys.concat(resultArraysKeys.slice().reverse());
@@ -275,7 +292,7 @@ function generateColors(numColors: number): string[] {
                         color: "#999"
                     } 
                 },
-                {   text: 'Source : ADES', 
+                {   text: `<a href="${hyperlien}" style="color:gray; font-family: 'Segoe UI Semilight'; font-size: 14px;">Source : ADES</a>`, 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 
@@ -296,8 +313,8 @@ function generateColors(numColors: number): string[] {
             legend: { orientation: "h", yanchor: "top", y: 1.1, xanchor: "right", x: 1 }
         }
     };
-        const startYear = TabDepthByDaily.length > 0 ? TabDepthByDaily[1].years : 'N/A';
-        const endYear = TabDepthByDaily.length > 0 ? TabDepthByDaily[TabDepthByDaily.length - 1].years : 'N/A';
+        const startYear = this.TabDepthByDaily.length > 0 ? this.TabDepthByDaily[1].years : 'N/A';
+        const endYear = this.TabDepthByDaily.length > 0 ? this.TabDepthByDaily[this.TabDepthByDaily.length - 1].years : 'N/A';
         // Construction du libellé pour la moyenne
         const labelmedian = `moyenne [${startYear} - ${endYear}]`;
         const labelinvariant = `variabilité [${startYear} - ${endYear}]`;
@@ -309,7 +326,8 @@ function generateColors(numColors: number): string[] {
           y: resultArray.map(item => item.q50),
           mode: 'lines',
           name: labelmedian,
-          line: { color: 'black', width: 1.5, dash : 'dot' }
+          line: { color: 'black', width: 1.5, dash : 'dot' },
+          hovertemplate: 'moyenne: %{y:.3f} m<extra></extra>',
         });
   
         //trace invariant
@@ -327,7 +345,7 @@ function generateColors(numColors: number): string[] {
             // Boucle sur les événements
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
-        const df_event = YearTabDepthByDaily.filter(item => item.years === year);
+        const df_event = this.YearTabDepthByDaily.filter(item => item.years === year);
         if (df_event) {
           const trace = {
             x: df_event.map(item => item.daily),
@@ -337,15 +355,16 @@ function generateColors(numColors: number): string[] {
             line: {
               color: colors[i], // Utilisation des couleurs générées par Chroma.js
               width: 1.5
-            }
+            },
+            hovertemplate: `${year}: %{y:.3f} m<extra></extra>`,
           };
           this.fig.data.push(trace); // Ajouter la trace à this.fig.data
         }
       }
       
         // Mettre à jour l'annotation pour afficher la date de mise à jour actuelle
-        if (lastUpdate){       
-          const currentDate = `${lastUpdate.getDate().toString().padStart(2, '0')}-${(lastUpdate.getMonth() + 1).toString().padStart(2, '0')}-${lastUpdate.getFullYear()}`;
+        if (this.lastUpdate){       
+          const currentDate = `${this.lastUpdate.getDate().toString().padStart(2, '0')}-${(this.lastUpdate.getMonth() + 1).toString().padStart(2, '0')}-${this.lastUpdate.getFullYear()}`;
           const updatedAnnotation = this.fig.layout.annotations.find((annotation: any) => annotation.text.includes('Mis à jour le :'));
           if (updatedAnnotation) {
             updatedAnnotation.text = `Mis à jour le : ${currentDate}`;
@@ -353,12 +372,99 @@ function generateColors(numColors: number): string[] {
       }
     
         // Tracer la figure Plotly
-        const hydrographWidth = 0.40 * window.innerWidth;
+        //const hydrographWidth = 0.40 * window.innerWidth;
+        const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+        const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
         Plotlydist.newPlot('DepthSeasonal', this.fig.data, this.fig.layout, { responsive: true });
         Plotlydist.relayout('DepthSeasonal', { width: hydrographWidth });
         
       
       }
+  
+      downloadCSV(){
+        console.log(this.YearTabDepthByDaily)
+        // Initialiser un objet pour stocker les données fusionnées
+        const mergedData: { [key: string]: { [year: string]: number | null, q10: number | null ,q50: number | null, q90: number | null} } = {};
+        // Initialiser les années présentes dans yearTabDepth
+        const years = this.yearSelectionChange;  
+        // Ajouter les données de resultArray
+        for (const result of this.resultArray) {
+            mergedData[result.key] = {
+              q10: result.q10 !== undefined ? result.q10 : null,
+              q50: result.q50 !== undefined ? result.q50 : null,
+              q90: result.q90 !== undefined ? result.q90 : null,
+            };
+        }
+    
+        // Ajouter les données de yearTabDepth
+        for (const entry of this.YearTabDepthByDaily) {
+            mergedData[entry.daily][`${entry.years}`] = entry.d;
+        }
+                              
+          // Initialisation de la chaîne CSV avec l'en-tête initial
+          let csv = 'Date,Q90,Q50,Q10';
+  
+          // Ajouter les années à l'en-tête CSV
+          this.yearSelectionChange.forEach(year => {
+              csv += `,${year}`;
+          });
+  
+          // Ajouter une nouvelle ligne pour le CSV
+          csv += '\n';
+  
+          // Parcours de mergedData pour construire le CSV
+          Object.keys(mergedData).forEach(date => {
+              // Reformater la date au format souhaité si nécessaire
+              const formattedDate = date; // Assurez-vous de reformater correctement la date si nécessaire
+  
+              // Extraire les valeurs q10, q50, q90
+              const q10 = mergedData[date]['q10'] !== null ? mergedData[date]['q10'] : '';
+              const q50 = mergedData[date]['q50'] !== null ? mergedData[date]['q50'] : '';
+              const q90 = mergedData[date]['q90'] !== null ? mergedData[date]['q90'] : '';
+  
+              // Construire la ligne CSV pour chaque date
+              let csvLine = `${formattedDate},${q90},${q50},${q10}`;
+  
+              // Ajouter les données spécifiques aux années
+              years.forEach(year => {
+                  const value = mergedData[date][year] !== null ? mergedData[date][year] : '';
+                  csvLine += `,${value}`;
+              });
+  
+              // Ajouter une nouvelle ligne pour le CSV
+              csvLine += '\n';
+  
+              // Ajouter la ligne au CSV final
+              csv += csvLine;
+          });
+  
+    
+              // Créer le Blob à partir du CSV
+              const blob = new Blob([csv], { type: 'text/csv' });
+    
+              // Créer l'URL du Blob
+              const url = window.URL.createObjectURL(blob);
+  
+              const fileName = `profondeur_de_la_nappe[${this.DataDepth[1]}].csv`;
+    
+              // Créer un élément <a> pour le téléchargement du fichier
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+    
+              // Ajouter l'élément <a> au corps du document
+              document.body.appendChild(a);
+    
+              // Simuler un clic sur le lien pour déclencher le téléchargement
+              a.click();
+    
+              // Supprimer l'élément <a> du corps du document
+              document.body.removeChild(a);
+    
+              // Révoquer l'URL du Blob pour libérer la mémoire
+              window.URL.revokeObjectURL(url);
+              
+          }
   
 
 

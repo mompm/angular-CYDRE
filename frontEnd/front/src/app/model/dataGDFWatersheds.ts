@@ -9,6 +9,7 @@ export default class dataGDFWatersheds {
     min_lat : number;
     max_lon : number;
     max_lat: number;
+
   
     constructor(index: string, name: string, geometry_area: number, hydro_area: number,K1: any, geometry: any, min_lon : number , min_lat: number, max_lon: number, max_lat: number) {
         this.index = index;

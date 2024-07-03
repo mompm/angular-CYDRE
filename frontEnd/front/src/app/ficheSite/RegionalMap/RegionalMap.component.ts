@@ -21,7 +21,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
 
     @Input() stationSelectionChange!: string; // Prend en entrée la sélection de la station
     @Output() markerClick: EventEmitter<string> = new EventEmitter<string>(); // Émetteur d'événement pour le clic sur un marqueur
-    private RegionalMapLeaflet!: L.Map; // Instance de la carte Leaflet
+    //private RegionalMapLeaflet!: L.Map; // Instance de la carte Leaflet
     MapExecutee = false; // Indicateur si la carte a été initialisée
     DataGDFWatersheds: dataGDFWatersheds[] = []; // Données des bassins versants
     DataGDFPiezometry: dataGDFPiezometry[] = []; // Données des piézomètres
@@ -141,11 +141,12 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         this.DataGDFPiezometry = data;
       });
     }
-
+    
     /**
      * affiche la carte régional avec Leaflet (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
      * @param stationID 
      */
+    /*
     RegionalMap_Leaflet(stationID: string) {
       //si la carte existe, supprime (permet la maj pour la station selectionnée)
       if (this.RegionalMapLeaflet) {
@@ -206,8 +207,8 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         // Ajout du marqueur 
         markerstations.addTo(this.RegionalMapLeaflet);
       }
+        
       
-      /*
       //création des point piezo  
       //boucle parcourant tous les points des piezometre  
       for (let i = 0; i < this.DataGDFPiezometry.length; i++){
@@ -217,128 +218,96 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
         // Ajout du marqueur 
         markerpiezo.addTo(this.RegionalMapLeaflet);
       }
-      */
+      
     }
-
+*/
 
     /**
      * affiche la carte régional avec plotly (contour station selectionée rouge, contour des autre stations, points de la station, points piezo )
      * @param stationID 
      * @returns 
      */
-   RegionalMap_Plotly(stationID: string) {
-      
-    const figData: any[] = [];
-    //met en place apparence de la carte
-    const figLayout = {
-      mapbox: {
-        // les différents styles possibles sont 'white-bg' 'open-street-map', 'carto-positron', et 'carto-darkmatter'
-        style: 'open-street-map',
-        center: { lat: 48.2141667, lon: -2.9424167 },
-        zoom: 6.5,
-      },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      margin: { l: 0, r: 0, t: 0, b: 0 },
-      showlegend: false
-    };
-    // vérifie si la station sélectionner est bien dans les stations
-    const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
-    if (!stationData) return; // Sinon sort de la fonction 
-
-    // Ajoute couches tous les contours de stations 
-    const watershedPolygons = this.DataGDFWatersheds.map((data, index) => {
-      const polygonCoords = data.geometry.coordinates[0];
-      return {
-        type: 'scattermapbox',
-        lon: polygonCoords.map((coord: number[]) => coord[0]),
-        lat: polygonCoords.map((coord: number[]) => coord[1]),
-        mode: 'lines',
-        line: { width: 0.8, color: '#3E88A6' },
-        fill: 'toself',
-        fillcolor: 'rgba(0, 0, 0, 0.1)',
-        hoverinfo: 'none',
-        name: `Watershed Boundaries ${index + 1}`
+    RegionalMap_Plotly(stationID: string) {
+      const figData: any[] = [];
+      const figLayout = {
+          mapbox: {
+              style: 'open-street-map',
+              center: { lat: 48.2141667, lon: -2.9424167 },
+              zoom: 6.5,
+          },
+          paper_bgcolor: 'rgba(0,0,0,0)',
+          margin: { l: 0, r: 0, t: 0, b: 0 },
+          showlegend: false
       };
-    });
-    figData.push(...watershedPolygons);
-  
-    // Ajoute couche contour de la station selectionnée
-    const selectedPolygonCoords = stationData.geometry.coordinates[0];
-    figData.push({
-      type: 'scattermapbox',
-      lon: selectedPolygonCoords.map((coord: number[]) => coord[0]),
-      lat: selectedPolygonCoords.map((coord: number[]) => coord[1]),
-      mode: 'lines',
-      line: { width: 0.0001 , color: '#3E88A6'},
-      fill: 'toself',
-      fillcolor: 'rgba(255, 0, 0, 0.5)',
-      hoverinfo: 'none',
-      name: 'Selected Watershed'
-    });
 
-    //récupère les informations des points stations
-    const x_wgs84_station: any[] = [];
-    const y_wgs84_station: any[] = [];
-    const text_station: any[] = []; 
-    for (let i = 0; i < this.DataGDFStation.length; i++) {
-        x_wgs84_station.push(this.DataGDFStation[i].x_outlet);
-        y_wgs84_station.push(this.DataGDFStation[i].y_outlet);
-        text_station.push(`${this.DataGDFStation[i].index} - ${this.DataGDFStation[i].station_name}`);
-    }
-    //Ajoute couches des points stations
-    figData.push({
-      type: 'scattermapbox',
-      lon: x_wgs84_station,
-      lat: y_wgs84_station,
-      mode: 'markers',
-      marker: { size: 5, color: '#3E88A6' },
-      hoverinfo:'text',
-      hovertext: text_station,
-      name: '',
-    });
+      const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
+      if (!stationData) return;
 
-    /*
-    //récupère les information points piezo
-    const x_wgs84_piezo: any[] = [];
-    const y_wgs84_piezo: any[] = [];
-    const text_piezo: any[] = []; 
-    for (let i = 0; i < this.DataGDFPiezometry.length; i++) {
-      x_wgs84_piezo.push(this.DataGDFPiezometry[i].x_wgs84);
-      y_wgs84_piezo.push(this.DataGDFPiezometry[i].y_wgs84);
-      text_piezo.push(`${this.DataGDFPiezometry[i].identifiant_BSS} - ${this.DataGDFPiezometry[i].Nom}`);
-    }
-    //Ajoute la couche des points piezo
-    figData.push({
-      type: 'scattermapbox',
-      lon: x_wgs84_piezo,
-      lat: y_wgs84_piezo,
-      mode: 'markers',
-      marker: { size: 5, color: 'purple' },
-      hoverinfo:'text',
-      hovertext: text_piezo,
-      name: '',
-    });
-    */
-    // Création de la carte regional ! identifiant de cette element est map :)
-    const hydrographWidth = 0.50 * window.innerWidth;
-    Plotlydist.newPlot('RegionalMapPlotly', figData,  figLayout, { responsive: true });
-    Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
-
-    const plotlyElement = document.getElementById('RegionalMapPlotly');
-    if (plotlyElement) {
-      (plotlyElement as any).on('plotly_click', (data: any) => {
-        const point = data.points[0];
-        const text = point.hovertext;
-        const id = text.split(' - ')[0]; // Sépare la chaîne en utilisant le caractère "-"
-        this.markerClick.emit(id);
-        console.log(`ID du marker : ${id}`);
+      const watershedPolygons = this.DataGDFWatersheds.map((data, index) => {
+          const polygonCoords = data.geometry.coordinates[0];
+          return {
+              type: 'scattermapbox',
+              lon: polygonCoords.map((coord: number[]) => coord[0]),
+              lat: polygonCoords.map((coord: number[]) => coord[1]),
+              mode: 'lines',
+              line: { width: 0.8, color: '#3E88A6' },
+              fill: 'toself',
+              fillcolor: 'rgba(0, 0, 0, 0.1)',
+              hoverinfo: 'none',
+              name: `Watershed Boundaries ${index + 1}`
+          };
       });
-    }
-    
-    
+      figData.push(...watershedPolygons);
+
+      const selectedPolygonCoords = stationData.geometry.coordinates[0];
+      figData.push({
+          type: 'scattermapbox',
+          lon: selectedPolygonCoords.map((coord: number[]) => coord[0]),
+          lat: selectedPolygonCoords.map((coord: number[]) => coord[1]),
+          mode: 'lines',
+          line: { width: 0.0001, color: '#3E88A6' },
+          fill: 'toself',
+          fillcolor: 'rgba(255, 0, 0, 0.5)',
+          hoverinfo: 'none',
+          name: 'Selected Watershed'
+      });
+
+      const x_wgs84_station: any[] = [];
+      const y_wgs84_station: any[] = [];
+      const text_station: any[] = [];
+      for (let i = 0; i < this.DataGDFStation.length; i++) {
+          x_wgs84_station.push(this.DataGDFStation[i].x_outlet);
+          y_wgs84_station.push(this.DataGDFStation[i].y_outlet);
+          text_station.push(`${this.DataGDFStation[i].index} - ${this.DataGDFStation[i].station_name}`);
+      }
+
+      figData.push({
+          type: 'scattermapbox',
+          lon: x_wgs84_station,
+          lat: y_wgs84_station,
+          mode: 'markers',
+          marker: { size: 5, color: '#3E88A6' },
+          hoverinfo: 'text',
+          hovertext: text_station,
+          name: '',
+      });
+
+      const hydrographWidth = 0.50 * window.innerWidth;
+      Plotlydist.newPlot('RegionalMapPlotly', figData, figLayout, { responsive: true }).then(() => {
+          Plotlydist.relayout('RegionalMapPlotly', { width: hydrographWidth });
+
+          const plotlyElement = document.getElementById('RegionalMapPlotly');
+          if (plotlyElement) {
+              (plotlyElement as any).on('plotly_click', (data: any) => {
+                  const point = data.points[0];
+                  const text = point.hovertext;
+                  const id = text.split(' - ')[0];
+                  this.markerClick.emit(id);
+                  console.log(`ID du marker : ${id}`);
+              });
+          }
+      }).catch(error => {
+          console.error("Error loading Plotly map:", error);
+      });
   }
-
-   
-
-  
 }

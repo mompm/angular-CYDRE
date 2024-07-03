@@ -1,9 +1,7 @@
-<div class="body">
+<div class="body" style="margin-left: 10%; margin-right: 10%;">
   <div>
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <!-- <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button> -->
-      <!-- Bulle d'info pour la sélection des stations hydrologiques -->
       <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
         <mat-icon>info</mat-icon>
       </button>
@@ -69,32 +67,45 @@
       </div>
     </div>
     <div class="seasonal_plot_div">
-    <app-hydrographGlobal [stationSelectionChange] = "selectedWatershedID" ></app-hydrographGlobal>
-    <div style="text-align: center;">
-    <h3>Dynamique saisonnière de la ressource en eau</h3>
-    <p>Choix d'une année à visualiser :</p>
-    <mat-form-field class="second-dropdown">
-      <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]=" selectedYears" class="second-dropdown">
-        <mat-option *ngFor="let year of years" [value]="year">
-          {{ year }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-  <div class="container_seasonal">
-    <div class="seasonal_plot">
-      <div ><app-temperatureSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-temperatureSeasonal></div>
-      <div ><app-precipitationSeasonal  [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears"></app-precipitationSeasonal></div>
+      <app-hydrographGlobal [stationSelectionChange]="selectedWatershedID"></app-hydrographGlobal>
+      <div style="text-align: center;">
+        <h3>Dynamique saisonnière de la ressource en eau</h3>
+        <p>Choix d'une année à visualiser :</p>
+        <mat-form-field class="second-dropdown">
+          <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears" class="second-dropdown">
+            <mat-option *ngFor="let year of years" [value]="year">
+              {{ year }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="container_seasonal">
+        <div class="seasonal_plot">
+          <div><app-temperatureSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-temperatureSeasonal></div>
+          <div><app-precipitationSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-precipitationSeasonal></div>
+        </div>
+        <div class="seasonal_plot">
+          <div><app-hydrographSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-hydrographSeasonal></div>
+          <div *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-WaterTableDepthSeasonal></div>
+        </div>
+      </div>
     </div>
-    <div class="seasonal_plot">
-      <div ><app-hydrographSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-hydrographSeasonal> </div>
-      <div  *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange] = "selectedWatershedID" [yearSelectionChange] = " selectedYears" ></app-WaterTableDepthSeasonal></div>
+    
+  <div>
+    <div class="h3_div">
+      <h3 class="h3_text">TITRE</h3>
     </div>
-  
-  
   </div>
+  <div class="seasonal_plot_div">
+      <!--<div id="mappy"></div>-->
+      <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;">
+        <div id="mapy" class="map_typologie"></div>
+        <div style="height: 350px; width: 30%;">
+          <strong>Légende des Typologies</strong>
+          <div id="legend-items"></div>
+        </div>
+      </div>
   </div>
-  
-  </div>
+</div>
   
   
