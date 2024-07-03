@@ -7,7 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { AnotherDialog } from '../documentTuto/documentTuto';
+import { Documentation } from '../documentation/documentation';
 
 @Component({
   selector: 'app-navbar',
@@ -80,7 +80,7 @@ export class NavbarComponent {
   }
 
   openDialog() {
-    this.dialog.open(AnotherDialog, {});
+    this.dialog.open(Documentation, {});
   }
 }
 

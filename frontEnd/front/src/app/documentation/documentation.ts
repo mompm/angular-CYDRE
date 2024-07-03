@@ -5,12 +5,12 @@ import { CommonModule } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
-  selector: 'another-dialog',
-  templateUrl: './app-dialog.html',
-  styleUrls: ['./app-dialog.scss'],
+  selector: 'documentation',
+  templateUrl: './documentation.html',
+  styleUrls: ['./documentation.scss'],
 })
-export class AnotherDialog {
-  constructor(public dialogRef: MatDialogRef<AnotherDialog>) {}
+export class Documentation {
+  constructor(public dialogRef: MatDialogRef<Documentation>) {}
 
   onClose(): void {
     this.dialogRef.close();

@@ -10,7 +10,7 @@ import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {MatTabsModule} from '@angular/material/tabs';
-import { AnotherDialog } from './documentTuto/documentTuto';
+import { Documentation } from './documentation/documentation';
 
 @Component({
   selector: 'app-root',
@@ -36,7 +36,7 @@ export class AppComponent implements OnInit{
     this.openDialog();
   }
   openDialog() {
-    this.dialog.open(AnotherDialog);
+    this.dialog.open(Documentation);
   }
 
 }
