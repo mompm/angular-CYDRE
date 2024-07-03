@@ -1238,7 +1238,7 @@ class Graph():
             'volume50': float(self.volume50),
             'volume10': float(self.volume10),
             'volume90': float(self.volume90),
-            'prop_alert_all_series': int(self.prop_alert_all_series),
+            'prop_alert_all_series': float(self.prop_alert_all_series),
             'ndays_before_alert':{
                 'Q10': float(self.ndays_before_alert_Q10),
                 'Q50': float(self.ndays_before_alert_Q50),
@@ -1391,7 +1391,7 @@ class Graph():
             'Q90': float(self.ndays_below_alert['Q90']),
             'Q10': float(self.ndays_below_alert['Q10'])
         },
-        'prop_alert_all_series': int(self.prop_alert_all_series),
+        'prop_alert_all_series': float(self.prop_alert_all_series),
         'volume50': float(self.volume50),
         'volume10': float(self.volume10),
         'volume90': float(self.volume90),
