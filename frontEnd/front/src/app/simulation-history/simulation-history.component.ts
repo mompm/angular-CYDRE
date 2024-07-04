@@ -11,12 +11,23 @@ import { forEach } from 'mathjs';
 })
 export class SimulationHistoryComponent implements OnInit {
   simulations: any[] = [];
-
+  user_horizon : number =0;
   constructor(private jsonService: JsonService, private router: Router,private http: HttpClient,) {}
 
   ngOnInit() {
     this.jsonService.getUserSimulations().subscribe({
-      next: (data) => {this.simulations = data;
+      next: (data) => {
+        this.simulations = data;
+        data.forEach((simulation)=>{
+          if(!simulation.parameters.user_horizon){
+            simulation.parameters['user_horizon']=simulation.parameters.UserConfig['user_horizon']
+            console.log("user_horizon added:"+simulation.parameters['user_horizon']);
+          }
+          if(!simulation.parameters.date){
+            simulation.parameters['date']=simulation.parameters.General['date']
+            console.log("date added:"+simulation.parameters['date']);
+          }
+        })
         console.log(this.simulations)},
       error: (err) => console.error('Failed to load simulations', err)
     });

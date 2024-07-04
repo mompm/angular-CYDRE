@@ -161,8 +161,8 @@ class SimulationsBeta(db.Model):
 
 
 @app.route('/api/simulations', methods=['GET'])
-@login_required
 @cross_origin
+@login_required
 def get_simulations():
     # Assurez-vous que l'utilisateur est connecté et récupérez son ID
     user_id = current_user.id
