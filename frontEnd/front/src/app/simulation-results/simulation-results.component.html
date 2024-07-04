@@ -106,7 +106,7 @@
     </div>
 
     <!-- Calcul et affichage des indicateurs opérationnels -->
-    <div *ngFor="let indicator of results.indicators">
+    <div *ngFor="let indicator of results.indicators; let i = index">
       <div class="card my-4 ">
         <div class="card-header">
           <div class="align-tooltip">
@@ -116,49 +116,58 @@
         <div class="card-body">
           <div class="containerIndicatiors">
             <div class="containerIndicatior" *ngIf="indicator.type == '1/10 du module'">
-              <p class="titleIndicators">Valeur en débit</p>
-              <p class="moyenneIndicators" *ngIf="indicator.type =='1/10 du module'">{{indicator.results.proj_values.Q50 | number: '1.2-2' }}</p>
+              <p class="moyenneIndicators" *ngIf="indicator.type =='1/10 du module'">{{indicator.results.proj_values.Q50 | number: '1.2-2' }} m³/s</p>
               <p class="resultIndicators" *ngIf="indicator.results.proj_values ">
-                [{{ min(indicator.results.proj_values.Q10,indicator.results.proj_values.Q10) | number: '1.3-3' }} - {{
-                max(indicator.results.proj_values.Q10,indicator.results.proj_values.Q90) | number: '1.3-3' }}]
+                [{{ min(indicator.results.proj_values.Q10,indicator.results.proj_values.Q10) | number: '1.2-2' }} - {{
+                max(indicator.results.proj_values.Q10,indicator.results.proj_values.Q90) | number: '1.2-2' }}]
               </p>
               <p class="descriptionIndicators" *ngIf="results.results.data.last_date ">
-                Valeur du débit au {{ results.results.data.last_date }} en m3/s. Cela représente une évolution de {{
-                indicator.results.proj_values.Q50 | number: '1.1-1' }} %
+                estimation du débit au {{ results.results.data.last_date }}
               </p>
+              <button mat-button class="boutonindicator" [matTooltip]="tooltipTextsEstimationValue[i]">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
             <div class="containerIndicatior">
-              <p class="titleIndicators">Franchissement du seuil</p>
               <p class="moyenneIndicators" *ngIf="indicator.results.ndays_before_alert">{{
-                indicator.results.ndays_before_alert['Q50'] }}</p>
+                indicator.results.ndays_before_alert['Q50'] }} jours</p>
               <p class="resultIndicators" *ngIf="indicator.results.ndays_before_alert">
                 [{{ min(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }} - 
                 {{ max(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }}]
               </p>
-              <p class="descriptionIndicators">Nombre de jours avant que le seuil soit atteint.</p>
+              <p class="descriptionIndicators">Franchissement du seuil</p>
+              <button mat-button class="boutonindicator" matTooltip="Nombre de jours avant que le seuil soit atteint">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
             <div class="containerIndicatior">
-              <p class="titleIndicators">Durée du seuil</p>
               <p class="moyenneIndicators" *ngIf="indicator.results.ndays_below_alert">{{
-                indicator.results.ndays_below_alert.Q50 }}</p>
+                indicator.results.ndays_below_alert.Q50 }} jours</p>
               <p class="resultIndicators" *ngIf="indicator.results.ndays_below_alert">
                 [{{ min(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90) }} - 
                 {{ max(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90)  }}]
               </p>
-              <p class="descriptionIndicators">Nombre de jours cumulés sous le seuil</p>
+              <p class="descriptionIndicators">Durée du seuil</p>
+              <button mat-button class="boutonindicator" matTooltip="Nombre de jours cumulés sous le seuil">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
             <div class="containerIndicatior">
-              <p class="titleIndicators">Probabilité</p>
               <p class="moyenneIndicators">{{ (indicator.results.prop_alert_all_series || 0) * 100 | number: '1.1-1' }} %</p>
-              <p class="resultIndicators"  >-</p>
-              <p class="descriptionIndicators">Proportion d'événements où le seuil est atteint dans les prochains mois</p>
+              <p class="resultIndicators"> - </p>
+              <p class="descriptionIndicators">Probabilité</p>
+              <button mat-button class="boutonindicator" matTooltip="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
             <div class="containerIndicatior">
-              <p class="titleIndicators">Volume manquant</p>
-              <p class="moyenneIndicators">{{ (indicator.results.volume50 || 0) | number: '1.2-2' }} m3</p>
-              <p class="resultIndicators" >{{ (min(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.3-3' }} - {{
-                (max(indicator.results.volume10,indicator.results.volume90) || 0) | number: '1.3-3' }}</p>
-              <p class="descriptionIndicators">Volume manquant pour compenser le dépassement du seuil</p>
+              <p class="moyenneIndicators">{{ getVolumeAsInt(indicator.results.volume50) }} m³</p>
+              <p class="resultIndicators" >[{{ getVolumeAsInt(min(indicator.results.volume10,indicator.results.volume90)) }} - {{
+                getVolumeAsInt(max(indicator.results.volume10,indicator.results.volume90))}}]</p>
+              <p class="descriptionIndicators">Volume manquant</p>
+              <button mat-button class="boutonindicator" matTooltip="Volume manquant pour compenser le dépassement du seuil">
+                <mat-icon>help</mat-icon>
+              </button>
             </div>
           </div>
         </div>
@@ -180,14 +189,26 @@
           <option value="all">Toutes</option> 
         </select>
       </div>
-      <div class="heatmapcontainer">
-        <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmap">
+      
+      <div *ngIf="matricecolumn; else defaultContainer" class="heatmapcontainercolumn">
+        <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmapcolumn ">
           <div class="heatmap-content" id="matriceRecharge"></div>
         </div>
-        <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" class="heatmap">
+        <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" class="heatmapcolumn ">
           <div class="heatmap-content" id="matriceSpecificDischarge"></div>
         </div>
       </div>
+      <ng-template #defaultContainer>
+        <div class="heatmapcontainer">
+          <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmap">
+            <div class="heatmap-content" id="matriceRecharge"></div>
+          </div>
+          <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" class="heatmap">
+            <div class="heatmap-content" id="matriceSpecificDischarge"></div>
+          </div>
+        </div>
+      </ng-template>
+
     </div>
     
     <!-- <div class="card my-4">
