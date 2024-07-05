@@ -7,26 +7,8 @@ import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataTemperature from 'src/app/model/dataTemperature';
+import { ColorService } from 'src/app/color-service.service';
 
-/**
- * Génère une palette de couleurs distinctes.
- * La fonction crée un tableau de couleurs en utilisant le modèle de couleur HSL (teinte, saturation, luminosité).
- * Les couleurs sont réparties uniformément sur le cercle chromatique en fonction du nombre de couleurs demandé.
- * 
- * @param numColors Le nombre de couleurs à générer.
- * @returns Un tableau de chaînes de caractères représentant les couleurs en format HSL.
- */
-function generateColors(numColors: number): string[] {
-  const colors: string[] = []; // Tableau pour stocker les couleurs générées
-  const hueStep = 360 / numColors; // Calcul de l'intervalle de teinte pour chaque couleur
-
-  for (let i = 0; i < numColors; i++) {
-    const hue = i * hueStep; // Calcul de la teinte pour la couleur actuelle
-    colors.push(`hsl(${hue}, 100%, 50%)`); // Ajout de la couleur au format HSL dans le tableau
-  }
-
-  return colors; // Retourne le tableau de couleurs générées
-}
 
 /**
  * Déclare un composant Angular pour afficher les températures saisonnières.
@@ -52,6 +34,7 @@ function generateColors(numColors: number): string[] {
     YearTabTemperatureByDaily: any[] = []; //tableau contenant les données Temperature triés des années selectionné
     lastUpdate: any | null;// dernière update des données des données Temperature
     resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = []; // tableau contenant les quantiles 
+   
 
 
     /**
@@ -60,7 +43,7 @@ function generateColors(numColors: number): string[] {
      * @param dataService Service de gestion des données
      * @param jsonService Service de gestion des JSON
      */
-    constructor(private dataService: DataService,private jsonService: JsonService) {
+    constructor(private dataService: DataService,private jsonService: JsonService,private colorService: ColorService) {
     this.resizeListener = () => {
       const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
       const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
@@ -315,27 +298,25 @@ function generateColors(numColors: number): string[] {
           name: labelinvariant,
           hoverinfo: 'none' 
         });
-        const lengthYear = targetYears.length;
-        const colors = generateColors(lengthYear);
             // Boucle sur les événements
-      for (let i = 0; i < targetYears.length; i++) {
-        const year = targetYears[i];
-        const df_event = this.YearTabTemperatureByDaily.filter(item => item.years === year);
-        if (df_event) {
-          const trace = {
-            x: df_event.map(item => item.daily),
-            y: df_event.map(item => item.Q),
-            mode: 'lines',
-            name: String(year),
-            line: {
-              color: colors[i], 
-              width: 1.5
-            },
-            hovertemplate: `${year}: %{y:.3f} °C<extra></extra>`,
-          };
-          this.fig.data.push(trace); // Ajouter la trace à this.fig.data
-        }
-      }
+            for (let i = 0; i < targetYears.length; i++) {
+              const year = targetYears[i];
+              const df_event = this.YearTabTemperatureByDaily.filter(item => item.years === year);
+              if (df_event) {
+                const trace = {
+                  x: df_event.map(item => item.daily),
+                  y: df_event.map(item => item.Q),
+                  mode: 'lines',
+                  name: String(year),
+                  line: {
+                    color: this.colorService.getColorForYear(year), // Utilisation de la fonction pour obtenir une couleur
+                    width: 1.5
+                  },
+                  hovertemplate: `${year}: %{y:.3f} °C<extra></extra>`,
+                };
+                this.fig.data.push(trace); // Ajouter la trace à this.fig.data
+              }
+            }
       
         // Mettre à jour l'annotation pour afficher la date de mise à jour actuelle
         if (this.lastUpdate){       

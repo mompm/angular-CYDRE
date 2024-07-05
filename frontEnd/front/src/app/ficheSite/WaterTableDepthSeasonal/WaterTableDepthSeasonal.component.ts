@@ -7,26 +7,7 @@ import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataDepth from 'src/app/model/dataDepth';
-
-/**
- * Génère une palette de couleurs distinctes.
- * La fonction crée un tableau de couleurs en utilisant le modèle de couleur HSL (teinte, saturation, luminosité).
- * Les couleurs sont réparties uniformément sur le cercle chromatique en fonction du nombre de couleurs demandé.
- * 
- * @param numColors Le nombre de couleurs à générer.
- * @returns Un tableau de chaînes de caractères représentant les couleurs en format HSL.
- */
-function generateColors(numColors: number): string[] {
-  const colors: string[] = []; // Tableau pour stocker les couleurs générées
-  const hueStep = 360 / numColors; // Calcul de l'intervalle de teinte pour chaque couleur
-
-  for (let i = 0; i < numColors; i++) {
-    const hue = i * hueStep; // Calcul de la teinte pour la couleur actuelle
-    colors.push(`hsl(${hue}, 100%, 50%)`); // Ajout de la couleur au format HSL dans le tableau
-  }
-
-  return colors; // Retourne le tableau de couleurs générées
-}
+import { ColorService } from 'src/app/color-service.service';
 
 /**
  * component pour graphique profondeur nappe
@@ -62,7 +43,7 @@ function generateColors(numColors: number): string[] {
      * @param dataService 
      * @param jsonService 
      */
-    constructor(private dataService: DataService,private jsonService: JsonService) {
+    constructor(private dataService: DataService,private jsonService: JsonService, private colorService : ColorService) {
     this.resizeListener = () => {
       const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
       const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
@@ -340,8 +321,6 @@ function generateColors(numColors: number): string[] {
           name: labelinvariant,
           hoverinfo: 'none' 
         });
-        const lengthYear = targetYears.length;
-        const colors =generateColors(lengthYear);
             // Boucle sur les événements
       for (let i = 0; i < targetYears.length; i++) {
         const year = targetYears[i];
@@ -353,7 +332,7 @@ function generateColors(numColors: number): string[] {
             mode: 'lines',
             name: String(year),
             line: {
-              color: colors[i], // Utilisation des couleurs générées par Chroma.js
+              color: this.colorService.getColorForYear(year), // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             },
             hovertemplate: `${year}: %{y:.3f} m<extra></extra>`,
