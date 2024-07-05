@@ -198,8 +198,8 @@ WaterShedMap_Leaflet(stationID:string){
     if (selectedStation) {
       //remplie les coordonées de la station pour le bound
       point1 = [selectedStation.y_outlet, selectedStation.x_outlet];
-      const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 7, color: 'black',weight : 1, fill:true, fillColor: '#38BFFF',fillOpacity:0.4 })
-        .bindPopup(`<b>Station hydrologique :</b><br>ID : ${selectedStation.index}<br>Nom: ${selectedStation.station_name}<br>(station piezo de référence: ${selectedStation.BSS_name})`);
+      const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 7, color: 'black',weight : 1, fill:true, fillColor: 'black',fillOpacity:1 })
+        .bindPopup(`<b>Station hydrologique :</b><br>ID : ${selectedStation.index}<br>Nom: ${selectedStation.station_name}<br>`);
       stationMarker.addTo(this.WatershedMapLeaflet);
       //chercher la station piezo avec ID BSS 
       const piezoSelectedStation = this.DataGDFPiezometry.find(data => data.identifiant_BSS === selectedStation.BSS_ID);
@@ -208,7 +208,7 @@ WaterShedMap_Leaflet(stationID:string){
         point2 = [piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84];
         console.log(piezoSelectedStation);
         const piezoMarker = L.circleMarker([piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84], { radius: 7, color: 'black',weight : 1,fill:true, fillColor: '#D800A0',fillOpacity:0.4})
-          .bindPopup(`<b>Station piezo de référence </b><br>ID : ${piezoSelectedStation.identifiant_BSS}<br>Nom : ${piezoSelectedStation.Nom}`);
+          .bindPopup(`<b>Station piézométrique </b><br>ID : ${piezoSelectedStation.identifiant_BSS}<br>Nom : ${piezoSelectedStation.Nom}`);
         piezoMarker.addTo(this.WatershedMapLeaflet);
       }
     }
