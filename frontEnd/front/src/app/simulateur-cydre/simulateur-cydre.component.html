@@ -14,13 +14,10 @@
       <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
         <mat-icon class="info-icon">info</mat-icon>
       </button>
-      <button mat-icon-button class="button_info" matTooltipPosition=after matTooltip="<strong>Info : </strong><br>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.">
-        <mat-icon class="info-icon">info</mat-icon>
-      </button>
       <mat-menu #dateInfoPopup="matMenu" xPosition="after">
         <ng-template matMenuContent>
           <div class="info-tooltip">
-            <p><strong>Info : </strong>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
+            <p>La sélection de la station modifie <strong>la visualisation des données</strong> et définit le bassin versant à utiliser pour <strong>la prévision des débits</strong> dans la partie "Simulateur". Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
           </div>
         </ng-template>
       </mat-menu>
@@ -28,8 +25,8 @@
     
     <div class="choix_station_div">
       <form class="dropdown-form">
-        <mat-form-field class="first-dropdown">
-          <mat-label>Station</mat-label>
+        <mat-form-field appearance="outline" class="first-dropdown">
+          <mat-label>Choix d'une station</mat-label>
           <input type="text"
                  placeholder="Sélectionner une station"
                  aria-label="Number"
