@@ -422,12 +422,22 @@ import * as Plotly from 'plotly.js-dist';
           opacity: 1,
           fillOpacity: 0.8
         }).addTo(this.mapy);
-    
-        marker.bindPopup(`
-          <b>Identifiant:</b> ${station.index}<br>
-          <b>Nom de la station hydrologique:</b> ${station.station_name}<br>
+
+        marker.bindTooltip(`
+          <b>ID:</b> ${station.index}<br>
+          <b>Nom:</b> ${station.station_name}<br>
           <b>Groupe:</b> ${station.typology}
-        `);
+        `, {
+          direction: 'top',
+          permanent: false,
+          sticky: true
+        });
+    
+        // marker.bindPopup(`
+        //   <b>ID:</b> ${station.index}<br>
+        //   <b>Nom:</b> ${station.station_name}<br>
+        //   <b>Groupe:</b> ${station.typology}
+        // `);
       });
 
  // Ajout de la légende dans la div HTML
