@@ -268,21 +268,17 @@ import { ColorService } from 'src/app/color-service.service';
                     x: 0.5, 
                     y: 1.15, 
                     font: {
-                        family: "Segoe UI Semilight Italic", 
-                        size: 18, 
-                        color: "#999"
+                        "family": "Segoe UI", "size": 14, "color": "#999"
                     } 
                 },
-                {   text: `<a href="${hyperlien}" style="color:gray; font-family: 'Segoe UI Semilight'; font-size: 14px;">Source : ADES</a>`, 
+                {   text: `<a href="${hyperlien}" style="color:#999; font-family: Segoe UI; font-size: 14px;">Source : ADES</a>`, 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 
                     x: 0.5, 
                     y: -0.20, 
                     font: { 
-                        family:'Segoe UI Semilight',
-                        size:14,
-                        color:"gray"
+                        "size":14, "color":"#999", "family":'Segoe UI'
                     } 
                 }
             ],
@@ -308,7 +304,7 @@ import { ColorService } from 'src/app/color-service.service';
           mode: 'lines',
           name: labelmedian,
           line: { color: 'black', width: 1.5, dash : 'dot' },
-          hovertemplate: 'moyenne: %{y:.3f} m<extra></extra>',
+          hovertemplate: 'moyenne: %{y:.1f} m<extra></extra>',
         });
   
         //trace invariant
@@ -335,7 +331,7 @@ import { ColorService } from 'src/app/color-service.service';
               color: this.colorService.getColorForYear(year), // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             },
-            hovertemplate: `${year}: %{y:.3f} m<extra></extra>`,
+            hovertemplate: `${year}: %{y:.1f} m<extra></extra>`,
           };
           this.fig.data.push(trace); // Ajouter la trace à this.fig.data
         }
