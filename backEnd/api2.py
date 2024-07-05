@@ -366,7 +366,7 @@ def get_temperature(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(surfex_path, 'temperature', csv_filename)
+        csv_file_path = os.path.join(surfex_path, 'etp', csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             # Initialiser une liste pour stocker les données JSON
