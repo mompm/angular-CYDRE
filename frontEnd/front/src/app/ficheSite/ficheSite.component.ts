@@ -102,6 +102,11 @@ import * as Plotly from 'plotly.js-dist';
     openDialog() {
       this.dialog.open(PopupDialogFicheSite);
     }
+
+    openDialogLoc() {
+      this.dialog.open(PopupDialogLoc);
+    }
+    
     /**
      * 
      */
@@ -197,6 +202,7 @@ import * as Plotly from 'plotly.js-dist';
         this.testt = false;
       }
     }
+    
 
     test(){
       let gdf_stations_filter : any[] = [];
@@ -447,9 +453,16 @@ import * as Plotly from 'plotly.js-dist';
   /**
    * 
    */
+
+
   @Component({
     selector: 'popupDialogFicheSite',
     templateUrl: './popupDialogFicheSite.html',
   })
   export class PopupDialogFicheSite {}
   
+  @Component({
+    selector: 'popupDialogLoc',
+    templateUrl : './popupDialogLoc.html',
+  })
+  export class PopupDialogLoc {}
