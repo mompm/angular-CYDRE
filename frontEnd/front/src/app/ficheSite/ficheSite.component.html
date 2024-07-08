@@ -72,7 +72,7 @@
         <h3>Dynamique saisonnière de la ressource en eau</h3>
         <p>Choix d'une année à visualiser :</p>
         <mat-form-field class="second-dropdown">
-          <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears" class="second-dropdown">
+          <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears"  (selectionChange)="onYearChanged()" class="second-dropdown">
             <mat-option *ngFor="let year of years" [value]="year">
               {{ year }}
             </mat-option>

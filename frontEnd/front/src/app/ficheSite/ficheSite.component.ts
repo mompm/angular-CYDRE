@@ -1,4 +1,4 @@
-import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnInit, SimpleChanges, OnDestroy } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import * as L from 'leaflet';
 import { DataService } from 'src/app/service/data.service';
@@ -11,6 +11,7 @@ import dataGDFStation from '../model/dataGDFStation';
 import {MatDialog} from '@angular/material/dialog';
 import dataGDFWatersheds from '../model/dataGDFWatersheds';
 import * as Plotly from 'plotly.js-dist';
+import { ColorService } from '../color-service.service';
 
 
 
@@ -54,7 +55,7 @@ import * as Plotly from 'plotly.js-dist';
      * @param sharedService 
      * @param dialog 
      */
-    constructor(private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
+    constructor(private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog, private colorService : ColorService) { }
     /**
      * 
      */
@@ -73,6 +74,13 @@ import * as Plotly from 'plotly.js-dist';
       if (BSS){
         this.selectedWatershedBSS = BSS
       }
+      if(this.colorService.loadColorsFromSessionStorage()){
+        this.selectedYears = this.colorService.getKeys();
+      }
+    }
+
+    ngOnDestroy(){
+      this.colorService.saveSessionColors();
     }
     /**
      * 
@@ -441,6 +449,9 @@ import * as Plotly from 'plotly.js-dist';
      legendItemsContainer.appendChild(legendItem);
    });
  }
+}
+public onYearChanged(){
+  this.colorService.updateColors(this.selectedYears);
 }
 
   }
