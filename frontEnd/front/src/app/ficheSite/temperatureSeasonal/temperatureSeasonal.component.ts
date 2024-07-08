@@ -212,7 +212,7 @@ import { ColorService } from 'src/app/color-service.service';
         data: [],
         layout: {
             title: { 
-              text: 'Température' ,
+              text: 'Evapotranspiration' ,
               font: {
                 family: "Segoe UI Semibold", 
                 size: 22, 
@@ -231,7 +231,7 @@ import { ColorService } from 'src/app/color-service.service';
               'gridcolor' : 'rgba(0,0,0,0.1)',
             },
             yaxis: { 
-              title: 'Température de l\'air [°C]', 
+              title: 'Evapotranspiration [mm/jour]]', 
               font: {
                 family: "Segoe UI Semibold", 
                 size: 16, 
@@ -251,15 +251,15 @@ import { ColorService } from 'src/app/color-service.service';
                   yref: 'paper', 
                   x: 0.5, 
                   y: 1.15, 
-                  font: {"family": "Segoe UI Semilight Italic", "size": 18, "color": "#999"} 
+                  font: {"family": "Segoe UI", "size": 14, "color": "#999"} 
                 },
-                { text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray; font-family: Segoe UI Semilight; font-size: 14px;">Source : Météo France</a>', 
+                { text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:#999; font-family: Segoe UI; font-size: 14px;">Source : Météo France</a>', 
                   showarrow: false, 
                   xref: 'paper', 
                   yref: 'paper', 
                   x: 0.5, 
                   y: -0.20, 
-                  font: { "size":14, "color":"gray", "family":'Segoe UI Semilight' } 
+                  font: { "size":14, "color":"#999", "family":'Segoe UI' } 
                 }
             ],
             // Ajoutez les paramètres de mise en page saisonnière ici
@@ -285,7 +285,7 @@ import { ColorService } from 'src/app/color-service.service';
           mode: 'lines',
           name: labelmedian,
           line: { color: 'black', width: 1.5, dash : 'dot' },
-          hovertemplate: 'moyenne: %{y:.3f} °C<extra></extra>',
+          hovertemplate: 'moyenne: %{y:.1f} mm/jour<extra></extra>',
         });
   
         //trace invariant
@@ -312,7 +312,7 @@ import { ColorService } from 'src/app/color-service.service';
                     color: this.colorService.getColorForYear(year), // Utilisation de la fonction pour obtenir une couleur
                     width: 1.5
                   },
-                  hovertemplate: `${year}: %{y:.3f} °C<extra></extra>`,
+                  hovertemplate: `${year}: %{y:.1f} mm/jour<extra></extra>`,
                 };
                 this.fig.data.push(trace); // Ajouter la trace à this.fig.data
               }
@@ -401,7 +401,7 @@ import { ColorService } from 'src/app/color-service.service';
               // Créer l'URL du Blob
               const url = window.URL.createObjectURL(blob);
   
-              const fileName = `temperature.csv`;
+              const fileName = `evapotranspiration.csv`;
     
               // Créer un élément <a> pour le téléchargement du fichier
               const a = document.createElement('a');

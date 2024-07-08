@@ -161,7 +161,6 @@ class SimulationsBeta(db.Model):
 
 
 @app.route('/api/simulations', methods=['GET'])
-@cross_origin
 @login_required
 def get_simulations():
     # Assurez-vous que l'utilisateur est connecté et récupérez son ID
@@ -366,7 +365,7 @@ def get_temperature(id):
         # Nom du fichier CSV basé sur l'identifiant
         csv_filename = f'{id}.csv'
         # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(surfex_path, 'temperature', csv_filename)
+        csv_file_path = os.path.join(surfex_path, 'etp', csv_filename)
         # Vérifier si le fichier CSV existe
         if os.path.exists(csv_file_path):
             # Initialiser une liste pour stocker les données JSON
@@ -742,20 +741,22 @@ def select_scenarios(simulation_id):
             recharge_df.reset_index(drop=True, inplace=True)
 
         # Appel de la méthode select_scenarios avec la DataFrame de corrélation
-        scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
-        print(selected_scenarios)
+        scenarios_grouped, selected_scenarios, scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
+        print("scenarios",scenarios)
+
 
         for key, value in selected_scenarios.items():
             if key == "specific_discharge":
                 specific_discharge = value.to_json(orient='split')
-                print(specific_discharge)
+                # print(specific_discharge)
             elif key == "recharge":
                 recharge = value.to_json(orient='split')
-                print(recharge)
-                print("fin recharge")
-
+                # print(recharge)
+                # print("fin recharge")
+        scenarios_json = scenarios.to_json(orient = 'split')
         # Chemin JSON de la mise à jour
         scenarios_grouped_path = '$.scenarios_grouped'
+        scenarios_path = '$.scenarios'
         selected_scenarios_path = '$.selected_scenarios'
         json_path_specific_discharge = selected_scenarios_path + '.specific_discharge'
         json_path_recharge = selected_scenarios_path + '.recharge'
@@ -784,10 +785,18 @@ def select_scenarios(simulation_id):
 
         # Exécution de la mise à jour
         db.session.execute(stmt)
+        # Préparation de la mise à jour
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_path, scenarios_json)})
+        )
+        # Exécution de la mise à jour
+        db.session.execute(stmt)
         
         db.session.commit()
 
-        return jsonify({"scenarios grouped": scenarios_grouped.to_json(), "specific discharge": specific_discharge, "recharge": recharge}), 200
+        return jsonify({"scenarios grouped": scenarios_grouped.to_json(), "specific discharge": specific_discharge, "recharge": recharge, "scenarios":scenarios_json}), 200
     except Exception as e:
         return {"error": str(e)}, 500
 

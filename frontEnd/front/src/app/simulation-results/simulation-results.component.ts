@@ -103,6 +103,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
   };
 
+  scenarios : MatTableDataSource<any> |undefined;
+  displayedColumnsScenarios  : string []= [];
+
   
 
   ngOnInit(): void {
@@ -151,6 +154,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         }
       console.log(this.results.results.data);
         this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
+        this.scenarios = new MatTableDataSource(this.results.results.scenarios);
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;     
       }else{
@@ -187,6 +191,16 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }catch(error){
       console.log("Problème lors du chargement des matrices de similarités : " + error)
     }
+
+    try {//Création du tableau de scenarios
+      if(this.results.results.scenarios){
+        this.loadScenarios()
+      }else{
+        console.log("Données manquantes lors du chargement du tableau de scenarios")
+      }
+    }catch(error){
+      console.log("Problème lors du chargement du tableau scenarios : " + error)
+    }
     
     window.addEventListener('resize', this.resizeListener);
   }
@@ -207,7 +221,23 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     return Math.floor(volume || 0);
   }
 
+  loadScenarios() {
+    const scenarios = this.results.results.scenarios;
+    this.displayedColumnsScenarios = ['Index', ...scenarios.columns];
 
+    const data = scenarios.data.map((row : any , rowIndex: any) => {
+      const rowData: { [key: string]: number | string } = { Index: scenarios.index[rowIndex] };
+      scenarios.columns.forEach((col : any, colIndex:any) => {
+        rowData[col] = row[colIndex];
+      });
+      return rowData;
+    });
+
+    this.scenarios = new MatTableDataSource(data);
+    this.scenarios.paginator = this.paginator;
+    this.scenarios.sort = this.sort;
+
+  }
   
 
   fillIndicators() {//ajouter les indicateurs de la base de données au tableau du front

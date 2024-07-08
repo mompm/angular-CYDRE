@@ -219,15 +219,15 @@ export class hydrographSeasonal implements OnDestroy{
             yref: 'paper',
             x: 0.5, 
             y: 1.15, 
-            font: { "family": "Segoe UI Semilight Italic", "size": 18, "color": "#999" } 
+            font: { "family": "Segoe UI", "size": 14, "color": "#999" } 
           },
-          { text: `<a href="${hyperlien}" style="color:gray; font-family: 'Segoe UI Semilight'; font-size: 14px;">Source : DREAL Bretagne</a>`,  
+          { text: `<a href="${hyperlien}" style="color:#999; font-family: Segoe UI; font-size: 14px;;">Source : DREAL Bretagne</a>`,  
             showarrow: false, 
             xref: 'paper', 
             yref: 'paper', 
             x: 0.5, 
             y: -0.20, 
-            font: { "size": 14, "color": "gray", "family": 'Segoe UI Semilight' } }
+            font: { "size":14, "color":"#999", "family":'Segoe UI' } }
         ],
         margin: { t: 125 },
         title_x: 0.5,

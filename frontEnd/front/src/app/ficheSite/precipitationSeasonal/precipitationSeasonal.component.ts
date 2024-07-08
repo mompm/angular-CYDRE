@@ -276,15 +276,15 @@ import { ColorService } from 'src/app/color-service.service';
                     yref: 'paper', 
                     x: 0.5, 
                     y: 1.15, 
-                    font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
+                    font: {"family": "Segoe UI", "size": 14, "color": "#999"} 
                 },
-                {   text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray; font-family: Segoe UI Semilight; font-size: 14px;">Source : Météo France</a>', 
+                {   text: '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:#999; font-family: Segoe UI; font-size: 14px;">Source : Météo France</a>', 
                     showarrow: false, 
                     xref: 'paper', 
                     yref: 'paper', 
                     x: 0.5, 
                     y: -0.20, 
-                    font: {family:'Segoe UI Semilight', size:14, color:"gray"} 
+                    font: {"size":14, "color":"#999", "family":'Segoe UI'} 
                 }
             ],
             margin: { t: 125 },
@@ -311,7 +311,7 @@ import { ColorService } from 'src/app/color-service.service';
           mode: 'lines',
           name: labelmedian,
           line: { color: 'black', width: 1.5, dash : 'dot' },
-          hovertemplate: 'moyenne: %{y:.3f} mm<extra></extra>',
+          hovertemplate: 'moyenne: %{y:.1f} mm<extra></extra>',
         });
   
         //trace invariant
@@ -337,7 +337,7 @@ import { ColorService } from 'src/app/color-service.service';
               color: this.colorService.getColorForYear(year), // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             },
-            hovertemplate: `${year}: %{y:.3f} mm<extra></extra>`,
+            hovertemplate: `${year}: %{y:.1f} mm<extra></extra>`,
           };
           this.fig.data.push(trace); // Ajouter la trace à this.fig.data
         }

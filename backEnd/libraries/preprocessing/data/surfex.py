@@ -52,7 +52,7 @@ class Surfex():
         
         # https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7
         # Download last file : URL stable
-        url_meteo = 'https://www.data.gouv.fr/fr/datasets/r/ff8e9fc6-d269-45e8-a3c3-a738195ea92a'
+        url_meteo = 'https://www.data.gouv.fr/fr/datasets/r/adcca99a-6db0-495a-869f-40c888174a57'
         last_file = "last_file"
 
         # Read surfex mesh at the Brittany regional-scale

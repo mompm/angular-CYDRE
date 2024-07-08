@@ -233,7 +233,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
           mapbox: {
               style: 'open-street-map',
               center: { lat: 48.2141667, lon: -2.9424167 },
-              zoom: 6.5,
+              zoom: 6.8,
           },
           paper_bgcolor: 'rgba(0,0,0,0)',
           margin: { l: 0, r: 0, t: 0, b: 0 },
@@ -286,7 +286,7 @@ import dataGDFStation from 'src/app/model/dataGDFStation';
           lon: x_wgs84_station,
           lat: y_wgs84_station,
           mode: 'markers',
-          marker: { size: 5, color: '#3E88A6' },
+          marker: { size: 6, color: 'black' },
           hoverinfo: 'text',
           hovertext: text_station,
           name: '',

@@ -5,10 +5,10 @@
       <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
         <mat-icon>info</mat-icon>
       </button>
-      <mat-menu #dateInfoPopup="matMenu" xPosition="after">
+      <mat-menu #dateInfoPopup="matMenu" xPosition="after" class="custom-menu">
         <ng-template matMenuContent>
           <div class="info-tooltip">
-          <p><strong>Info : </strong>Les prévisions de débits seront générées pour la station hydrologique sélectionnée. Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
+          <p>La sélection de la station modifie <strong>la visualisation des données</strong> et définit le bassin versant à utiliser pour <strong>la prévision des débits</strong> dans la partie "Simulateur". Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
           </div>
         </ng-template>
       </mat-menu>
@@ -18,8 +18,8 @@
       <div class="choix_station_div">
           <div>
               <form class="dropdown-form">
-                  <mat-form-field class="first-dropdown">
-                      <mat-label>Station</mat-label>
+                  <mat-form-field appearance="outline" class="first-dropdown">
+                      <mat-label>Choix d'une station</mat-label>
                       <input type="text"
                           placeholder="Sélectionner une station"
                           aria-label="Number"
@@ -50,14 +50,11 @@
     <div>
       <div class="h3_div">
         <h3 class="h3_text">Localisation du bassin versant</h3>
+        <button mat-button (click)="openDialogLoc()"><mat-icon style="color: white">help</mat-icon></button>
       </div> 
       <div class="maps_div">
         <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" (markerClick)="handleMarkerClick($event)" class="regional_map"></app-RegionalMap>
         <app-WatershedMap [stationSelectionChange] = "selectedWatershedID" class="watershed_map"></app-WatershedMap>
-      </div>
-      <div>
-        <p class="parapgraphe_without_padding">L'association d'une station piézométrique au bassin versant est définie selon 3 critères : 1) proximité géographique; 2) couverture géologique et; 3) cohérence amont/aval.</p>
-        <p class="parapgraphe_with_padding_visible">Pour plus d'informations concernant les stations hydrologiques et piézométriques, vous pouvez cliquer sur les logos des plateformes HydroPortail et ADES, en haut de le page, à côté de la liste déroulante de sélection du bassin versant.</p>
       </div>
     </div>
 
@@ -93,7 +90,7 @@
     
   <div>
     <div class="h3_div">
-      <h3 class="h3_text">TITRE</h3>
+      <h3 class="h3_text">Propriétés hydrogéologiques</h3>
     </div>
   </div>
   <div class="seasonal_plot_div">
@@ -101,7 +98,7 @@
       <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;">
         <div id="mapy" class="map_typologie"></div>
         <div style="height: 350px; width: 30%;">
-          <strong>Légende des Typologies</strong>
+          <strong>Légende</strong>
           <div id="legend-items"></div>
         </div>
       </div>

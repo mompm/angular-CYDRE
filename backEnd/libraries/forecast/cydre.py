@@ -6,6 +6,7 @@ Created on Wed May  3 10:27:18 2023
 """
 
 # Modules
+from numpy import NaN
 import pandas as pd
 from datetime import timedelta
 
@@ -102,7 +103,7 @@ class Cydre():
         
         # Group all scenarios in one dataframe
         self.scenarios_grouped = Selection.group_scenarios(self.scenarios)
-        return self.scenarios_grouped, self.selected_scenarios
+        return self.scenarios_grouped, self.selected_scenarios , self.scenarios.replace(NaN, 0)
     
     
     def streamflow_forecast(self, data_path):
