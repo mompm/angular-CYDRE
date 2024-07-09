@@ -64,12 +64,13 @@
       </div>
     </div>
     <div class="seasonal_plot_div">
-      <app-hydrographGlobal [stationSelectionChange]="selectedWatershedID"></app-hydrographGlobal>
-      <div style="text-align: center;">
-        <h3>Dynamique saisonnière de la ressource en eau</h3>
-        <p>Choix d'une année à visualiser :</p>
-        <mat-form-field class="second-dropdown">
-          <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears"  (selectionChange)="onYearChanged()" class="second-dropdown">
+      <!-- <app-hydrographGlobal [stationSelectionChange]="selectedWatershedID"></app-hydrographGlobal> -->
+      <div style="text-align: center; padding: 10px;">
+        <!-- <h3>Dynamique saisonnière de la ressource en eau</h3> -->
+        <!-- <p>Choix d'une année à visualiser :</p> -->
+        <mat-form-field appearance="outline" class="second-dropdown">
+          <mat-label>Choix d'une année à visualiser :</mat-label>
+          <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears" class="second-dropdown">
             <mat-option *ngFor="let year of years" [value]="year">
               {{ year }}
             </mat-option>

@@ -1,6 +1,6 @@
 .custom-dialog {
     position: fixed;
-    top: 20%;
+    top: 12%;
     left: 2%;
     background-color: white;
     border: 1px solid #ccc;
@@ -73,7 +73,7 @@
 }
 
 .menu-logo {
-    width: 350px;
+    width: 1050px;
     display: block;
     margin-left: auto;
     margin-right: auto;
@@ -82,7 +82,34 @@
 }
 
 .station-selection {
-    width: 700px;
+    width: 500px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.station-localisation {
+    width: 850px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.seasonal-hydro {
+    width: 500px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.typology-map {
+    width: 850px;
     display: block;
     margin-left: auto;
     margin-right: auto;

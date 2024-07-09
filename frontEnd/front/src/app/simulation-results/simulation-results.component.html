@@ -182,7 +182,7 @@
           <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
         </div>
       </div>
-      <div class="card-body">
+      <!-- <div class="card-body">
         <div class="table-container">
           <table mat-table [dataSource]="scenarios!" class="mat-elevation-z8">
                 <ng-container *ngFor="let column of displayedColumnsScenarios" [matColumnDef]="column">
@@ -194,7 +194,7 @@
             <tr mat-row *matRowDef="let row; columns: displayedColumnsScenarios;"></tr>
           </table>
         </div>
-      </div>
+      </div> -->      
       <div class="form-group">
         <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
           <option value="recharge">Recharge des nappes</option>

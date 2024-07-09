@@ -482,7 +482,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           hoverinfo: 'none',
           mode: 'lines',
           type: 'scatter',
-          name: 'projection', 
+          name: 'événements individuels', 
           line: { color: '#e3dcda', width: 1, dash: 'dash' },
         };
         this.traces.push(projectionTrace);
@@ -683,7 +683,105 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       };
       Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
     }
-}
+}       
+        matriceScenarios(): void {
+          if (this.stations.length > 0){
+          const columns = this.results.results.scenarios.columns;  
+          const columnNames = columns.map((columnId: any) => {
+            const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+            const name = station ? station.name : "Unknown"; // Default to "Unknown" if station is not found
+            return `${columnId} - ${name}`;
+          });
+
+          const data = this.results.results.stations.data;
+          const index = this.results.results.stations.index;
+
+          // Remplacer les 1 par null dans le tableau de données
+          const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
+          const colorscale = [
+            ['0.0', 'rgb(165,0,38)'],
+            ['0.111111111111', 'rgb(215,48,39)'],
+            ['0.222222222222', 'rgb(244,109,67)'],
+            ['0.333333333333', 'rgb(253,174,97)'],
+            ['0.444444444444', 'rgb(254,224,144)'],
+            ['0.555555555556', 'rgb(224,243,248)'],
+            ['0.666666666667', 'rgb(171,217,233)'],
+            ['0.777777777778', 'rgb(116,173,209)'],
+            ['0.888888888889', 'rgb(69,117,180)'],
+            ['1.0', 'rgb(49,54,149)']
+        ];
+
+          const DataMatrice: any[] = [];
+          DataMatrice.push({
+            z: modifiedData,
+            x: columnNames,
+            y: index,
+            type: 'heatmap',
+            colorscale: colorscale,
+            reversescale: true,
+            showscale: false,
+            xgap: 1,
+            ygap: 1
+          });
+
+          // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+          const caseHeight = 10; // Hauteur de chaque case en pixels
+          const caseWidth = 20;  // Largeur de chaque case en pixels
+          const height = caseHeight * index.length; // Hauteur totale de la figure
+          const width = caseWidth * columns.length; // Largeur totale de la figure
+
+          const figLayout: Partial<Layout> = {
+            title: {
+              text: '<b>Test</b>',
+              yanchor: 'bottom',  // Ancrage vertical en bas
+              xanchor: 'center',  // Ancrage horizontal au centre par défaut
+              x: 0.5,  // Position horizontale centrée (valeur entre 0 et 1)
+              y: 0.05,
+              font: {  
+                size: 25,  
+                color: 'black', 
+                family: 'Arial, sans-serif',  
+            } 
+          },
+              xaxis: {
+                  tickangle: -90,
+                  side: 'top',
+                  automargin: true,
+                  tickfont: {  
+                    size: 14  
+                } 
+              },
+              yaxis: {
+                  tickmode: 'array',
+                  autorange: 'reversed'
+              },
+              margin: {
+                  t: 50,  // marge supérieure
+                  b: 100,  // marge inférieure pour éviter la coupe des labels
+                  l: 50,  // marge gauche
+                  r: 50   // marge droite
+              },
+              height: height + 200, 
+              width: width + 300, 
+          
+          };
+          //mettre en vertical si matrice trop grande 
+          if(columns.length > 15 ){
+            this.matricecolumn = true;
+            const matricewidth = 0.50 * window.innerWidth;
+            Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+            Plotly.relayout('matriceScenarios',{width :matricewidth});
+          }
+          else{
+            this.matricecolumn = false;
+            const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+            const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
+            Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+            Plotly.relayout('matriceScenarios',{width :matricewidth});
+          }
+
+        }
+        }
 
         matriceRecharge(): void {
           if (this.stations.length > 0){
