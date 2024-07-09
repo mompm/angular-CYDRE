@@ -17,7 +17,7 @@ import { forEach } from 'mathjs';
 })
 export class JsonService {
   
-private baseUrl = 'http://localhost:5000';
+private baseUrl = '';
 
 
   constructor(private http: HttpClient){}

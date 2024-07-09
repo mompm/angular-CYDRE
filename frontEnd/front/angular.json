@@ -104,7 +104,9 @@
           "options": {
             "port": 4200,
             "browserTarget": "front:build",
-            "proxyConfig": "proxy.conf.json"
+            "proxyConfig": "proxy.conf.json",
+            "host": "0.0.0.0",
+            "disableHostCheck": true
           },
           "configurations": {
             "production": {
