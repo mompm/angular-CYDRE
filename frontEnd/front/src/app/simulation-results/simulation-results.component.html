@@ -182,19 +182,11 @@
           <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
         </div>
       </div>
-      <!-- <div class="card-body">
-        <div class="table-container">
-          <table mat-table [dataSource]="scenarios!" class="mat-elevation-z8">
-                <ng-container *ngFor="let column of displayedColumnsScenarios" [matColumnDef]="column">
-              <th mat-header-cell *matHeaderCellDef> {{ column }} </th>
-              <td mat-cell *matCellDef="let element"> {{ element[column] }} </td>
-            </ng-container>
-      
-            <tr mat-header-row *matHeaderRowDef="displayedColumnsScenarios"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumnsScenarios;"></tr>
-          </table>
-        </div>
-      </div> -->      
+      <div class="card-body">
+        <div class="scenariosInfos">Quand, et où, a-t-on retrouvé des conditions similaires à la date du {{results.results.data.last_date}} mesurées à la station hydrologique {{watershedName}} ?</div>
+        <div class="evenementsNumber">{{similarScenarios}}</div>
+        <div class="scenariosEvenementInfo">évenements utilisés pour la prévision</div>
+        <div class="heatmap-content" id="matriceScenarios"></div>
       <div class="form-group">
         <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
           <option value="recharge">Recharge des nappes</option>

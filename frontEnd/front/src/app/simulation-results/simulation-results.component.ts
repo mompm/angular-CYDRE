@@ -43,6 +43,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
         Plotly.relayout('matriceRecharge',{width :matricewidth});
         Plotly.relayout('matriceSpecificDischarge',{width :matricewidth});
+        Plotly.relayout('matriceScenarios',{width :this.calculateMatrixWidth('matriceScenarios',this.createMatrixStationLabel(this.results.results.scenarios.columns),this.scenariosMatrixFontSize)});
+
       }
 
       
@@ -102,15 +104,30 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     group: ScaleType.Ordinal,
     domain: ['#5AA454', '#A10A28', '#C7B42C', '#AAAAAA']
   };
-
-  scenarios : MatTableDataSource<any> |undefined;
+  similarScenarios : number = 0;
+  scenarios : any;
   displayedColumnsScenarios  : string []= [];
+  allColumns: string[] = [];
+  scenariosHeatMap: any;
+  colorScale = [
+    ['0.0', 'rgb(165,0,38)'],
+    ['0.111111111111', 'rgb(215,48,39)'],
+    ['0.222222222222', 'rgb(244,109,67)'],
+    ['0.333333333333', 'rgb(253,174,97)'],
+    ['0.444444444444', 'rgb(254,224,144)'],
+    ['0.555555555556', 'rgb(224,243,248)'],
+    ['0.666666666667', 'rgb(171,217,233)'],
+    ['0.777777777778', 'rgb(116,173,209)'],
+    ['0.888888888889', 'rgb(69,117,180)'],
+    ['1.0', 'rgb(49,54,149)']
+];
 
+  scenariosMatrixFontSize : number = 11
   
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     this.simulation_id = sessionStorage.getItem('lastSimulationId')?sessionStorage.getItem('lastSimulationId'):null
-
+    await this.initGDFStations();
     try{
       if(this.results.results.data){//générer les traces du graphe
         if (Object.prototype.toString.call(this.results.results.data) === '[object String]') {
@@ -154,7 +171,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         }
       console.log(this.results.results.data);
         this.dataSource = new MatTableDataSource(this.results.results.corr_matrix);
-        this.scenarios = new MatTableDataSource(this.results.results.scenarios);
+        // this.scenarios = new MatTableDataSource(this.results.results.scenarios);
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;     
       }else{
@@ -176,7 +193,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     if(this.results.results.similarity){
       const columns = this.results?.results?.similarity?.corr_matrix?.specific_discharge?.columns;
       this.matricecolumn = columns && columns.length > 15;
-      this.initGDFStations();
+      
     }
 
 
@@ -194,14 +211,15 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
     try {//Création du tableau de scenarios
       if(this.results.results.scenarios){
-        this.loadScenarios()
+        this.createScenariosHeatmap()
+        console.log("Scenarios OK")
       }else{
         console.log("Données manquantes lors du chargement du tableau de scenarios")
       }
     }catch(error){
       console.log("Problème lors du chargement du tableau scenarios : " + error)
     }
-    
+    console.log(this.results)
     window.addEventListener('resize', this.resizeListener);
   }
 
@@ -209,9 +227,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     window.removeEventListener('resize', this.resizeListener);//détruire le listener
   }
 
-  initGDFStations() {
-    this.jsonService.getGDFStations().then(data => {
+  async initGDFStations() {
+    await this.jsonService.getGDFStations().then(data => {
       this.stations = data;
+      console.log(this.stations)
       this.cdr.detectChanges();
       this.matriceRecharge();
       this.matriceSpecificDischarge();
@@ -221,21 +240,107 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     return Math.floor(volume || 0);
   }
 
-  loadScenarios() {
-    const scenarios = this.results.results.scenarios;
-    this.displayedColumnsScenarios = ['Index', ...scenarios.columns];
 
-    const data = scenarios.data.map((row : any , rowIndex: any) => {
-      const rowData: { [key: string]: number | string } = { Index: scenarios.index[rowIndex] };
-      scenarios.columns.forEach((col : any, colIndex:any) => {
-        rowData[col] = row[colIndex];
+  createScenariosHeatmap() {
+    try{
+      // Utiliser flat() pour aplatir la matrice en un tableau à une dimension
+      const flattenedData = this.results.results.scenarios.data.flat();
+      // Utiliser filter() pour garder uniquement les éléments différents de 0
+      const nonZeroElements = flattenedData.filter((value: number) => value !== 0);
+      // La longueur du tableau résultant est le nombre d'éléments différents de 0
+      this.similarScenarios = nonZeroElements.length;
+
+    }catch(e){
+      console.error(e)
+    }
+
+    if (this.stations.length >0){
+      console.log("showing scenarios matrix")
+      const stations = this.results.results.scenarios.columns;
+      const labeledStations = this.createMatrixStationLabel(stations)
+
+
+      const data = this.results.results.scenarios.data;
+      // Transpose the data matrix because we want years in x and stations in y
+      const transposedData = data[0].map((_: any, colIndex: string | number) => data.map((row: { [x: string]: any; }) => row[colIndex]));
+
+      const index = this.results.results.scenarios.index;
+      
+
+      const DataMatrice: any[] = [];
+      DataMatrice.push({
+        z: transposedData,
+        x: index,
+        y: labeledStations,
+        type: 'heatmap',
+        colorscale: [
+          [0, 'rgba(0, 0, 0, 0.2)'], 
+          [1, 'rgb(34, 94, 168)']  
+        ],
+        reversescale: false,
+        showscale: false,
+        xgap: 1,
+        ygap: 1
       });
-      return rowData;
-    });
 
-    this.scenarios = new MatTableDataSource(data);
-    this.scenarios.paginator = this.paginator;
-    this.scenarios.sort = this.sort;
+      // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+      const caseHeight = 10; // Hauteur de chaque case en pixels
+      const caseWidth = document.getElementById("matriceScenarios")!.clientWidth/transposedData[0].length;  // Largeur de chaque case en pixels
+      console.log(caseWidth)
+      const height = caseHeight * labeledStations.length; // Hauteur totale de la figure
+      const width = caseWidth * index.length; // Largeur totale de la figure
+      console.log(index.length)
+      console.log(width)
+      console.log(document.getElementById("matriceScenarios")!.clientWidth)
+
+
+      // Calculate the width of the longest label
+      const longestLabel = Math.max(...labeledStations.map((label: string | any[]) => label.length));
+      const labelFontSize = this.scenariosMatrixFontSize; // Font size in pixels
+      const figLayout: Partial<Layout> = {
+          xaxis: {
+              tickangle: -90,
+              side: 'top',
+              automargin: true,
+              tickfont: {  
+                size: labelFontSize  
+            } 
+          },
+          yaxis: {
+              tickfont : {
+                size: labelFontSize,
+              },
+              tickmode: 'array',
+              autorange: 'reversed'
+          },
+          margin: {
+              t: 50,  // marge supérieure
+              b: 100,  // marge inférieure pour éviter la coupe des labels
+              l:longestLabel * labelFontSize *0.8,  // marge gauche
+              // r: 50   // marge droite
+          },
+          height: height + 200,
+    
+      };
+        Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+        Plotly.relayout('matriceScenarios',{width :this.calculateMatrixWidth('matriceScenarios',stations,this.scenariosMatrixFontSize)});
+
+    }
+  }
+
+  createMatrixStationLabel(stations: any[]){
+    const labeledStations = stations.map((columnId: any) => {
+      const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+      const name = station ? station.name : "Unknown";
+      return `${columnId} - ${name}`
+  })
+  return labeledStations
+
+}
+
+  calculateMatrixWidth(id:string, labels :any [], fontsize :number){
+    // return (document.getElementById(id)!.clientWidth + Math.max(...labels.map((label: string | any[]) => label.length)) * fontsize)*0.95;
+    return (document.getElementById(id)!.clientWidth);
 
   }
   
@@ -684,104 +789,93 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
     }
 }       
-        matriceScenarios(): void {
-          if (this.stations.length > 0){
-          const columns = this.results.results.scenarios.columns;  
-          const columnNames = columns.map((columnId: any) => {
-            const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
-            const name = station ? station.name : "Unknown"; // Default to "Unknown" if station is not found
-            return `${columnId} - ${name}`;
-          });
+        // matriceScenarios(): void {
+        //   if (this.stations.length > 0){
+        //   const columns = this.results.results.scenarios.columns;  
+        //   const columnNames = columns.map((columnId: any) => {
+        //     const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+        //     const name = station ? station.name : "Unknown"; // Default to "Unknown" if station is not found
+        //     return `${columnId} - ${name}`;
+        //   });
 
-          const data = this.results.results.stations.data;
-          const index = this.results.results.stations.index;
+        //   const data = this.results.results.stations.data;
+        //   const index = this.results.results.stations.index;
 
-          // Remplacer les 1 par null dans le tableau de données
-          const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-          const colorscale = [
-            ['0.0', 'rgb(165,0,38)'],
-            ['0.111111111111', 'rgb(215,48,39)'],
-            ['0.222222222222', 'rgb(244,109,67)'],
-            ['0.333333333333', 'rgb(253,174,97)'],
-            ['0.444444444444', 'rgb(254,224,144)'],
-            ['0.555555555556', 'rgb(224,243,248)'],
-            ['0.666666666667', 'rgb(171,217,233)'],
-            ['0.777777777778', 'rgb(116,173,209)'],
-            ['0.888888888889', 'rgb(69,117,180)'],
-            ['1.0', 'rgb(49,54,149)']
-        ];
-
-          const DataMatrice: any[] = [];
-          DataMatrice.push({
-            z: modifiedData,
-            x: columnNames,
-            y: index,
-            type: 'heatmap',
-            colorscale: colorscale,
-            reversescale: true,
-            showscale: false,
-            xgap: 1,
-            ygap: 1
-          });
-
-          // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
-          const caseHeight = 10; // Hauteur de chaque case en pixels
-          const caseWidth = 20;  // Largeur de chaque case en pixels
-          const height = caseHeight * index.length; // Hauteur totale de la figure
-          const width = caseWidth * columns.length; // Largeur totale de la figure
-
-          const figLayout: Partial<Layout> = {
-            title: {
-              text: '<b>Test</b>',
-              yanchor: 'bottom',  // Ancrage vertical en bas
-              xanchor: 'center',  // Ancrage horizontal au centre par défaut
-              x: 0.5,  // Position horizontale centrée (valeur entre 0 et 1)
-              y: 0.05,
-              font: {  
-                size: 25,  
-                color: 'black', 
-                family: 'Arial, sans-serif',  
-            } 
-          },
-              xaxis: {
-                  tickangle: -90,
-                  side: 'top',
-                  automargin: true,
-                  tickfont: {  
-                    size: 14  
-                } 
-              },
-              yaxis: {
-                  tickmode: 'array',
-                  autorange: 'reversed'
-              },
-              margin: {
-                  t: 50,  // marge supérieure
-                  b: 100,  // marge inférieure pour éviter la coupe des labels
-                  l: 50,  // marge gauche
-                  r: 50   // marge droite
-              },
-              height: height + 200, 
-              width: width + 300, 
+        //   // Remplacer les 1 par null dans le tableau de données
+        //   const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
           
-          };
-          //mettre en vertical si matrice trop grande 
-          if(columns.length > 15 ){
-            this.matricecolumn = true;
-            const matricewidth = 0.50 * window.innerWidth;
-            Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
-            Plotly.relayout('matriceScenarios',{width :matricewidth});
-          }
-          else{
-            this.matricecolumn = false;
-            const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
-            const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
-            Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
-            Plotly.relayout('matriceScenarios',{width :matricewidth});
-          }
 
-        }
-        }
+        //   const DataMatrice: any[] = [];
+        //   DataMatrice.push({
+        //     z: modifiedData,
+        //     x: columnNames,
+        //     y: index,
+        //     type: 'heatmap',
+        //     colorscale: this.colorScale,
+        //     reversescale: true,
+        //     showscale: false,
+        //     xgap: 1,
+        //     ygap: 1
+        //   });
+
+        //   // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+        //   const caseHeight = 10; // Hauteur de chaque case en pixels
+        //   const caseWidth = 20;  // Largeur de chaque case en pixels
+        //   const height = caseHeight * index.length; // Hauteur totale de la figure
+        //   const width = caseWidth * columns.length; // Largeur totale de la figure
+
+        //   const figLayout: Partial<Layout> = {
+        //     title: {
+        //       text: '<b>Test</b>',
+        //       yanchor: 'bottom',  // Ancrage vertical en bas
+        //       xanchor: 'center',  // Ancrage horizontal au centre par défaut
+        //       x: 0.5,  // Position horizontale centrée (valeur entre 0 et 1)
+        //       y: 0.05,
+        //       font: {  
+        //         size: 25,  
+        //         color: 'black', 
+        //         family: 'Arial, sans-serif',  
+        //     } 
+        //   },
+        //       xaxis: {
+        //           tickangle: -90,
+        //           side: 'top',
+        //           automargin: true,
+        //           tickfont: {  
+        //             size: 14  
+        //         } 
+        //       },
+        //       yaxis: {
+        //           tickmode: 'array',
+        //           autorange: 'reversed'
+        //       },
+        //       margin: {
+        //           t: 50,  // marge supérieure
+        //           b: 100,  // marge inférieure pour éviter la coupe des labels
+        //           l: 50,  // marge gauche
+        //           r: 50   // marge droite
+        //       },
+        //       height: height + 200, 
+        //       width: width + 300, 
+          
+        //   };
+        //   //mettre en vertical si matrice trop grande 
+        //   if(columns.length > 15 ){
+        //     this.matricecolumn = true;
+        //     const matricewidth = 0.50 * window.innerWidth;
+        //     Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+        //     Plotly.relayout('matriceScenarios',{width :matricewidth});
+        //   }
+        //   else{
+        //     this.matricecolumn = false;
+        //     const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
+        //     const matricewidth = isSmallScreen ? 0.50 * window.innerWidth : 0.30 * window.innerWidth;
+        //     Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+        //     Plotly.relayout('matriceScenarios',{width :matricewidth});
+        //   }
+
+        // }
+        // }
 
         matriceRecharge(): void {
           if (this.stations.length > 0){
@@ -797,18 +891,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
           // Remplacer les 1 par null dans le tableau de données
           const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-          const colorscale = [
-            ['0.0', 'rgb(165,0,38)'],
-            ['0.111111111111', 'rgb(215,48,39)'],
-            ['0.222222222222', 'rgb(244,109,67)'],
-            ['0.333333333333', 'rgb(253,174,97)'],
-            ['0.444444444444', 'rgb(254,224,144)'],
-            ['0.555555555556', 'rgb(224,243,248)'],
-            ['0.666666666667', 'rgb(171,217,233)'],
-            ['0.777777777778', 'rgb(116,173,209)'],
-            ['0.888888888889', 'rgb(69,117,180)'],
-            ['1.0', 'rgb(49,54,149)']
-        ];
 
           const DataMatrice: any[] = [];
           DataMatrice.push({
@@ -816,7 +898,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             x: columnNames,
             y: index,
             type: 'heatmap',
-            colorscale: colorscale,
+            colorscale: this.colorScale,
             reversescale: true,
             showscale: false,
             xgap: 1,
@@ -896,18 +978,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
           // Remplacer les 1 par null dans le tableau de données
           const modifiedData = data.map((row: number[]) => row.map(value => value === 1 ? null : value));
-          const colorscale = [
-            ['0.0', 'rgb(165,0,38)'],
-            ['0.111111111111', 'rgb(215,48,39)'],
-            ['0.222222222222', 'rgb(244,109,67)'],
-            ['0.333333333333', 'rgb(253,174,97)'],
-            ['0.444444444444', 'rgb(254,224,144)'],
-            ['0.555555555556', 'rgb(224,243,248)'],
-            ['0.666666666667', 'rgb(171,217,233)'],
-            ['0.777777777778', 'rgb(116,173,209)'],
-            ['0.888888888889', 'rgb(69,117,180)'],
-            ['1.0', 'rgb(49,54,149)']
-          ];
 
           const DataMatrice: any[] = [];
           DataMatrice.push({
@@ -915,7 +985,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             x: columnNames,
             y: index,
             type: 'heatmap',
-            colorscale: colorscale,
+            colorscale: this.colorScale,
             reversescale: true,
             showscale: false,
             xgap: 1,
@@ -993,7 +1063,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   }
 
 
-
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
     this.dataSource!.filter = filterValue.trim().toLowerCase();
@@ -1020,6 +1089,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateIndicatorShapes();
       this.matriceRecharge();
       this.matriceSpecificDischarge();
+      this.createScenariosHeatmap();
       //this.showTypologyMap();
   }
 
@@ -1035,7 +1105,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.matriceSpecificDischarge();
     } 
   }
-
 
   
 
