@@ -89,6 +89,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   @Input() watershedID: string | null | undefined;
 
   watershedName: string | null | undefined;
+  stationName: string | null | undefined;
   startDate: Date = new Date(this.results.results.similarity.user_similarity_period[0]);
   yMin = 0;
   yMax = 0;
@@ -232,8 +233,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.stations = data;
       console.log(this.stations)
       this.cdr.detectChanges();
-      this.matriceRecharge();
-      this.matriceSpecificDischarge();
+      // this.matriceRecharge();
+      // this.matriceSpecificDischarge();
     });
   }
   getVolumeAsInt(volume: number): number {
@@ -710,7 +711,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.layout = {
         hovermode: "x unified",
         title: {
-            text: this.watershedID + " | " + this.watershedName,
+            text: this.watershedID + " | " + this.stationName,
             font: { size: 17 },
         },
         legend: {
@@ -1079,6 +1080,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.dataSource.paginator = this.paginator;
     this.dataSource.sort = this.sort;
     this.watershedName = this.results.watershed_name;
+    this.stationName = this.results.station_name;
     this.watershedID = this.results.watershed_id;
   
     // Mise à jour des autres éléments

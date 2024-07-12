@@ -33,6 +33,7 @@ class UserConfiguration():
         # Store the hydrological station identifier
         self.params = params
         self.user_watershed_id = self.params.getparam("user_watershed_id").getvalue()
+        self.user_watershed_name = stations[stations['ID'] == self.user_watershed_id]['station_name'].values[0]
         self.user_bss_id = stations[stations['ID'] == self.user_watershed_id]['BSS_ID'].values[0]
         self.user_watershed_area = stations[stations['ID'] == self.user_watershed_id]['area'].values[0]
         self.user_horizon = self.params.getparam("user_horizon").getvalue()

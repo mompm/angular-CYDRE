@@ -816,11 +816,22 @@ def start_simulation_cydre_app(simulation_id):
         # Initialisation et création de cydre_app
         cydre_app = create_cydre_app(params)
         watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+        station_name = cydre_app.UserConfiguration.user_watershed_name
         # Stocker le nom de la station dans les paramètres
         stmt = (
             update(Simulation)
             .where(Simulation.SimulationID == simulation_id)
             .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.watershed_name',watershed_name)})
+        )
+        
+        # Exécution de la mise à jour
+        db.session.execute(stmt)
+        db.session.commit()
+
+        stmt = (
+            update(Simulation)
+            .where(Simulation.SimulationID == simulation_id)
+            .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.station_name',station_name)})
         )
         
         # Exécution de la mise à jour
@@ -1124,6 +1135,7 @@ def get_results(simulation_id):
             results = simulation.Results
             indicators = simulation.Indicators
             watershed_name = simulation.Parameters['watershed_name']
+            station_name = simulation.Parameters['station_name']
             try:
                 userconfig = simulation.Parameters['UserConfig']
                 watershed_id = userconfig['user_watershed_id']
@@ -1133,8 +1145,9 @@ def get_results(simulation_id):
             
             print(watershed_name)
             print(watershed_id)
+            print(station_name)
 
-            return jsonify({"results":results,"indicators":indicators, "watershed_name":watershed_name,"watershed_id":watershed_id}),200
+            return jsonify({"results":results,"indicators":indicators, "watershed_name":watershed_name,"watershed_id":watershed_id, "station_name":station_name}),200
         else:
             return jsonify({"Error":"No simulation ID given"}),500
     except Exception as e :
@@ -1146,6 +1159,7 @@ class Graph():
     def __init__(self,cydre_app,watershed_name, stations, selected_date,scenarios_grouped,user_similarity_period,similar_watersheds,
                     log=True, module=True, baseflow=False, options='viz_plotly'):
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
+        self.station_name = cydre_app.UserConfiguration.user_watershed_name
         self.streamflow_proj = cydre_app.df_streamflow_forecast
         self.watershed_name = watershed_name
         self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
@@ -1418,7 +1432,8 @@ class Graph():
         'volume10': float(self.volume10),
         'volume90': float(self.volume90),
         'last_date': self.projection_period[-1].strftime("%d/%m/%Y"),
-        'first_date': self.simulation_date.strftime('%Y-%m-%d'),
+        'first_date': self.simulation_date.strftime('%d/%m/%Y'),
+        # 'first_date': self.simulation_date.strftime('%Y-%m-%d'),
         'm10':self.mod10
         }
 

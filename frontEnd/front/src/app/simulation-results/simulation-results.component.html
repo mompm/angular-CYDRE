@@ -183,27 +183,29 @@
         </div>
       </div>
       <div class="card-body">
-        <div class="scenariosInfos">Quand, et où, a-t-on retrouvé des conditions similaires à la date du {{results.results.data.last_date}} mesurées à la station hydrologique {{watershedName}} ?</div>
+        <div class="scenariosInfos">Quand, et où, a-t-on retrouvé des conditions similaires à la date du {{results.results.data.first_date}} mesurées à la station hydrologique {{stationName}} ?</div>
         <div class="evenementsNumber">{{similarScenarios}}</div>
         <div class="scenariosEvenementInfo">évenements utilisés pour la prévision</div>
         <div class="heatmap-content" id="matriceScenarios"></div>
-      <div class="form-group">
-        <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
-          <option value="recharge">Recharge des nappes</option>
-          <option value="discharge">Débits de cours d'eau</option>
-          <option value="all">Toutes</option> 
-        </select>
       </div>
       
-      <div *ngIf="matricecolumn; else defaultContainer" class="heatmapcontainercolumn">
+        <!-- <div class="form-group">
+          <select id="matrixSelect" class="form-control small-select" [(ngModel)]="selectedMatrix" (change)="renderMatrix()">
+            <option value="recharge">Recharge des nappes</option>
+            <option value="discharge">Débits de cours d'eau</option>
+            <option value="all">Toutes</option> 
+          </select>
+       </div> -->
+      
+      <!-- <div *ngIf="matricecolumn; else defaultContainer" class="heatmapcontainercolumn">
         <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmapcolumn ">
           <div class="heatmap-content" id="matriceRecharge"></div>
         </div>
         <div *ngIf="selectedMatrix === 'discharge' || selectedMatrix === 'all'" class="heatmapcolumn ">
           <div class="heatmap-content" id="matriceSpecificDischarge"></div>
         </div>
-      </div>
-      <ng-template #defaultContainer>
+      </div> -->
+      <!-- <ng-template #defaultContainer>
         <div class="heatmapcontainer">
           <div *ngIf="selectedMatrix === 'recharge' || selectedMatrix === 'all'" class="heatmap">
             <div class="heatmap-content" id="matriceRecharge"></div>
@@ -212,7 +214,7 @@
             <div class="heatmap-content" id="matriceSpecificDischarge"></div>
           </div>
         </div>
-      </ng-template>
+      </ng-template> -->
 
     </div>
     
