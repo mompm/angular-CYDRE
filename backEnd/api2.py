@@ -46,7 +46,7 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 # Application path
-app_root = os.path.dirname(os.path.abspath("api.py"))
+app_root = os.path.dirname(os.path.abspath("api2.py"))
 
 data_path = os.path.join(app_root, 'data')
 hydrometry_path = os.path.join(data_path, 'hydrometry', 'discharge')
