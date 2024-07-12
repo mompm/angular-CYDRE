@@ -3,6 +3,10 @@
 Created on Wed Jun 14 15:20:32 2023
 
 @author: Nicolas Cornette
+
+Configutation of the watershed used for the projection
+- Parameter Management
+- Data loalding for hdyrographic stations for the watershed on which projections are demanded
 """
 
 from flask import jsonify
@@ -11,49 +15,43 @@ import os
 
 
 class UserConfiguration():
-    
+    """
+        Configutation of the watershed used for the projection
+    """
     
     def __init__(self, params, stations):
         """
-        DESCRIPTION.
-
         Parameters
         ----------
-        user_site : TYPE
-            DESCRIPTION.
-        historical_database : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+        params : results of xml reader in specific class 
+            Parameters of the simulation (User_Configuration)
+        stations : 
+            List of all stations and characteristics
         """
         
-        # Store the hydrological station identifier
+        # Store the hydrological station identifier and characteristics
         self.params = params
         self.user_watershed_id = self.params.getparam("user_watershed_id").getvalue()
         self.user_watershed_name = stations[stations['ID'] == self.user_watershed_id]['station_name'].values[0]
         self.user_bss_id = stations[stations['ID'] == self.user_watershed_id]['BSS_ID'].values[0]
         self.user_watershed_area = stations[stations['ID'] == self.user_watershed_id]['area'].values[0]
+        # Number of days on which projection should be completed
         self.user_horizon = self.params.getparam("user_horizon").getvalue()
 
 
     def serialize_params(self):
+        """
+        For web application, gets some of the elements of the class
+        - watershed_id
+        - user_horizon
+        """
         return jsonify({"user_watershed_id":self.user_watershed_id,"user_horizon":self.user_horizon})
                 
         
+    #NICOLAS: supprimer cette fonction au profit de la suivante
     def select_user_watershed(self, data_path):
         """
-        
-
-        Parameters
-        ----------
-
-        Returns
-        -------
-        dict
-            DESCRIPTION.
+        Gets the time series of the data
 
         """
         try:
@@ -65,6 +63,10 @@ class UserConfiguration():
     
     
     def extract_user_timeseries(self, data_path):
+        """
+        Gets the time series from stored files (HydroPortail)
+        of the data (streamflow, runoff, recharge, storage)
+        """
         
         # Extract the user time series data
         self.user_streamflow = self.get_user_streamflow(data_path)

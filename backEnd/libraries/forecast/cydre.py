@@ -3,6 +3,8 @@
 Created on Wed May  3 10:27:18 2023
 
 @author: Nicolas Cornette
+
+Driver of the application for the hydrological projection
 """
 
 # Modules
@@ -22,15 +24,28 @@ class Cydre():
     
     """
     Class used to run the seasonal forecast application.
+    - On which watershes, at which date is made the projection
     """
     
     def __init__(self, stations, data_path, params, version):
+        """  
+        Parameters
+        ----------
+        stations : TYPE
+            File with all stations.
+        data_path : TYPE
+            Folder with all data.
+        params : results from xml reader
+            parameters xml (ALL).
+        version : TYPE
+            #NICOLAS: à garder?
+        """
         
         # Store the Cydre application inputs parameters
         self.params = params
-        #self.watersheds = watersheds
         self.version = version
         self.data_path = data_path
+        # Configuration of the projection (date, position, duration of projection...)
         user_params = self.params.getgroup("UserConfig")
         
         # Create the User instance and select the watershed chosen by the user

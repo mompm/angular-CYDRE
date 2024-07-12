@@ -3,6 +3,8 @@
 Created on Wed Oct 25 19:39:10 2023
 
 @author: Nicolas Cornette
+
+Loading xml parameters and creation of cydre instance
 """
 
 # Python modules
@@ -14,7 +16,9 @@ import tools.Parameters.Parameters.ParametersGroup as pg
 
 
 class Initialization():
+    """
     
+    """    
     
     def __init__(self, app_root, stations):
         
@@ -64,11 +68,14 @@ class Initialization():
     
     def create_cydre_app(self):
         
+        #NICOLAS: à supprimer? 
+        # Version classique ou version de test 
         self.version = self.params.getgroup('General').getparam('version').getvalue()
 
         return CY.Cydre(self.stations, self.data_path, self.params, self.version)
 
 
+    #NICOLAS:à déplacer dans la classe paramètres
     def get_parameters_path(self, param_names):
         param_paths = []
 
