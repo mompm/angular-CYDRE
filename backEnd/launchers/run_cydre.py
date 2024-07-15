@@ -38,7 +38,7 @@ geometry_stations = [Point(xy) for xy in zip(x_wgs84, y_wgs84)]
 gdf_stations = gpd.GeoDataFrame(stations, geometry=geometry_stations, crs="EPSG:4326")
 
 # Load watersheds boundaries
-gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds.shp'))
+gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds2.shp'))
 gdf_watersheds = gdf_watersheds.set_index('index')
 
 

@@ -75,7 +75,8 @@ class Watershed():
             self.watershed_name = watershed_info.iloc[0]['name']
             x_outlet = watershed_info.iloc[0]['x_outlet']
             y_outlet = watershed_info.iloc[0]['y_outlet']
-            snap_dist = watershed_info.iloc[0]['snap_dist']
+            #snap_dist = watershed_info.iloc[0]['snap_dist']
+            snap_dist=150
         
         except:
             print("Warning : The name of watershed is not in the watershed list or watershed list does not exist")
