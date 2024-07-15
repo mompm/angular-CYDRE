@@ -2,124 +2,85 @@
 """
 Created on Wed Jun  7 17:30:16 2023
 
-@author: nicol
+@author: Nicolas Cornette
+
+Launchers for updating time series.
 """
 
 # Python modules
 import os
 import sys
+import pandas as pd
+import geopandas as gpd
 
 # Cydre modules
 from setup_cydre_path import setup_cydre_path
 app_root = setup_cydre_path()
 
-import utils.toolbox as toolbox
 import libraries.preprocessing.data.surfex as surfex
 import libraries.preprocessing.data.hydrometry as hydrometry
 import libraries.preprocessing.data.piezometry as piezometry
 
 
-
-#%% path definitions (tmp)
-# Intermediary outputs (formatted database)
-out_path = os.path.join(app_root, "outputs")
+#%% Path Definitions
+data_path = os.path.join(app_root, 'data')
 surfex_path = os.path.join(app_root, 'data', 'climatic', 'surfex')
 hydro_path = os.path.join(app_root, 'data', 'hydrometry')
 piezo_path = os.path.join(app_root, 'data', 'piezometry')
-sys.exit()
-test = surfex.Surfex(surfex_path)
-test.update_reanalysis()
 
-#%% Update the new data structure
 
-# Load datasets
-watersheds = toolbox.load_object(out_path, 'data.pkl')
+#%% Load hydrological stations and watershed delineation 
+hydro_stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
+piezo_stations = pd.read_csv(os.path.join(piezo_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
+gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds.shp'))
+gdf_watersheds = gdf_watersheds.set_index('index')
 
-# Climatic data : updating the reanalysis
-for ws in watersheds.keys():
-    
+
+#%% Updating streamflow from HydroPortail using Hub'Eau API
+for station_ID in hydro_stations['ID']:    
     try:
-        test = surfex.Surfex(surfex_path)
-        test.update_watershed_data(surfex_path, watersheds[ws]["geographic"]["geometry"])
+        # API
+        Hydro = hydrometry.Hydrometry(bh_id = station_ID)
         
-        if not 'climatic' in watersheds:
-            watersheds[ws]['climatic'] = {}
-            
-        watersheds[ws]['climatic']['cells_list'] = test.cells_list
-        watersheds[ws]['climatic']['values'] = test.values
-        watersheds[ws]['climatic']['recharge'] = test.recharge
-        watersheds[ws]['climatic']['runoff'] = test.runoff
-        watersheds[ws]['climatic']['precipitation'] = test.precipitation
-        watersheds[ws]['climatic']['etp'] = test.etp
-        watersheds[ws]['climatic']['temperature'] = test.temperature
+        # Export data        
+        Hydro.discharge.to_csv(os.path.join(hydro_path, 'discharge', station_ID+'.csv'))
+        Hydro.specific_discharge.to_csv(os.path.join(hydro_path, 'specific_discharge', station_ID+'.csv'))
         
-        test.recharge.to_csv(os.path.join(surfex_path, 'recharge', ws+'.csv'))
-        test.runoff.to_csv(os.path.join(surfex_path, 'runoff', ws+'.csv'))
-        test.precipitation.to_csv(os.path.join(surfex_path, 'precipitation', ws+'.csv'))
-        test.etp.to_csv(os.path.join(surfex_path, 'etp', ws+'.csv'))
-        test.temperature.to_csv(os.path.join(surfex_path, 'temperature', ws+'.csv'))
+        print(station_ID, ':' ,Hydro.discharge.index[-1])
     except:
-        print(f"Error with {ws}")
+        print(f"Error updating data for the hydrological station {station_ID}")
 
 
-# Hydrometric data
-for ws in watersheds.keys():    
+#%% Updating piezometric data from ADES using Hub'Eau API
+for bss_ID in piezo_stations['Identifiant BSS']:
     try:
-        test2 = hydrometry.Hydrometry(bh_id = ws)
+        # API
+        Piezo = piezometry.Piezometry(bss_ID, piezo_path)
+        Piezo.update_data(Piezo.old_bss_id)
         
-        if not 'hydrometry' in watersheds:
-            watersheds[ws]['hydrometry'] = {}
+        # Export data
+        Piezo.data.to_csv(os.path.join(piezo_path, Piezo.bss_id+'.csv'))
         
-        watersheds[ws]['hydrometry']['name'] = test2.name
-        watersheds[ws]['hydrometry']['area'] = test2.area
-        watersheds[ws]['hydrometry']['station_sheet'] = test2.station_sheet
-        watersheds[ws]['hydrometry']['outlet'] = test2.outlet
-        watersheds[ws]['hydrometry']['discharge'] = test2.discharge
-        watersheds[ws]['hydrometry']['specific_discharge'] = test2.specific_discharge
-        
-        test2.discharge.to_csv(os.path.join(hydro_path, 'discharge', ws+'.csv'))
-        test2.specific_discharge.to_csv(os.path.join(hydro_path, 'specific_discharge', ws+'.csv'))
-        
-        print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
+        print(bss_ID, ':' ,Piezo.water_table_depth.index[-1])
     except:
-        print(f"Error with {ws}")
-        
+        print(f"Error updating data for the piezometric station {bss_ID}")
 
-# Piezometric data
-for ws in watersheds.keys():
+
+#%% Updating climatic data from Météo-France using stable URL
+# We need to update regional reanalysis h5 file first and then extract at the watershed-scale. 
+Climatic = surfex.Surfex(surfex_path)
+Climatic.update_reanalysis()
+
+for station_ID in hydro_stations['ID']:
     try:
-        test3 = piezometry.Piezometry(ws, piezo_path)
+        Climatic = surfex.Surfex(surfex_path)
+        watershed_geometry = gdf_watersheds[gdf_watersheds.index == station_ID]['geometry']
+        Climatic.extract_watershed_scale(surfex_path, watershed_geometry)
         
-        if not 'piezometry' in watersheds:
-            watersheds[ws]['piezometry'] = {}
-        
-        watersheds[ws]['piezometry']['watershed_id'] = test3.watershed_id
-        watersheds[ws]['piezometry']['data_path'] = test3.data_path
-        watersheds[ws]['piezometry']['table'] = test3.table
-        watersheds[ws]['piezometry']['bss_id'] = test3.bss_id
-        watersheds[ws]['piezometry']['old_bss_id'] = test3.old_bss_id
-        watersheds[ws]['piezometry']['data'] = test3.data
-        watersheds[ws]['piezometry']['water_table_level'] = test3.water_table_level
-        watersheds[ws]['piezometry']['water_table_depth'] = test3.water_table_depth
-        
-        test3.data.to_csv(os.path.join(piezo_path, test3.bss_id+'.csv'))
-        
-        print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
+        Climatic.recharge.to_csv(os.path.join(surfex_path, 'recharge', station_ID+'.csv'))
+        Climatic.runoff.to_csv(os.path.join(surfex_path, 'runoff', station_ID+'.csv'))
+        Climatic.precipitation.to_csv(os.path.join(surfex_path, 'precipitation', station_ID+'.csv'))
+        Climatic.etp.to_csv(os.path.join(surfex_path, 'etp', station_ID+'.csv'))
+        Climatic.temperature.to_csv(os.path.join(surfex_path, 'temperature', station_ID+'.csv'))
     except:
-        print(f"Error with {ws}")
-        
-#%% Test
-count = 0
-for ws in watersheds.keys():
-    #print(ws, ':' ,watersheds[ws]['hydrometry']['discharge'].index[-1])
-    #print(ws, ':' ,watersheds[ws]['climatic']['temperature'].index[-1])
-    #print(watersheds[ws]['climatic']['temperature'].iloc[-1].values[0])
-    try:
-        print(ws, ':' ,watersheds[ws]['piezometry']['water_table_depth'].index[-1])
-        count = count + 1
-    except:
-        pass
-
-#%% Save regional object
-toolbox.save_object(watersheds, out_path, 'data.pkl')
-
+        print(f"Error updating data for the hydrological station {station_ID}")        
