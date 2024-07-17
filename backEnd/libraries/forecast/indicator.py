@@ -2,7 +2,9 @@
 """
 Created on Fri Sep 22 13:57:06 2023
 
-@author: nicol
+@author: Nicolas Cornette
+
+Indicator of correlation between 2 chronicles
 """
 
 import pandas as pd
@@ -15,6 +17,10 @@ from dtaidistance import dtw, similarity
 
 
 class Indicator():
+    """
+    Indicator of correlation between 2 chronicles 
+    Indicator type ("metric") is stored in params
+    """
     
     
     def __init__(self, params):
@@ -29,11 +35,13 @@ class Indicator():
         # /!\ apply standardization ? /!\
         # /!\ moving average ? /!\
         self.metric = self.params.getparam("metric").getvalue()
+        #NICOLAS: supprimer self.x et self.y qui ne semblent pas être utilisés ailleurs dans ce fichier?
         self.x = ref_df.values
         self.y = comp_df.values
         self.w = np.array((ref_df.index - ref_df.index.min()).days / (ref_df.index.max() - ref_df.index.min()).days)
 
         
+#NICOLAS: à conserver? 
         # Timeseries normalization
         # Normalement pas d'influence car mêmes échelles et unités
         # Pourrait être intéressant dans le cas où l'indicateur n'est pas nécessairement entre -1 et 1 comme le DTW ?
@@ -57,6 +65,7 @@ class Indicator():
         return coeff
     
     
+    #NICOLAS: encore utilisée ou à supprimer? 
     def _series_normalization(self, ref_df, comp_df):
         scaler = StandardScaler()
         ref_df_normalized = scaler.fit_transform(ref_df.values.reshape(-1, 1))
@@ -67,7 +76,10 @@ class Indicator():
     
     
     def model_performance(self, sim, obs):
-        
+        """
+        Computes all indicators of correlations between sim and obs 
+        and returns them as a dictionary
+        """
         nselog = self.nselog(sim, obs)
         nse = self.nse(sim, obs)
         kge = self.kge(sim, obs)
@@ -92,6 +104,7 @@ class Indicator():
             x = ref_df.values
             y = comp_df.values
             
+        #NICOLAS self.w doit il être recalculé? 
         if weight:
             corr = self._weighted_cov(x, y, self.w) / np.sqrt(self._weighted_cov(x, x, self.w) * self._weighted_cov(y, y, self.w))
         else:
@@ -152,6 +165,7 @@ class Indicator():
 
 
     def nselog(self, comp_df, ref_df):
+        # nse on log values
         
         if isinstance(comp_df, np.ndarray):
             x = ref_df
@@ -168,6 +182,7 @@ class Indicator():
 
 
     def nseinv(self, sim, obs):
+        # nse on inverse of values
         
         sim = sim.values
         obs = obs.values
@@ -180,6 +195,7 @@ class Indicator():
 
 
     def kge(self, comp_df, ref_df):
+        # Kling Gupta Efficiency
         
         if isinstance(comp_df, np.ndarray):
             x = ref_df

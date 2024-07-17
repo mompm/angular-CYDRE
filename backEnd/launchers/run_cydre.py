@@ -27,6 +27,7 @@ start = time.time()
 
 
 #%% PREPARATION
+#NICOLAS: à factoriser avec api2.py
 
 # Define paths
 data_path = os.path.join(app_root, 'data')
@@ -34,7 +35,7 @@ hydraulic_path = os.path.join(data_path, 'hydraulicprop')
 output_path = os.path.join(app_root, 'outputs', 'projections')
 
 # Load hydrological stations
-#NICOLAS: � int�grer dans Initialization
+#NICOLAS: à intégrer dans Initialization
 stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
 
 
@@ -44,6 +45,7 @@ gdf_watersheds = gdf_watersheds.set_index('index')
 
 
 #%% CYDRE APPLICATION
+#NICOLAS: à factoriser avec api2.py
 
  # Initialize the Cydre application
 init = IN.Initialization(app_root, stations)
@@ -57,6 +59,7 @@ df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast(data
 
 
 #%% VISUALIZATION AND RESULTS STORAGE
+#NICOLAS: à factoriser avec api2.py
 # Change of coordinate system for compatibility maps
 # Everything is in the code in WGS84
 lambert93_to_wgs84 = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", always_xy=True)

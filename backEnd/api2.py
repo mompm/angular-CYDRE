@@ -30,20 +30,25 @@ import xml.etree.ElementTree as ET
 
 from collections import OrderedDict
 
+#%% INITIALIZATION OF FLASK SERVER
 
-
-
-# Configuration
+# Configuration, Flask is the library necessary to exchange with the website
 app = flask.Flask(__name__)
+# Autorisation de requête sur le site web par angular
 CORS(app, supports_credentials=True, origins=["http://localhost:4200", "https://apirequest.io"])
 app.config['CORS_HEADERS'] = 'Content-Type'
+# Magage Database in python (database des utilisateurs et des simulations, une table pour les utilisateurs, une table pour les simulations)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:diverse35@localhost/cydre'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'une_cle_secrete_tres_complexe'
 
+# Database effective
 db = SQLAlchemy(app)
+# Extension de flask pour les bases de données
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+#%% INITIALIZATION OF CYDRE: Loading stations, watershed boundaries, location of files
 
 # Application path
 app_root = os.path.dirname(os.path.abspath("api2.py"))
@@ -84,8 +89,10 @@ for i in gdf_watersheds.index:
     gdf_watersheds.loc[i, 'max_lon'] = maxx
     gdf_watersheds.loc[i, 'max_lat'] = maxy
 
+#%% INITIALIZATION OF USER DATABASE (MYSQL)
 
 class Users(db.Model, UserMixin):
+    # Struicture of Users database
     __tablename__ = "Users"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), unique=True, nullable=False)
@@ -138,6 +145,8 @@ def create_user():
     return jsonify({'message': 'User successfully registered'}), 201
 
 Base = declarative_base()
+
+#%% INITIALIZATION OF SIMULATION DATABASE (MYSQL)
 
 # Définition du modèle pour SQLAlchemy
 class Simulation(db.Model):
@@ -317,7 +326,9 @@ def get_GDF_Watersheds():
     return json_list
 
 
-# Get discharge timeseries
+#NICOLAS: factoriser le contenu des fonctions de chargement 
+
+# Get discharge timeseries (used for site documentation, "fiche de sites")
 @app.route('/osur/stationDischarge/<string:id>', methods=['GET'])
 @cross_origin()
 def get_stationdata(id):

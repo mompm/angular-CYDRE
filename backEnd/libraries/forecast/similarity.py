@@ -343,7 +343,7 @@ class Similarity:
         years = None
         
         if which == 'user':
-            self._extract_variable_parameters(variable)
+            self.__extract_variable_parameters(variable)
             years = self.TimeProperties.get_nyears(data)
         
         return data, years
@@ -375,7 +375,7 @@ class Similarity:
         return df.rolling(window=window, min_periods=min_periods).mean()
     
     
-    def _extract_variable_parameters(self, variable):
+    def __extract_variable_parameters(self, variable):
         time_params = self.params.getgroup(variable).getgroup("Time")
         self.TimeProperties.set_similarity_conditions(time_params)
         indicator_params = self.params.getgroup(variable).getgroup("Calculation")

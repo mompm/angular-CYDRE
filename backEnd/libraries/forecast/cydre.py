@@ -31,14 +31,14 @@ class Cydre():
         """  
         Parameters
         ----------
-        stations : TYPE
+        stations : string
             File with all stations.
-        data_path : TYPE
+        data_path : string
             Folder with all data.
         params : results from xml reader
             parameters xml (ALL).
         version : TYPE
-            #NICOLAS: à garder?
+            #NICOLAS: à garder? à supprimer
         """
         
         # Store the Cydre application inputs parameters

@@ -23,6 +23,7 @@ dependencies:
         - requests
         - flask
         - flask_cors
+        - flask_login
         - dash
         - dash_daq
         - dash_bootstrap_components
