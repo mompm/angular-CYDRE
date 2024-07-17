@@ -6,28 +6,18 @@ from flask_cors import CORS, cross_origin
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, current_user, login_user, logout_user, login_required
 from sqlalchemy.orm.attributes import flag_modified
-from datetime import datetime
-
-
 import numpy as np
 from sqlalchemy.ext.declarative import declarative_base
-
-
-from sqlalchemy import JSON, Column, DateTime, Integer, String, func, text, update
+from sqlalchemy import DateTime, func, text, update
 from werkzeug.security import generate_password_hash, check_password_hash
-
 import os,csv 
-
 import pandas as pd
 import geopandas as gpd
 import pyproj
 from shapely.geometry import mapping , Point
-
 import libraries.forecast.initialization as INI
-import libraries.forecast.outputs as OU
 import plotly.graph_objects as go
 import xml.etree.ElementTree as ET
-
 from collections import OrderedDict
 
 #%% INITIALIZATION OF FLASK SERVER
@@ -90,7 +80,10 @@ for i in gdf_watersheds.index:
     gdf_watersheds.loc[i, 'max_lat'] = maxy
 
 #%% INITIALIZATION OF USER DATABASE (MYSQL)
+Base = declarative_base()
 
+
+# Définition du model Users pour SQLAlchemy
 class Users(db.Model, UserMixin):
     # Struicture of Users database
     __tablename__ = "Users"
@@ -105,11 +98,32 @@ class Users(db.Model, UserMixin):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+    
+# Définition du modèle Simulation pour SQLAlchemy
+class Simulation(db.Model):
+    __tablename__ = 'Simulations'
+    SimulationID = db.Column(db.String(36), primary_key=True)
+    UserID = db.Column(db.Integer, nullable=False)
+    Parameters = db.Column(db.JSON, nullable=True)
+    SimulationDate = db.Column(DateTime, default=func.now())
+    Indicators = db.Column(db.JSON, default= [])
+    Results = db.Column(db.JSON, nullable = True, default = {})
 
+# Définition du modèle SimulationsBeta pour SQLAlchemy (table contenant les simulations déjà éxécutées afin d'éviter un chargement)
+class SimulationsBeta(db.Model):
+    __tablename__ = 'SimulationsBeta'
+    SimulationID = db.Column(db.String(36), primary_key=True)
+    Parameters = db.Column(db.JSON, nullable=True)
+    SimulationDate = db.Column(DateTime, default=func.now())
+    Indicators = db.Column(db.JSON, default= [])
+    Results = db.Column(db.JSON, nullable = True, default = {})
+
+# Fonction qui retourne un utilisateur de la table selon son ID
 @login_manager.user_loader
 def load_user(user_id):
     return Users.query.get(int(user_id))
 
+# Route permettant le login d'un utilisateur 
 @app.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -121,12 +135,15 @@ def login():
         return jsonify({'message': 'Logged in successfully', 'username': username, 'role': user.role, "UserID":user.id}), 200
     return jsonify({'error': 'Invalid username or password'}), 401
 
+# Route permettant le logout d'un utilisateur 
 @app.route('/api/logout', methods=['POST'])
 @login_required
 def logout():
     logout_user()
     return jsonify({'message': 'Logged out successfully'}), 200
 
+
+# Route permettant de créer un utilisateur 
 @app.route('/users', methods=['POST'])
 def create_user():
     data = request.get_json()
@@ -144,31 +161,7 @@ def create_user():
     db.session.commit()
     return jsonify({'message': 'User successfully registered'}), 201
 
-Base = declarative_base()
-
-#%% INITIALIZATION OF SIMULATION DATABASE (MYSQL)
-
-# Définition du modèle pour SQLAlchemy
-class Simulation(db.Model):
-    __tablename__ = 'Simulations'
-    SimulationID = db.Column(db.String(36), primary_key=True)
-    UserID = db.Column(db.Integer, nullable=False)
-    Parameters = db.Column(db.JSON, nullable=True)
-    SimulationDate = db.Column(DateTime, default=func.now())
-    Indicators = db.Column(db.JSON, default= [])
-    Results = db.Column(db.JSON, nullable = True, default = {})
-
-    # Définition du modèle pour SQLAlchemy
-class SimulationsBeta(db.Model):
-    __tablename__ = 'SimulationsBeta'
-    SimulationID = db.Column(db.String(36), primary_key=True)
-    Parameters = db.Column(db.JSON, nullable=True)
-    SimulationDate = db.Column(DateTime, default=func.now())
-    Indicators = db.Column(db.JSON, default= [])
-    Results = db.Column(db.JSON, nullable = True, default = {})
-
-
-
+# Route permettant de récupérer toutes les simulations d'un utilisateur 
 @app.route('/api/simulations', methods=['GET'])
 @login_required
 def get_simulations():
@@ -495,7 +488,7 @@ def get_water_table_depth(id):
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
-
+# Route permettant de supprimer une simulation grâce à son ID
 @app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
 @cross_origin()
 def delete_simulation(simulation_id):
@@ -512,6 +505,8 @@ def delete_simulation(simulation_id):
     except Exception as e:
         return jsonify({"Error":str(e)}),500
     
+# Route permettant de supprimer toutes les simulations de l'utilisateur "default", 
+# Ces simulations sont celles des utilisateurs non connectés
 @app.route('/api/delete_default_simulation', methods=['POST'])
 @cross_origin()
 def delete_default_simulation():
@@ -537,7 +532,7 @@ def delete_default_simulation():
     except Exception as e:
         return jsonify({"Error": str(e)}), 500
 
-    
+# Fonction qui extrait récursivement les noms des paramètres d'un json
 def extract_param_names(params, prefix=""):
     param_names = []
     for key, value in params.items():
@@ -546,27 +541,19 @@ def extract_param_names(params, prefix=""):
             param_names.extend(extract_param_names(value, current_path))
         else:
             param_names.append(current_path)
-    # print(param_names)
     return param_names
 
-
+# Fonction qui crée l'app cydre à partir des paramètres qu'on lui fournit
 def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
         # Initialiser l'app cydre
         init = INI.Initialization(app_root,stations)
         cydre_app = init.cydre_initialization()
-        param_names=extract_param_names(params=params)
-        # print('param names: ', param_names)
+        param_names = extract_param_names(params=params)
         # Mettre à jour les paramètres de l'application en fonction des entrées
-        # param_names = ['user_watershed_id', 'user_horizon', 'date']
         param_paths = init.get_parameters_path(param_names)
-        # print('param paths : ',param_paths)
         param_paths_dict = {name: path for name, path in zip(param_names, param_paths) if path and name!='watershed_name'}
-        # print('param_paths_dict', param_paths_dict)
-        # init.params.find_and_replace_param(param_paths[0], params.get('watershed'))
-        # init.params.find_and_replace_param(param_paths[1], int(params.get('slider')))
-        # init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
         for name in param_paths_dict.keys():
             path = param_paths_dict.get(name)
             if path != []:
@@ -581,7 +568,7 @@ def create_cydre_app(params):
         app.logger.error("Erreur lors de la création de l'app: ",str(e))
         return e
 
-
+# Route permettant de créer la simulation dans la base de données et renvoie son ID
 @app.route('/api/run_cydre', methods=['POST'])
 @cross_origin()
 def run_cydre():
@@ -629,6 +616,8 @@ def run_cydre():
         app.logger.error('Error starting cydre_app: %s', str(e))
         return jsonify({'error': str(e)}), 500
 
+
+# Route permettant d'éxécuter les similarités spatiales pour une simulation et les stocker
 @app.route('/api/run_spatial_similarity/<simulation_id>', methods=['POST'])
 @cross_origin()
 def run_spatial_similarity(simulation_id):
@@ -671,7 +660,7 @@ def run_spatial_similarity(simulation_id):
     
     return {"Success":"Ran spatial similarity"}, 200
 
-
+# Route permettant d'éxécuter les similarités temporelles pour une simulation et les stocker
 @app.route('/api/run_timeseries_similarity/<simulation_id>', methods=['POST'])
 @cross_origin()
 def run_timeseries_similarity(simulation_id):
@@ -683,7 +672,7 @@ def run_timeseries_similarity(simulation_id):
         cydre_app.run_timeseries_similarity(data_path, json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
-        print(corr_matrix)
+        # print(corr_matrix)
         # with open('dataframe_output.txt', 'w') as file:
         #     for index, row in corr_matrix.iterrows():
         #         file.write(f"{row['Nom']}, {row['Age']}, {row['Ville']}\n")
@@ -729,6 +718,8 @@ def run_timeseries_similarity(simulation_id):
         return jsonify({'error': str(e)}), 500 
     return jsonify({"specific_discharge":json.loads(specific_discharge),"recharge":json.loads(recharge)}), 200
 
+
+# Route permettant de sélectionner les scénarios pour une simulation et les stocker
 @app.route('/api/select_scenarios/<simulation_id>', methods=['POST'])
 @cross_origin()
 def select_scenarios(simulation_id):
@@ -812,7 +803,7 @@ def select_scenarios(simulation_id):
         return {"error": str(e)}, 500
 
     
-
+# Fonction permettant de relancer l'app cydre correspondant à une simulation à partir de son ID
 def start_simulation_cydre_app(simulation_id):
     # Retrouver dans la base de données la simulation correspondante
     simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
@@ -853,6 +844,7 @@ def start_simulation_cydre_app(simulation_id):
     except Exception as e :
         return {"Error starting cydre app":str(e)}
     
+# Route permettant de récupérer les données du graphe observations/prévisions d'une simulation grâce à son ID et les stocker
 @app.route('/api/simulateur/getGraph/<simulation_id>', methods=['GET'])
 @cross_origin()
 def getGraph(simulation_id):
@@ -951,7 +943,9 @@ def getGraph(simulation_id):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
+
+
+# Route permettant de mettre à jour les projections liées à un indicateur d'une simulation, de le créer sinon
 @app.route('/api/simulateur/update_indicator/<simulation_id>', methods=['POST'])
 @cross_origin()
 def update_indicator(simulation_id):
@@ -1031,7 +1025,7 @@ def update_indicator(simulation_id):
         app.logger.error(f"Error adding/updating indicator: {str(e)}")  # Log the error
         return jsonify({"Error": str(e)}), 500
     
-
+# Route renvoyant les valeurs de prévisions liées aux indicateurs d'une simulations
 @app.route('/api/simulateur/get_indicators_value/<simulation_id>', methods=['GET'])
 @cross_origin()
 def get_indicators_value(simulation_id):
@@ -1044,6 +1038,7 @@ def get_indicators_value(simulation_id):
     indicators = simulation.Indicators
     return indicators, 200
 
+# Route permettant de supprimer un indicateur d'une simulation
 @app.route('/api/simulateur/remove_indicator/<simulation_id>', methods=['POST'])
 @cross_origin()
 def remove_indicator(simulation_id):
@@ -1082,6 +1077,7 @@ def remove_indicator(simulation_id):
         app.logger.error(f"Error removing indicator: {str(e)}")
         return jsonify({'Error': str(e)}), 500
 
+# Route permettant de récupérer la matrice de corrélation d'une simulation et la stocker
 @app.route('/api/simulateur/getCorrMatrix/<simulation_id>', methods=['GET'])
 @cross_origin()
 def getCorrMatrix(simulation_id):
@@ -1137,6 +1133,7 @@ def getCorrMatrix(simulation_id):
         return jsonify({'error': str(e)}), 500
 
     
+# Route renvoyant les résultats d'une simulation
 @app.route('/api/results/<simulation_id>', methods=['GET'])
 @cross_origin()
 def get_results(simulation_id):
@@ -1164,8 +1161,96 @@ def get_results(simulation_id):
     except Exception as e :
         return jsonify({"Error loading results ":str(e)})
 
+# Classe permettant de ne pas organiser les paramètres dans l'ordre alphabétique mais dans l'ordre du fichier xml
+class OrderedDictEncoder(json.JSONEncoder):
+    def encode(self, obj):
+        if isinstance(obj, OrderedDict):
+            return json.dumps(obj, default=self.default, sort_keys=False, indent=4)
+        return super().encode(obj)
 
-#reprise de la classe Outputs permettant de générer le graphe
+# Renvoie les paramètres du fichier xml run_cydre_params.xml, le paramètre "default" indique si il faut renvoyer les valeurs par 
+# défaut du fichier ou les valeurs actuelles.
+@app.route('/api/parameters/<default>', methods=['GET'])
+def get_parameters(default):
+    root = parse_xml('./launchers/run_cydre_params.xml')
+    params = parse_xml_to_ordered_dict(root, default.lower() == 'true')
+    response = app.response_class(
+        response=json.dumps(params, cls=OrderedDictEncoder),
+        mimetype='application/json'
+    )
+    return response
+
+# Route permettant de mettre à jour les valeurs dans le fichier run_cydre_params.xml 
+@app.route('/api/parameters', methods=['POST'])
+def update_parameters():
+    data = request.json
+    update_xml('./launchers/run_cydre_params.xml', data)
+    return jsonify({"message": "Parameters updated successfully"})
+
+
+# Fonction remplaçant dans le fichier xml au path "file_path", les valeurs correspondant à celle dans le json "data" 
+def update_xml(file_path, data):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    for key, value in data.items():
+        element = root.find(".//*[@name='{}']/value".format(key))
+        if element is not None:
+            print("on change ", key)
+            element.text = value
+    tree.write(file_path)
+
+# Fonction permettant de parser le fichier xml en gardant ses paramètres dans l'ordre
+def parse_xml_to_ordered_dict(element, default):
+    """Convertit un élément XML en un OrderedDict imbriqué en incluant les possible_values."""
+    result = OrderedDict()
+    if len(element) > 0:
+        for child in element:
+            if child.tag == 'ParametersGroup':
+                result[child.attrib['name']] = parse_xml_to_ordered_dict(child, default)
+            elif child.tag == 'Parameter':
+                param_name = child.attrib['name']
+                description = child.find('description').text.strip().replace('\n', ' ').replace('\t', ' ')
+                param_type = child.find('type').text.strip().replace('\n', ' ').replace('\t', ' ')
+
+                if default:
+                    param_value = child.find('default_value').text
+                else:
+                    param_value = child.find('value').text
+
+                possible_values = child.find('possible_values').text
+                possible_values_list = possible_values.split('; ') if possible_values else []
+
+                result[param_name] = OrderedDict({
+                    'value': param_value,
+                    'possible_values': possible_values_list,
+                    'description': description,
+                    'type': param_type
+                })
+    return result
+
+# Renvoie la racine de l'arbre des paramètres du fichier en paramètre
+def parse_xml(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+    return root
+
+
+# Route permettant de récupérer les résultats d'une simulation défaut liée à une station en particulier grâce à l'ID de la station
+@app.route("/api/getBetaSimulations/<index>", methods=['GET'])
+def getBetaSimulations(index):
+    try: 
+        simulation = SimulationsBeta.query.filter(
+            func.json_extract(SimulationsBeta.Parameters, '$.user_watershed_id') == index
+        ).first()
+        
+        if simulation is None:
+            return jsonify({"Error": "No simulation found for the given index"}), 404
+
+        return jsonify({"results":simulation.Results,"indicators": simulation.Indicators, "watershed_name":simulation.Parameters["watershed_name"]}), 200
+    except Exception as e:
+        return jsonify({"Error": str(e)}), 500
+
+# Reprise de la classe Outputs (ancienne version) permettant de générer le graphe
 class Graph():
     def __init__(self,cydre_app,watershed_name, stations, selected_date,scenarios_grouped,user_similarity_period,similar_watersheds,
                     log=True, module=True, baseflow=False, options='viz_plotly'):
@@ -1182,8 +1267,6 @@ class Graph():
         self.simulation_date = cydre_app.date
         self.similarity_period = user_similarity_period
         self.similar_watersheds = similar_watersheds
-
-
 
     def _get_streamflow(self):
         
@@ -1456,368 +1539,6 @@ class Graph():
         mod = df.mean()
         mod10 = mod/10
         return mod, mod10
-
-class OrderedDictEncoder(json.JSONEncoder):
-    def encode(self, obj):
-        if isinstance(obj, OrderedDict):
-            return json.dumps(obj, default=self.default, sort_keys=False, indent=4)
-        return super().encode(obj)
-
-@app.route('/api/parameters/<default>', methods=['GET'])
-def get_parameters(default):
-    root = parse_xml('./launchers/run_cydre_params.xml')
-    params = parse_xml_to_ordered_dict(root, default.lower() == 'true')
-    response = app.response_class(
-        response=json.dumps(params, cls=OrderedDictEncoder),
-        mimetype='application/json'
-    )
-    return response
-
-@app.route('/api/parameters', methods=['POST'])
-def update_parameters():
-    data = request.json
-    update_xml('./launchers/run_cydre_params.xml', data)
-    return jsonify({"message": "Parameters updated successfully"})
-
-def parse_xml(file_path):
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    return root
-
-def xml_to_dict(root, default):
-    params = {}
-    if default:
-        for param in root.iter('Parameter'):
-            params[param.get('name')] = param.find('default_value').text
-    else:
-        for param in root.iter('Parameter'):
-            params[param.get('name')] = param.find('value').text
-    return params
-
-def update_xml(file_path, data):
-    tree = ET.parse(file_path)
-    root = tree.getroot()
-    for key, value in data.items():
-        element = root.find(".//*[@name='{}']/value".format(key))
-        if element is not None:
-            print("on change ", key)
-            element.text = value
-    tree.write(file_path)
-
-def parse_xml_to_ordered_dict(element, default):
-    """Convertit un élément XML en un OrderedDict imbriqué en incluant les possible_values."""
-    result = OrderedDict()
-    if len(element) > 0:
-        for child in element:
-            if child.tag == 'ParametersGroup':
-                result[child.attrib['name']] = parse_xml_to_ordered_dict(child, default)
-            elif child.tag == 'Parameter':
-                param_name = child.attrib['name']
-                description = child.find('description').text.strip().replace('\n', ' ').replace('\t', ' ')
-                param_type = child.find('type').text.strip().replace('\n', ' ').replace('\t', ' ')
-
-                if default:
-                    param_value = child.find('default_value').text
-                else:
-                    param_value = child.find('value').text
-
-                possible_values = child.find('possible_values').text
-                possible_values_list = possible_values.split('; ') if possible_values else []
-
-                result[param_name] = OrderedDict({
-                    'value': param_value,
-                    'possible_values': possible_values_list,
-                    'description': description,
-                    'type': param_type
-                })
-    return result
-
-@app.route ("/api/updateSimulationsBeta", methods=['POST'])
-def updateSimulationsBeta():
-
-    disabled_stations =  [
-    'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
-    'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310']
-
-    
-    try:
-            data = request.get_json()
-            if not data or 'station' not in data:
-                return jsonify({'Error': 'Invalid input'}), 400
-
-            station = data.get('station')
-            if(station not in disabled_stations):
-                # Création de l'identifiant de simulation unique
-                simulation_id = str(uuid.uuid4())
-                params = {"user_watershed_id": station,
-                "user_horizon": 120,
-                "date": datetime.now().strftime('%Y-%m-%d')
-                }
-
-                # Enregistrement initial dans la base de données
-                new_simulation = SimulationsBeta(
-                    SimulationID=simulation_id,
-                    Parameters=params,
-                    Indicators = [],
-                    Results = {"similarity": {"clusters":{},
-                                "similar_watersheds": [],
-                                "corr_matrix":{
-                                    "specific_discharge":{},
-                                    "recharge":{}
-                                },
-                                "user_similarity_period":[]
-                                },
-                                "data": {'graph': {},
-                                    'last_date': None,
-                                    'first_date': None,
-                                    },
-                                "corr_matrix":{}}
-                )
-                db.session.add(new_simulation)
-                db.session.commit()
-                #Init cydre app
-                # print("start app")
-                init = INI.Initialization(app_root,stations)  
-                cydre_app = init.cydre_initialization()
-                param_names = ['user_watershed_id', 'user_horizon', 'date']
-                param_paths = init.get_parameters_path(param_names)
-                init.params.find_and_replace_param(param_paths[0], params.get('user_watershed_id'))
-                init.params.find_and_replace_param(param_paths[1], int(params.get('user_horizon')))
-                init.params.find_and_replace_param(param_paths[2], str(params.get('date')))
-                cydre_app = init.create_cydre_app()
-                watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
-                stmt = (
-                update(Simulation)
-                .where(Simulation.SimulationID == simulation_id)
-                .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.watershed_name',watershed_name)})
-                )
-            
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                db.session.commit()
-
-                #Run spatial similarity
-                cydre_app.run_spatial_similarity(hydraulic_path,spatial=True)
-                # print("ran spatial")
-                clusters_json = cydre_app.Similarity.clusters.to_json()
-                similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
-                # Chemin JSON pour la mise à jour
-                json_path_clusters = '$.similarity.clusters'
-                json_path_similar_watersheds = '$.similarity.similar_watersheds'
-                # Préparation de la mise à jour pour stocker les données
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_clusters, clusters_json)})
-                )
-
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_similar_watersheds, similar_watersheds_json)})
-                )
-                db.session.execute(stmt)
-                db.session.commit()
-
-                #Run timeseries similarity
-                cydre_app.run_timeseries_similarity(data_path,cydre_app.Similarity.similar_watersheds)
-                corr_matrix = cydre_app.Similarity.correlation_matrix
-
-                # La transformer en JSON pour la stocker
-                for key,value in corr_matrix.items():
-                    if key=="specific_discharge":
-                        specific_discharge = value.to_json(orient='split')
-                    elif key=="recharge":
-                        recharge = value.to_json(orient='split')
-                # Chemins JSON pour les mises à jour
-                json_path_specific_discharge = '$.similarity.corr_matrix.specific_discharge'
-                json_path_recharge = '$.similarity.corr_matrix.recharge'
-                json_path_similar_period = '$.similarity.user_similarity_period'
-
-
-                # Préparation de la mise à jour
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_specific_discharge, specific_discharge)})
-                )
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                # Préparation de la mise à jour
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_recharge, recharge)})
-                )
-
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_similar_period, json.dumps(cydre_app.Similarity.user_similarity_period.strftime('%Y-%m-%d').tolist()))})
-                )
-                db.session.execute(stmt)
-                db.session.commit()
-
-                scenarios_grouped, selected_scenarios = cydre_app.select_scenarios(corr_matrix=corr_matrix)
-                # print(selected_scenarios)
-
-                for key, value in selected_scenarios.items():
-                    if key == "specific_discharge":
-                        specific_discharge = value.to_json(orient='split')
-                        # print(specific_discharge)
-                    elif key == "recharge":
-                        recharge = value.to_json(orient='split')
-                        # print(recharge)
-                        # print("fin recharge")
-
-                # Chemin JSON de la mise à jour
-                scenarios_grouped_path = '$.scenarios_grouped'
-                selected_scenarios_path = '$.selected_scenarios'
-                json_path_specific_discharge = selected_scenarios_path + '.specific_discharge'
-                json_path_recharge = selected_scenarios_path + '.recharge'
-
-                # Préparation de la requête SQL pour la mise à jour
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, scenarios_grouped_path, scenarios_grouped.to_json())})
-                )
-                db.session.execute(stmt)
-                # Préparation de la mise à jour
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_specific_discharge, specific_discharge)})
-                )
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                # Préparation de la mise à jour
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, json_path_recharge, recharge)})
-                )
-
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                
-                db.session.commit()
-
-                cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
-
-                #Créer le graphe 
-                results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,cydre_app.Similarity.user_similarity_period,cydre_app.Similarity.similar_watersheds,
-                                    log=True, module=True, baseflow=False, options='viz_plotly')
-                
-                app.logger.info('Cydre app and Graph results are initialized and stored')
-
-                # Calculer les projections
-                graph_results = results.plot_streamflow_projections(module=True)    
-                # Transformer les résultats en JSON pour les stocker
-                json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],
-                                        "last_date":graph_results['last_date'],
-                                        'first_observation_date':graph_results['first_observation_date'],
-                                        'last_observation_date':graph_results['last_observation_date'],
-                                        'first_prediction_date':graph_results['first_prediction_date'],
-                                        'last_prediction_date':graph_results['last_prediction_date']})
-                # Mise à jour de chaque champ
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({
-                        SimulationsBeta.Results: func.json_set(
-                            SimulationsBeta.Results,
-                            text("'$.data'"), json_to_store
-                        )
-                    })
-                )
-                # Enregistrer les résultats liés au 1/10 du module dans la colonne Indicators
-                mod10_string = {"type":"1/10 du module","value":graph_results['m10'], "color" : "#Ff0000", "results":{
-                'proj_values': graph_results['proj_values'],
-                'ndays_before_alert':graph_results['ndays_before_alert'],
-                'ndays_below_alert': graph_results['ndays_below_alert'],
-                'prop_alert_all_series': graph_results["prop_alert_all_series"],
-                'volume50': graph_results['volume50'],
-                'volume10': graph_results['volume10'],
-                'volume90': graph_results['volume90'],
-                }}
-
-                simulation = SimulationsBeta.query.filter_by(SimulationID=simulation_id).first()
-                # Trouver l'indicateur existant ou ajouter un nouvel indicateur
-                found = False
-                if simulation.Indicators:
-                    for indicator in simulation.Indicators:
-                        if indicator['type'] == "1/10 du module":
-                            indicator.update(mod10_string)
-                            found = True
-                            break
-
-                if not found:
-                    if not simulation.Indicators:
-                        simulation.Indicators = []
-                    simulation.Indicators.append(mod10_string)
-                # Exécution de la mise à jour
-                db.session.execute(stmt)
-                db.session.commit()
-
-                corr_matrix = pd.DataFrame(cydre_app.scenarios_grouped)
-                df = corr_matrix.reset_index()
-                df.columns = ['Year', 'ID', 'Coeff']
-                # Nettoyer les données
-                # Remplacer NaN par des chaînes vides
-                df['Coeff'] = df['Coeff'].round(2)
-                df['ID'] = df['ID'].map(gdf_stations.set_index('ID')['name'].to_dict())
-                df['ID'] = df['ID'].replace({np.nan: 'Unknown Station'})
-                df = df.astype({'Year': 'int', 'Coeff': 'float'})
-                
-                # Convertir en dictionnaire
-                corr_matrix = df.to_dict(orient='records')
-                
-                # Mise à jour de la base de données
-                stmt = (
-                    update(SimulationsBeta)
-                    .where(SimulationsBeta.SimulationID == simulation_id)
-                    .values({SimulationsBeta.Results: func.json_set(SimulationsBeta.Results, '$.corr_matrix', json.dumps(corr_matrix))})
-                )
-                db.session.execute(stmt)
-                db.session.commit()
-            else :
-                return ({"Error":"Station disbaled"}), 500
-    except Exception as e : 
-            print(e)
-            return jsonify({'Error':str(e)})
-
-    return jsonify({"Success":"Simulation succeeded"}), 200
-
-@app.route("/api/getBetaSimulations/<index>", methods=['GET'])
-def getBetaSimulations(index):
-    try: 
-        simulation = SimulationsBeta.query.filter(
-            func.json_extract(SimulationsBeta.Parameters, '$.user_watershed_id') == index
-        ).first()
-        
-        if simulation is None:
-            return jsonify({"Error": "No simulation found for the given index"}), 404
-
-        return jsonify({"results":simulation.Results,"indicators": simulation.Indicators, "watershed_name":simulation.Parameters["watershed_name"]}), 200
-    except Exception as e:
-        return jsonify({"Error": str(e)}), 500
-    
-@app.route("/api/resetDatabase", methods=['POST'])
-def resetDatabase():
-    try:
-        # Supprimer toutes les entrées de la table SimulationsBeta
-        db.session.execute(text('TRUNCATE TABLE SimulationsBeta'))
-        db.session.commit()
-        return jsonify({"status": "success", "message": "Database reset successfully"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"status": "error", "message": str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
