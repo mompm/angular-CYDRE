@@ -16,6 +16,7 @@ import requests
 from io import BytesIO
 import gzip
 
+
 def save_object(obj, out_path, name):
     # If folder already exists, removes it
     #if os.path.exists(os.path.join(out_path,name)):
@@ -43,7 +44,6 @@ class Surfex():
 
         """
         
-        print('Extraction des données climatiques')
         self.cells_list = False
         self.surfex_path = surfex_path
     
@@ -53,7 +53,6 @@ class Surfex():
         # https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7
         # Download last file : URL stable
         url_meteo = 'https://www.data.gouv.fr/fr/datasets/r/adcca99a-6db0-495a-869f-40c888174a57'
-        last_file = "last_file"
 
         # Read surfex mesh at the Brittany regional-scale
         mesh = gpd.read_file(os.path.join(self.surfex_path, 'shapefile', 'mesh_bzh.shp'))
@@ -117,7 +116,7 @@ class Surfex():
             print("Erreur lors du téléchargement du fichier.")
             
 
-    def update_watershed_data(self, surfex_path, watershed_shp):
+    def extract_watershed_scale(self, surfex_path, watershed_shp):
 
         # Load h5 file
         filename = os.path.join(surfex_path, 'reanalysis.h5')
@@ -153,12 +152,15 @@ class Surfex():
 
         """
         
+        # Mesh at Brittany regional-scale
         mesh_path = os.path.join(surfex_path, 'shapefile', 'mesh_bzh.shp')
-        #mesh_path = surfex_path + '/shapefile/maille_meteo_fr_pr93.shp'
-        mask = watershed_shp
-        #mask = gpd.read_file(watershed_shp , encoding="utf-8")
         mesh = gpd.read_file(mesh_path, encoding="utf-8") 
-        mask.crs = 'EPSG:2154'
+        
+        # Watershed polygon
+        mask = watershed_shp
+        mask = mask.to_crs(epsg=2154)
+        
+        # Intersection
         intersect = gpd.clip(mesh, mask)
         self.cells_list = intersect.num_id.to_list() # wanted Surfex cells list
 

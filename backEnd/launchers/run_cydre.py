@@ -34,8 +34,14 @@ hydraulic_path = os.path.join(data_path, 'hydraulicprop')
 output_path = os.path.join(app_root, 'outputs', 'projections')
 
 # Load hydrological stations
-#NICOLAS: Ã  intÃ©grer dans Initialization
+#NICOLAS: à intégrer dans Initialization
 stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
+
+
+# Load watersheds boundaries
+gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds2.shp'))
+gdf_watersheds = gdf_watersheds.set_index('index')
+
 
 #%% CYDRE APPLICATION
 

@@ -17,49 +17,24 @@ import json
 class Piezometry():
     
     
-    def __init__(self, watershed_id, data_path, update_data=False):
+    def __init__(self, bss_id, data_path):
         
-        # Parameters
-        self.watershed_id = watershed_id
         self.data_path = data_path
+        self.stations_bss = self.__get_piezometric_stations(self.data_path)
+        self.bss_id = bss_id
+        self.old_bss_id = self.stations_bss[self.stations_bss['Identifiant BSS'] == self.bss_id]['Ancien code national BSS'].values[0]
         
-        # Load correspondance table
-        self.table = self.load_correspondance_table(data_path)
-        self.bss_id = self.table[self.table['ID_HYDRO'] == self.watershed_id]['CODE_BSS'].values[0]
-        self.old_bss_id = self.table[self.table['ID_HYDRO'] == self.watershed_id]['Ancien code national BSS'].values[0]
         
-        # Load data
-        self.data = self.get_data(self.old_bss_id)
-        self.water_table_level = pd.DataFrame({'Q':self.data['H']})
-        self.water_table_depth = pd.DataFrame({'Q':self.data['d']})
-        
-        if update_data:
-            # Load piezometric data
-            self.data = self.get_data(self.watershed_id)
-            #self.station_sheet = self.load_station_sheet(self.site)
-    
-    
-    def load_correspondance_table(self, data_path):
-        
-        # Load correspondance tables
-        df_bss = self.correspondance_bss_names(data_path)
-        df_bss_ws = self.correspondance_bss_watershed(data_path)
-        
-        # Add column "OLD_BSS_NAME" in the watershed correspondance table
-        df_merged = pd.merge(df_bss_ws, df_bss, left_on='CODE_BSS', right_on='Identifiant BSS', how='left')
-        correspondance_table = df_merged[['NOM_BV', 'ID_HYDRO', 'CODE_BSS', 'Ancien code national BSS', 'NOM_BSS']]
-        
-        return correspondance_table
-    
-    
-    def correspondance_bss_names(self, data_path):
+    def __get_piezometric_stations(self, data_path):
         filename = 'stations.csv'
         return pd.read_csv(os.path.join(data_path, filename), delimiter=';', encoding='ISO-8859-1')
     
     
-    def correspondance_bss_watershed(self, data_path):
-        filename = 'correspondance_watershed_piezometers.csv'
-        return pd.read_csv(os.path.join(data_path, filename), delimiter=';')
+    def update_data(self, old_bss_id):
+        
+        self.data = self.get_data(old_bss_id)
+        self.water_table_level = pd.DataFrame({'Q':self.data['H']})
+        self.water_table_depth = pd.DataFrame({'Q':self.data['d']})
     
     
     def get_data(self, site):
@@ -96,6 +71,16 @@ class Piezometry():
         serie = serie.set_index("t")
         
         return serie
-
-#mezieres = Piezometry("02835X0055/PZ", update_data=True)
-         
+    
+    def get_correspondance_table(self, data_path):
+        
+        # Load correspondance tables
+        stations_bss = self.__get_piezometric_stations(data_path)
+        filename = 'correspondance_watershed_piezometers.csv'
+        corr_table = pd.read_csv(os.path.join(data_path, filename), delimiter=';')
+        
+        # Add column "OLD_BSS_NAME" in the watershed correspondance table
+        df_merged = pd.merge(corr_table, stations_bss, left_on='CODE_BSS', right_on='Identifiant BSS', how='left')
+        correspondance_table = df_merged[['NOM_BV', 'ID_HYDRO', 'CODE_BSS', 'Ancien code national BSS', 'NOM_BSS']]
+        
+        return correspondance_table, stations_bss

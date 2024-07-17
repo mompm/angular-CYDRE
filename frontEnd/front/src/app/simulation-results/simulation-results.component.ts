@@ -87,6 +87,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   @Input() simulation_id: string | undefined |  null = null
   @Input() showResults: boolean = false;
   @Input() watershedID: string | null | undefined;
+  @Input() showAdditionialMatrix = false;
 
   watershedName: string | null | undefined;
   stationName: string | null | undefined;
@@ -233,8 +234,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.stations = data;
       console.log(this.stations)
       this.cdr.detectChanges();
-      // this.matriceRecharge();
-      // this.matriceSpecificDischarge();
     });
   }
   getVolumeAsInt(volume: number): number {
