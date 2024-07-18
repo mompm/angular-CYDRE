@@ -25,6 +25,15 @@ class Cydre():
     """
     Class used to run the seasonal forecast application.
     - On which watershes, at which date is made the projection
+    
+    Attributes
+    ----------
+    params : results from xml reader
+        parameters xml (ALL).
+    data_path : string
+        Folder with all data.
+
+    
     """
     
     def __init__(self, stations, data_path, params, version):
@@ -33,8 +42,6 @@ class Cydre():
         ----------
         stations : string
             File with all stations.
-        data_path : string
-            Folder with all data.
         params : results from xml reader
             parameters xml (ALL).
         version : TYPE
@@ -44,6 +51,8 @@ class Cydre():
         # Store the Cydre application inputs parameters
         self.params = params
         self.version = version
+        #NICOLAS: data_path ne semble pas être utilisé ailleurs que dans ce constructeur. 
+        #         ne pas stocker comme attribut de la classe? 
         self.data_path = data_path
         # Configuration of the projection (date, position, duration of projection...)
         user_params = self.params.getgroup("UserConfig")
@@ -52,8 +61,8 @@ class Cydre():
         self.UserConfiguration = UC.UserConfiguration(user_params, stations)
         self.UserConfiguration.select_user_watershed(self.data_path)
         
-        # Simulation date definition
-        self.date = TI.TimeManagement.define_simulation_date(self.params, self.data_path, self.version,
+        # Simulation date definition (includes possible modification of starting date because of precipitations)
+        self.date = TI.TimeManagement.define_simulation_date(self.params, data_path, self.version,
                                                              self.UserConfiguration.user_watershed_id, self.UserConfiguration.user_bss_id)
         
         # Load initial flows
@@ -82,7 +91,7 @@ class Cydre():
         Parameters
         ----------
         corr_matrix : DataFrame
-            Correlation matrix with Pearson r coefficient:
+            Correlation matrix with:
                 - rows : hydrological years
                 - columns : watersheds
 

@@ -14,17 +14,40 @@ class Selection():
     
     """
     Class used to select cells in the correlation matrix.
+    
+    Attributes
+    ----------
+    select_method: string
+        selection_method for extracting top scenarios from the correlation matrix
+            minimal_threshold   : takes a minimal threshold for the correlation
+            maximal_percentage  : takes as a percentage the closest scenarios
+            n_scenarios         : takes a number of scenarios
+    __minimal_threshold_value: double
+        minimum threshold for extracting top scenarios from the correlation matrix
+    __maximal_percentage_value: double
+        maximal_percentage for extracting top scenarios from the correlation matrix
+    __n_scenarios_value: int 
+        Number of top scenarios from the correlation matrix
+
+    Methods
+    -------
+    filter_with_threshold(self, correlation_matrix)
+        selects the closest scenarios in the sense of one of the three previous selection criteria
+    
     """
     
     def __init__(self, params):
         
+        #NICOLAS: supprimer params des attributs si non utilisé ailleurs. 
         self.params = params
-        self.select_method = self.params.getparam("selection_method").getvalue()
-        self._minimal_threshold_value = self.params.getparam("minimal_threshold").getvalue()
-        self._maximal_percentage_value = self.params.getparam("maximal_percentage").getvalue()
-        self._n_scenarios_value = int(self.params.getparam("n_scenarios").getvalue())
+        self.select_method = params.getparam("selection_method").getvalue()
+        self.__minimal_threshold_value = params.getparam("minimal_threshold").getvalue()
+        self.__maximal_percentage_value =params.getparam("maximal_percentage").getvalue()
+        self.__n_scenarios_value = int(params.getparam("n_scenarios").getvalue())
 
+        #NICOLAS: le paramètre scale dans les fichiers xml ne semble plus utiliser. Si confirmer, le supprimer des xml. 
     
+    #NICOLAS: fonction plus utilisée? Supprimer? 
     def filter_with_similar_watersheds(self, correlation_matrix, similar_watersheds):
         return correlation_matrix[similar_watersheds]
     
@@ -32,33 +55,33 @@ class Selection():
     def filter_with_threshold(self, correlation_matrix):
         
         if self.select_method == 'minimal_threshold':
-            filter_matrix = self.minimal_threshold(correlation_matrix, self._minimal_threshold_value)
+            filter_matrix = self.__minimal_threshold(correlation_matrix, self.__minimal_threshold_value)
             n_values = filter_matrix.count().sum()
             if n_values < 10:
-                filter_matrix = self.maximal_percentage(correlation_matrix, self._maximal_percentage_value)
+                filter_matrix = self.__maximal_percentage(correlation_matrix, self.__maximal_percentage_value)
                 n_values = filter_matrix.count().sum()
                 if n_values < 10:
-                    filter_matrix = self.n_scenarios(correlation_matrix, self._n_scenarios_value)
+                    filter_matrix = self.__n_scenarios(correlation_matrix, self.__n_scenarios_value)
             
         elif self.select_method == 'maximal_percentage':
-            filter_matrix = self.maximal_percentage(correlation_matrix, self._maximal_percentage_value)
+            filter_matrix = self.__maximal_percentage(correlation_matrix, self.__maximal_percentage_value)
             n_values = filter_matrix.count().sum()
             if n_values < 10:
-                filter_matrix = self.n_scenarios(correlation_matrix, self._n_scenarios_value)
+                filter_matrix = self.__n_scenarios(correlation_matrix, self.__n_scenarios_value)
         
         elif self.select_method == 'n_scenarios':
-            filter_matrix = self.n_scenarios(correlation_matrix, self._n_scenarios_value)
+            filter_matrix = self.__n_scenarios(correlation_matrix, self.__n_scenarios_value)
         
         return filter_matrix
 
     
-    def minimal_threshold(self, correlation_matrix, min_thresh):
+    def __minimal_threshold(self, correlation_matrix, min_thresh):
         correlation_matrix = correlation_matrix.where(correlation_matrix != 1, np.nan)
         correlation_matrix = correlation_matrix.where(correlation_matrix >= min_thresh, np.nan)
         return correlation_matrix
     
     
-    def maximal_percentage(self, correlation_matrix, max_percentage):
+    def __maximal_percentage(self, correlation_matrix, max_percentage):
         correlation_matrix = correlation_matrix.where(correlation_matrix != 1, np.nan)
         value_max = np.nanmax(correlation_matrix)
         min_thresh = max_percentage * value_max
@@ -66,7 +89,7 @@ class Selection():
         return correlation_matrix
     
     
-    def n_scenarios(self, correlation_matrix, n_best_sce):
+    def __n_scenarios(self, correlation_matrix, n_best_sce):
         correlation_matrix = correlation_matrix.where(correlation_matrix != 1, np.nan)
         top_values = correlation_matrix.unstack().nlargest(n_best_sce)
         mask = correlation_matrix.apply(lambda x: x.isin(top_values))
@@ -94,5 +117,6 @@ class Selection():
         average_df = average_df.apply(pd.to_numeric, errors='coerce')
         return average_df
     
+    #NICOLAS: méthode utilisée à un seul endroit, utiliser directement stack dans cydre sans repasser par ici
     def group_scenarios(self, scenarios):
         return scenarios.stack() 

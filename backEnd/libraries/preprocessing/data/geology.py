@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 import random
 
+#NICOLAS: est-ce encore utilisé ou utilisable? Est-ce que cela vaut le coup de le garder et de le maintenir? 
+
 
 class Geology():
     """

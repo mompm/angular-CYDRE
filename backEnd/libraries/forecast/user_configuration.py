@@ -17,6 +17,23 @@ import os
 class UserConfiguration():
     """
         Configutation of the watershed used for the projection
+        
+        Attributes
+        ----------
+        user_watershed_id: string
+            watershed id (from BanqueHydro)
+        user_watershed_name: string
+            watershed name (explicit)
+        user_bss_id: string
+            piezometer name attached to the watershed (as defined within the file station.csv)
+        user_watershed_area: float
+            area of watershed
+        user_horizon: int 
+            Number of days on which projection should be completed
+            
+        Methods
+        -------
+        
     """
     
     def __init__(self, params, stations):
@@ -30,13 +47,14 @@ class UserConfiguration():
         """
         
         # Store the hydrological station identifier and characteristics
+        #NICOLAS: inutile de stocker params dans self s'il n'est pas utilisé plus tard, ce qui semble être le cas. Vérifier et supprimer. 
         self.params = params
-        self.user_watershed_id = self.params.getparam("user_watershed_id").getvalue()
+        self.user_watershed_id = params.getparam("user_watershed_id").getvalue()
         self.user_watershed_name = stations[stations['ID'] == self.user_watershed_id]['station_name'].values[0]
         self.user_bss_id = stations[stations['ID'] == self.user_watershed_id]['BSS_ID'].values[0]
         self.user_watershed_area = stations[stations['ID'] == self.user_watershed_id]['area'].values[0]
         # Number of days on which projection should be completed
-        self.user_horizon = self.params.getparam("user_horizon").getvalue()
+        self.user_horizon = params.getparam("user_horizon").getvalue()
 
 
     def serialize_params(self):

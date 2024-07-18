@@ -21,9 +21,6 @@ import rasterio
 class Geographic():
     """
     class Geographic used to delineate the watershed from outlet coordinates.
-
-    Parameters:
-    ----------
     
     Attributes:
     ----------  

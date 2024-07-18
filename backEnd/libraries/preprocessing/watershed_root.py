@@ -85,6 +85,7 @@ class Watershed():
         return x_outlet, y_outlet, snap_dist
         
         
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def load_object(self):
         
         if os.path.exists(os.path.join(self.watershed_folder, 'python_object')):
@@ -141,6 +142,7 @@ class Watershed():
         
 #%% DATA OBJECT
     
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_geographic(self, dem_path, x_outlet, y_outlet, snap_dist, out_path):
         # Structure data
         self.geographic = geographic.Geographic(dem_path=dem_path,
@@ -154,12 +156,14 @@ class Watershed():
         self.save_object()
         
         
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_hydrometry(self):
         self.hydrometry = hydrometry.Hydrometry(bh_id = self.watershed_id)
         self.elt_def.append('hydrometry')
         self.save_object()
 
     
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_surfex(self, surfex_path):
         surfex_path = surfex_path
         self.climatic = surfex.Surfex(out_path=self.watershed_folder,
@@ -169,6 +173,7 @@ class Watershed():
         self.save_object()
     
         
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_hydraulicprop(self, hydraulicprop_path):
         self.hydraulicprop = hydraulicprop.HydraulicProp(self.watershed_id,
                                                          hydraulicprop_path)
@@ -176,6 +181,7 @@ class Watershed():
         self.save_object()
         
         
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_geology(self, geology_path):
         self.geology = geology.Geology(self.watershed_id,
                                        geology_path)
@@ -183,6 +189,7 @@ class Watershed():
         self.save_object()
         
         
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def add_piezometry(self, piezometry_path):
         self.piezometry = piezometry.Piezometry(self.watershed_id,
                                                 piezometry_path)
@@ -191,7 +198,8 @@ class Watershed():
         
         
 #%% FILTER OBJECT
-
+        
+    #NICOLAS: méthode qui ne semble plus utilisée, à supprimer? 
     def get_variable(self, obj, variable):
         test = VAR.Variables()
         variable_type = test.get_variable_type(variable)

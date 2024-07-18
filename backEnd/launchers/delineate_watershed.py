@@ -56,7 +56,7 @@ gdf_watersheds = gdf_watersheds.set_index('index')
 station_info = stations[stations["ID"] == station_ID]
 print(stations[stations['ID'] == station_ID].station_name.values[0])
 
-# Create the watersged
+# Create the watershed
 BV = WS.Watershed(watershed_id=station_ID,
                   dem_path=dem_path,
                   out_path=geo_path,
