@@ -24,7 +24,7 @@ from collections import OrderedDict
 
 # Configuration, Flask is the library necessary to exchange with the website
 app = flask.Flask(__name__)
-# Autorisation de requête sur le site web par angular
+# Autorisation de requête sur le site web par angular et en test sur apirequest.io
 CORS(app, supports_credentials=True, origins=["http://localhost:4200", "https://apirequest.io"])
 app.config['CORS_HEADERS'] = 'Content-Type'
 # Magage Database in python (database des utilisateurs et des simulations, une table pour les utilisateurs, une table pour les simulations)
@@ -550,6 +550,7 @@ def create_cydre_app(params):
         # Initialiser l'app cydre
         init = INI.Initialization(app_root,stations)
         cydre_app = init.cydre_initialization()
+        # Recrée la structure de paramètres à partir du json
         param_names = extract_param_names(params=params)
         # Mettre à jour les paramètres de l'application en fonction des entrées
         param_paths = init.get_parameters_path(param_names)
