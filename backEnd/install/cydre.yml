@@ -35,4 +35,5 @@ dependencies:
         - dtaidistance
         - flask_sqlalchemy
         - pymysql
+        - mysql-connector-python
         - spyder
