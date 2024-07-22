@@ -7,6 +7,8 @@ Created on Thu Jul 18 14:44:01 2024
 
 import mysql.connector
 from mysql.connector import errorcode
+from werkzeug.security import generate_password_hash
+
 
 # Informations de connexion
 config = {
@@ -85,11 +87,16 @@ for table_name in TABLES:
     else:
         print(f"Table {table_name} créée avec succès")
 
+# Hachage des mots de passe
+default_password_hash = generate_password_hash('default')
+admin_password_hash = generate_password_hash('diverse35')
+
 # Insertion de l'utilisateur par défaut
 try:
     cursor.execute(
         "INSERT INTO Users (id, username, password, role) "
-        "VALUES (0, 'Default', 'default', 'acteur de l''eau')"
+        "VALUES (0, 'Default', %s, 'acteur de l''eau')",
+        (default_password_hash,)
     )
     cnx.commit()
     print("Utilisateur par défaut inséré avec succès")
@@ -101,7 +108,8 @@ except mysql.connector.Error as err:
 try:
     cursor.execute(
         "INSERT INTO Users (username, password, role) "
-        "VALUES ('diverse', 'diverse35', 'dev')"
+        "VALUES ('diverse', %s, 'dev')",
+        (admin_password_hash,)
     )
     cnx.commit()
     print("Utilisateur admin inséré avec succès")
