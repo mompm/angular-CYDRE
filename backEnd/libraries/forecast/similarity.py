@@ -16,7 +16,6 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
 # Cydre modules
-from libraries.forecast import preprocessor as PR
 from libraries.forecast import indicator as IN
 from libraries.forecast import time_management as TI
 
