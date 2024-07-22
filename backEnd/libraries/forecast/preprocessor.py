@@ -5,6 +5,8 @@ Created on Wed Jul  5 15:50:28 2023
 @author: Nicolas Cornette
 """
 
+#NICOLAS: plus utilisé, supprimer le fichier complet
+
 # Cydre modules
 from libraries.forecast import time_management as TI
 import libraries.forecast.variables as VAR

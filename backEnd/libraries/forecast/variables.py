@@ -3,6 +3,8 @@
 Created on Thu Jun 15 17:06:23 2023
 
 @author: Nicolas Cornette
+
+#NICOLAS: plus utilisé, supprimer le fichier complet
 """
 
 class Variables():

@@ -3,6 +3,8 @@
 Created on Mon Aug 14 15:27:02 2023
 
 @author: Nicolas Cornette
+
+Interface Dash, no longer used 
 """
 
 # Python modules

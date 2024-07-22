@@ -99,6 +99,7 @@ class Selection():
 
     @staticmethod
     def drop_target_scenarios(corr_matrix, target_year, target_watershed):
+        # Exclude the same watershed for the same year
         corr_matrix.at[target_year, target_watershed] = np.nan
         corr_matrix.loc[target_year, :] = np.nan
         return corr_matrix

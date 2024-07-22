@@ -32,7 +32,22 @@ class Cydre():
         parameters xml (ALL).
     data_path : string
         Folder with all data.
-
+    date : pandas date time
+        date at which projection should be started
+    UserConfiguration : instance of class UserCofiguration
+        reference watershed: identifier, chronicles, intial flow (at the date of simulation)
+    User_Qi : float
+        initial flow for the reference watershed
+    Similarity : instance of class Similarity 
+        spatio-temporal similarities
+    selected_scenarios: list of dataframes
+        matrix of correlation per variable (one matrix per variable)
+    scenarios: dataframe
+        combination of previous matrices (weigted or not according to the correlation coefficient)
+    scenarios_grouped: dataframe
+        same as the previous one in a different format
+    stats_station_forecast : dataframe
+        statiscitics with only the data at the reference watershed
     
     """
     
@@ -118,11 +133,15 @@ class Cydre():
             correlation_matrix = Selection.drop_target_scenarios(correlation_matrix, self.date.year, self.UserConfiguration.user_watershed_id)
             # correlation_matrix = Selection.filter_with_threshold(correlation_matrix)            
             
-            # Store the variable scenarios
+            # Store the variable scenarios (one matrix per variable)
+            #NICOLAS: remplcer selected_scenarios par correlation_matrices
             self.selected_scenarios[variable] = correlation_matrix
         
         # Matrix combinations
+        #NICOLAS: remplcer scenarios par correlation_matrix
+        #NICOLAS: ajouter des poids à la sélection
         self.scenarios = Selection.matrix_combinations(self.selected_scenarios)
+        # Ne garde dans la matrice de corrélation que les évènements à conserver, ceux qui ont été sélectionnés
         self.scenarios = Selection.filter_with_threshold(self.scenarios)
         
         # Group all scenarios in one dataframe
@@ -149,7 +168,7 @@ class Cydre():
         except:
             raise ValueError("There are no past events with a correlation coefficient above the defined threshold.")
         
-        # TEST : projection using station stats
+        # Projection using station stats (for matter of comparison made later in postprocessing)
         self.Forecast.stats_station_forecast(self.date, self.UserConfiguration.user_streamflow, self.user_Qi)
         
         try:
