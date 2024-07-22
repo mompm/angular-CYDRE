@@ -55,7 +55,7 @@ You'll need to run api2.py (see the following section about python installation)
 
 **Requirements :**
 - Miniconda (https://repo.anaconda.com/miniconda/).
-- MySQL ()
+- MySQL (https://dev.mysql.com/downloads/installer/)
 
 Create conda environment, install python requirements and activate the environment: 
 

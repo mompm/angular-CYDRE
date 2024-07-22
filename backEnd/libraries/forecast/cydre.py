@@ -4,13 +4,11 @@ Created on Wed May  3 10:27:18 2023
 
 @author: Nicolas Cornette
 
-Driver of the application for the hydrological projection
+Driver of the application for the hydrological projections
 """
 
 # Modules
 from numpy import NaN
-import pandas as pd
-from datetime import timedelta
 
 # Cydre modules
 from libraries.forecast import user_configuration as UC
@@ -24,7 +22,7 @@ class Cydre():
     
     """
     Class used to run the seasonal forecast application.
-    - On which watershes, at which date is made the projection
+    - On which watersheds, at which date is made the projection
     
     Attributes
     ----------

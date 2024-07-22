@@ -12,13 +12,15 @@ from sqlalchemy import DateTime, func, text, update
 from werkzeug.security import generate_password_hash, check_password_hash
 import os,csv 
 import pandas as pd
-import geopandas as gpd
-import pyproj
-from shapely.geometry import mapping , Point
+from shapely.geometry import mapping
 import libraries.forecast.initialization as INI
 import plotly.graph_objects as go
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
+
+from libraries.load_data import define_paths, load_data
+from libraries.utils.toolbox import lambert93_to_wgs84
+
 
 #%% INITIALIZATION OF FLASK SERVER
 
@@ -39,45 +41,10 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 
 #%% INITIALIZATION OF CYDRE: Loading stations, watershed boundaries, location of files
-
-# Application path
 app_root = os.path.dirname(os.path.abspath("api2.py"))
+(data_path, hydrometry_path, surfex_path, piezo_path, hydraulic_path, output_path) = define_paths(app_root)
+gdf_stations, gdf_piezometry, gdf_watersheds = load_data(app_root)
 
-data_path = os.path.join(app_root, 'data')
-hydrometry_path = os.path.join(data_path, 'hydrometry', 'discharge')
-surfex_path = os.path.join(data_path, 'climatic', 'surfex')
-piezo_path = os.path.join(data_path, 'piezometry')
-hydraulic_path = os.path.join(data_path, 'hydraulicprop')
-output_path = os.path.join(app_root, 'outputs', 'projections')
-
-# -- Read hydrological and piezometric stations csv files and watersheds boundaries
-
-# Hydrological stations
-stations = pd.read_csv(os.path.join(app_root, 'data', 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
-lambert93_to_wgs84 = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", always_xy=True)
-x_wgs84, y_wgs84 = lambert93_to_wgs84.transform(stations["x_outlet"], stations["y_outlet"])
-geometry_stations = [Point(xy) for xy in zip(x_wgs84, y_wgs84)]
-gdf_stations = gpd.GeoDataFrame(stations, geometry=geometry_stations, crs="EPSG:4326")
-
-# Piezometric stations
-piezo_stations = pd.read_csv(os.path.join(app_root, 'data', 'piezometry', 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
-geometry_piezometry = [Point(xy) for xy in zip(piezo_stations['X_WGS84'], piezo_stations['Y_WGS84'])]
-gdf_piezometry = gpd.GeoDataFrame(piezo_stations, geometry=geometry_piezometry, crs="EPSG:4326")
-
-# Watershed boundaries
-gdf_watersheds = gpd.read_file(os.path.join(app_root, 'data', 'watersheds2.shp'))
-gdf_watersheds = gdf_watersheds.set_index('index')
-
-for i in gdf_watersheds.index:
-
-    # Extraire les coordonnées des limites de la géométrie du polygone à l'index courant
-    minx, miny, maxx, maxy = gdf_watersheds['geometry'].bounds.loc[i]
-    
-    # Créer les colonnes min_lon, min_lat, max_lon et max_lat et leur assigner les valeurs extraites
-    gdf_watersheds.loc[i, 'min_lon'] = minx
-    gdf_watersheds.loc[i, 'min_lat'] = miny
-    gdf_watersheds.loc[i, 'max_lon'] = maxx
-    gdf_watersheds.loc[i, 'max_lat'] = maxy
 
 #%% INITIALIZATION OF USER DATABASE (MYSQL)
 Base = declarative_base()
@@ -214,7 +181,7 @@ def get_GDF_STATIONS():
     
     for index, row in gdf_stations.iterrows():
         
-        row['x_outlet'], row['y_outlet'] = lambert93_to_wgs84.transform(row["x_outlet"], row['y_outlet'] )
+        row['x_outlet'], row['y_outlet'] = lambert93_to_wgs84(row["x_outlet"], row['y_outlet'] )
         geometry_geojson = mapping(row.geometry)
         
         BSS_ID_value = row['BSS_ID']
@@ -548,7 +515,7 @@ def create_cydre_app(params):
     """Fonction pour initialiser et configurer l'application Cydre."""
     try: 
         # Initialiser l'app cydre
-        init = INI.Initialization(app_root,stations)
+        init = INI.Initialization(app_root, gdf_stations)
         cydre_app = init.cydre_initialization()
         # Recrée la structure de paramètres à partir du json
         param_names = extract_param_names(params=params)
@@ -818,7 +785,7 @@ def start_simulation_cydre_app(simulation_id):
 
         # Initialisation et création de cydre_app
         cydre_app = create_cydre_app(params)
-        watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+        watershed_name = gdf_stations[gdf_stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
         station_name = cydre_app.UserConfiguration.user_watershed_name
         # Stocker le nom de la station dans les paramètres
         stmt = (
@@ -887,7 +854,7 @@ def getGraph(simulation_id):
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         #Créer le graphe 
-        results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
+        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
         app.logger.info('Cydre app and Graph results are initialized and stored')
@@ -999,7 +966,7 @@ def update_indicator(simulation_id):
 
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
-        results = Graph(cydre_app, watershed_name, stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
+        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
         #Calculer les nouvelles projections
