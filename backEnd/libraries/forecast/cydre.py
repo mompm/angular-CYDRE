@@ -161,7 +161,7 @@ class Cydre():
                                                         self.date,
                                                         self.user_Qi)
         
-        # Timeseries projections
+        # Projections using scenarios from spatio-temporal similarities
         try:
             self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_streamflow_forecast_normalized, weight=False)
             self.df_storage_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_storage_forecast_normalized, weight=False)

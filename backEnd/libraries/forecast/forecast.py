@@ -288,7 +288,7 @@ class Forecast():
                 print(year)
                 
                 # Subset the time series for the forecast period
-                df_subset, comp_Qi = self._extract_forecast_period(user_df,
+                df_subset, comp_Qi = self.__extract_forecast_period(user_df,
                                                                    year,
                                                                    simulation_date,
                                                                    user_Qi)
@@ -297,7 +297,7 @@ class Forecast():
                 df_subset['Q_streamflow'] = df_subset['Q']
                 
                 # Time series normalization
-                df_normalized = self._timeseries_normalization(df_subset, user_Qi, comp_Qi)
+                df_normalized = self.__timeseries_normalization(df_subset, user_Qi, comp_Qi)
                 
                 # Store timeseries
                 if len(df_normalized) == self.forecast_horizon:
