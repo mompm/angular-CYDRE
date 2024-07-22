@@ -1,5 +1,5 @@
 
-![](./frontEnd/front/src/assets/img/Logo_Cydre_Partenaires.JPG#center "Application logo")
+![](./frontEnd/front/src/assets/img/Logo_Cydre_Partenaires.jpg#center "Application logo")
 
 # 1. Introduction
 
@@ -9,11 +9,15 @@ This application is intended for the seasonal streamflow forecasting of rivers w
 
 Clone the repo:
 
-`git clone https://gitlab.com/mompm1/cydre-angular.git`
+```
+git clone https://gitlab.com/mompm1/cydre-angular.git
+```
 
 Go to the application folder:
 
-`cd cydre-angular`
+```
+cd cydre-angular
+```
 
 
 ## 2.1. front-end Angular
@@ -63,11 +67,15 @@ conda activate cydre
 
 Create the environment variable:
 
-`python set_cydre_environment_variable.py`
+```
+python set_cydre_environment_variable.py
+```
 
 Create the MySQL database, the associated tables and default/admin users :
 
-`python create_database.py`
+```
+python create_database.py
+```
 
 Run the back-end server with api2.py : 
 
