@@ -48,17 +48,17 @@ class Geology():
         This method uses a correspondence table.
     """
 
-    def __init__(self, bh_id, path):
+    def __init__(self, path):
         
         # Geological map path
         filename = os.path.join(path, 'GEOL_001M_MassifArm.shp')
         self.geology_map_file = filename        
         
         # Load the geological map
-        #self.geology_map, self.color_dict = self.load_geology_map(self.geology_map_file)
+        self.geology_map, self.color_dict = self.load_geology_map(self.geology_map_file)
         
         # Store lithological composition
-        self.get_data(bh_id, path)
+        #self.get_data(bh_id, path)
         
         
     def get_data(self, bh_id, path):
