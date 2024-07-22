@@ -44,6 +44,21 @@ private baseUrl = '';
 		return lastValueFrom(this.http.get<Array<dataDischarge>>(url));
 	}
 
+	getTemperature(id: string): Promise<Array<dataTemperature>> {
+		const url = `/osur/stationTemperature/${id}`;
+		return lastValueFrom(this.http.get<Array<dataTemperature>>(url));
+	}
+
+	getDepth(id: string): Promise<Array<dataDepth>> {
+		const url = `/osur/stationWaterTableDepth/${id}`;
+		return lastValueFrom(this.http.get<Array<dataDepth>>(url));
+	}
+
+	getPrecipitation(id: string): Promise<Array<dataPrecipitation>> {
+		const url = `/osur/stationPrecipitation/${id}`;
+		return lastValueFrom(this.http.get<Array<dataPrecipitation>>(url));
+	}
+
 	getRunCydre(params: any): Promise<any> {
 		return this.http.post(`${this.baseUrl}/api/run_cydre`, params).toPromise()
 		  .then(response => {
@@ -177,21 +192,6 @@ private baseUrl = '';
 		}
 	  }
 	  
-	getTemperature(id: string): Promise<Array<dataTemperature>> {
-		const url = `/osur/stationTemperature/${id}`;
-		return lastValueFrom(this.http.get<Array<dataTemperature>>(url));
-	}
-
-	getDepth(id: string): Promise<Array<dataDepth>> {
-		const url = `/osur/stationWaterTableDepth/${id}`;
-		return lastValueFrom(this.http.get<Array<dataDepth>>(url));
-	}
-
-	getPrecipitation(id: string): Promise<Array<dataPrecipitation>> {
-		const url = `/osur/stationPrecipitation/${id}`;
-		return lastValueFrom(this.http.get<Array<dataPrecipitation>>(url));
-	}
-
 	getUserSimulations(): Observable<any[]> {
 		return this.http.get<any[]>(`${this.baseUrl}/api/simulations`,{ withCredentials: true });
 	}

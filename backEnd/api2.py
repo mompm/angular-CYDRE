@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 from libraries.load_data import define_paths, load_data
-from libraries.utils.toolbox import lambert93_to_wgs84
+from libraries.utils.toolbox import lambert93_to_wgs84, read_csv_and_generate_response
 
 
 #%% INITIALIZATION OF FLASK SERVER
@@ -148,6 +148,51 @@ def get_simulations():
 
     # Renvoyer les données sous forme de JSON
     return jsonify(results)
+
+
+# Route permettant de supprimer une simulation grâce à son ID
+@app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
+@cross_origin()
+def delete_simulation(simulation_id):
+    try:
+         # Recherche de la simulation à supprimer
+        simulation = Simulation.query.get(simulation_id)
+        if not simulation:
+            return jsonify({"Error": "Simulation not found"}), 404
+        
+        # Supprimer la simulation correspondante
+        db.session.delete(simulation)
+        db.session.commit()
+        return jsonify({"Succes":"Simulation deleted succesfully"}),200
+    except Exception as e:
+        return jsonify({"Error":str(e)}),500
+    
+# Route permettant de supprimer toutes les simulations de l'utilisateur "default", 
+# Ces simulations sont celles des utilisateurs non connectés
+@app.route('/api/delete_default_simulation', methods=['POST'])
+@cross_origin()
+def delete_default_simulation():
+    try:
+        # Retrieve the default user
+        default_user = Users.query.filter_by(username="default").first()
+        if not default_user:
+            return jsonify({"Error": "Default user not found"}), 404
+
+        # Get the user ID
+        default_user_id = default_user.id
+
+        # Find the simulation to delete
+        simulation = Simulation.query.filter_by(UserID=default_user_id).first()
+
+        if not simulation:
+            return jsonify({"Success": "No default simulation to delete"}), 201
+
+        # Delete the simulation
+        db.session.delete(simulation)
+        db.session.commit()
+        return jsonify({"Success": "Simulation deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"Error": str(e)}), 500
 
 
 @app.route('/osur/getoldBSS', methods=['GET'])
@@ -291,39 +336,11 @@ def get_GDF_Watersheds():
 # Get discharge timeseries (used for site documentation, "fiche de sites")
 @app.route('/osur/stationDischarge/<string:id>', methods=['GET'])
 @cross_origin()
-def get_stationdata(id):
+def get_discharge(id):
     if id is not None:
-        # Nom du fichier CSV basé sur l'identifiant
-        csv_filename = f'{id}.csv'
-        # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(hydrometry_path, csv_filename)
-        # Vérifier si le fichier CSV existe
-        if os.path.exists(csv_file_path):
-            # Initialiser une liste pour stocker les données JSON
-            id_upper = id.upper()
-            for i in gdf_stations.index:
-                if gdf_stations.loc[i, 'ID'] == id_upper:
-                    station_name = gdf_stations.loc[i, 'station_name']
-            json_list = []
-            json_list.append(station_name)
-            json_list.append(id_upper)
-            # Ouvrir le fichier CSV
-            with open(csv_file_path, 'r', encoding='utf-8') as csv_file:
-                # Attention au delimiter (si nécessaire)
-                csv_reader = csv.DictReader(csv_file)
-                # Parcourir les lignes du fichier CSV
-                for row in csv_reader:
-                    # Créer un dictionnaire JSON pour chaque ligne
-                    json_object = {
-                        't': row['t'],
-                        'Q': row['Q']
-                    }
-                    # Ajouter le dictionnaire à la liste
-                    json_list.append(json_object)
-            # Retourner la liste JSON
-            return jsonify(json_list), 200
-        else:
-            return jsonify({"filename": csv_filename,}), 404
+        id_upper = id.upper()
+        csv_file_path = os.path.join(hydrometry_path, f'{id}.csv')
+        return read_csv_and_generate_response(csv_file_path, id_upper, gdf_stations, ['t', 'Q'])
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
@@ -333,77 +350,21 @@ def get_stationdata(id):
 @cross_origin()
 def get_temperature(id):
     if id is not None:
-        # Nom du fichier CSV basé sur l'identifiant
-        csv_filename = f'{id}.csv'
-        # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(surfex_path, 'etp', csv_filename)
-        # Vérifier si le fichier CSV existe
-        if os.path.exists(csv_file_path):
-            # Initialiser une liste pour stocker les données JSON
-            id_upper = id.upper()
-            for i in gdf_stations.index:
-                if gdf_stations.loc[i, 'ID'] == id_upper:
-                    station_name = gdf_stations.loc[i, 'station_name']
-            json_list = []
-            json_list.append(station_name)
-            json_list.append(id_upper)
-            # Ouvrir le fichier CSV
-            with open(csv_file_path, 'r', encoding='utf-8') as csv_file:
-                # Attention au delimiter (si nécessaire)
-                csv_reader = csv.DictReader(csv_file)
-                # Parcourir les lignes du fichier CSV
-                for row in csv_reader:
-                    # Créer un dictionnaire JSON pour chaque ligne
-                    json_object = {
-                        't': row['t'],
-                        'Q': row['Q']
-                    }
-                    # Ajouter le dictionnaire à la liste
-                    json_list.append(json_object)
-            # Retourner la liste JSON
-            return jsonify(json_list), 200
-        else:
-            return jsonify({"filename": csv_filename,}), 404
+        id_upper = id.upper()
+        csv_file_path = os.path.join(surfex_path, 'etp', f'{id}.csv')
+        return read_csv_and_generate_response(csv_file_path, id_upper, gdf_stations, ['t', 'Q'])
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
-    
+
 
 # Get precipitation timeseries
 @app.route('/osur/stationPrecipitation/<string:id>', methods=['GET'])
 @cross_origin()
 def get_precipitation(id):
     if id is not None:
-        # Nom du fichier CSV basé sur l'identifiant
-        csv_filename = f'{id}.csv'
-        # Chemin complet vers le fichier CSV
-        csv_file_path = os.path.join(surfex_path, 'precipitation', csv_filename)
-        # Vérifier si le fichier CSV existe
-        if os.path.exists(csv_file_path):
-            # Initialiser une liste pour stocker les données JSON
-            id_upper = id.upper()
-            for i in gdf_stations.index:
-                if gdf_stations.loc[i, 'ID'] == id_upper:
-                    station_name = gdf_stations.loc[i, 'station_name']
-            json_list = []
-            json_list.append(station_name)
-            json_list.append(id_upper)
-            # Ouvrir le fichier CSV
-            with open(csv_file_path, 'r', encoding='utf-8') as csv_file:
-                # Attention au delimiter (si nécessaire)
-                csv_reader = csv.DictReader(csv_file)
-                # Parcourir les lignes du fichier CSV
-                for row in csv_reader:
-                    # Créer un dictionnaire JSON pour chaque ligne
-                    json_object = {
-                        't': row['t'],
-                        'Q': row['Q']
-                    }
-                    # Ajouter le dictionnaire à la liste
-                    json_list.append(json_object)
-            # Retourner la liste JSON
-            return jsonify(json_list), 200
-        else:
-            return jsonify({"filename": csv_filename,}), 404
+        id_upper = id.upper()
+        csv_file_path = os.path.join(surfex_path, 'precipitation', f'{id}.csv')
+        return read_csv_and_generate_response(csv_file_path, id_upper, gdf_stations, ['t', 'Q'])
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
     
@@ -455,49 +416,6 @@ def get_water_table_depth(id):
     else:
         return jsonify({"error": "Identifiant non fourni"}), 404
 
-# Route permettant de supprimer une simulation grâce à son ID
-@app.route('/api/delete_simulation/<simulation_id>', methods=['POST'])
-@cross_origin()
-def delete_simulation(simulation_id):
-    try:
-         # Recherche de la simulation à supprimer
-        simulation = Simulation.query.get(simulation_id)
-        if not simulation:
-            return jsonify({"Error": "Simulation not found"}), 404
-        
-        # Supprimer la simulation correspondante
-        db.session.delete(simulation)
-        db.session.commit()
-        return jsonify({"Succes":"Simulation deleted succesfully"}),200
-    except Exception as e:
-        return jsonify({"Error":str(e)}),500
-    
-# Route permettant de supprimer toutes les simulations de l'utilisateur "default", 
-# Ces simulations sont celles des utilisateurs non connectés
-@app.route('/api/delete_default_simulation', methods=['POST'])
-@cross_origin()
-def delete_default_simulation():
-    try:
-        # Retrieve the default user
-        default_user = Users.query.filter_by(username="default").first()
-        if not default_user:
-            return jsonify({"Error": "Default user not found"}), 404
-
-        # Get the user ID
-        default_user_id = default_user.id
-
-        # Find the simulation to delete
-        simulation = Simulation.query.filter_by(UserID=default_user_id).first()
-
-        if not simulation:
-            return jsonify({"Success": "No default simulation to delete"}), 201
-
-        # Delete the simulation
-        db.session.delete(simulation)
-        db.session.commit()
-        return jsonify({"Success": "Simulation deleted successfully"}), 200
-    except Exception as e:
-        return jsonify({"Error": str(e)}), 500
 
 # Fonction qui extrait récursivement les noms des paramètres d'un json
 def extract_param_names(params, prefix=""):

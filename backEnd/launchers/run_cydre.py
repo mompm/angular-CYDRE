@@ -7,14 +7,9 @@ Created on Thu Jun  1 16:06:06 2023
 Launcher principal pour l'application dans une utilisation standalone python
 
 """
-import sys
+
 # Python modules
-import os
 import time
-import pyproj
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import Point
 
 # Cydre modules
 from setup_cydre_path import setup_cydre_path
@@ -22,33 +17,19 @@ app_root = setup_cydre_path()
 
 import libraries.forecast.initialization as IN
 import libraries.forecast.outputs as OU
+from libraries.load_data import define_paths, load_data
 
 start = time.time()
 
 
 #%% PREPARATION
-#NICOLAS: à factoriser avec api2.py
-
-# Define paths
-data_path = os.path.join(app_root, 'data')
-hydraulic_path = os.path.join(data_path, 'hydraulicprop')
-output_path = os.path.join(app_root, 'outputs', 'projections')
-
-# Load hydrological stations
-#NICOLAS: à intégrer dans Initialization
-stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
-
-
-# Load watersheds boundaries
-gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds2.shp'))
-gdf_watersheds = gdf_watersheds.set_index('index')
+(data_path, hydrometry_path, surfex_path, piezo_path, hydraulic_path, output_path) = define_paths(app_root)
+gdf_stations, gdf_piezometry, gdf_watersheds = load_data(app_root)
 
 
 #%% CYDRE APPLICATION
-#NICOLAS: à factoriser avec api2.py
-
  # Initialize the Cydre application
-init = IN.Initialization(app_root, stations)
+init = IN.Initialization(app_root, gdf_stations)
 cydre_app = init.cydre_initialization()
 
 # Run the Cydre application
@@ -59,25 +40,14 @@ df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast(data
 
 
 #%% VISUALIZATION AND RESULTS STORAGE
-#NICOLAS: à factoriser avec api2.py
-# Change of coordinate system for compatibility maps
-# Everything is in the code in WGS84
-lambert93_to_wgs84 = pyproj.Transformer.from_crs("EPSG:2154", "EPSG:4326", always_xy=True)
-x_wgs84, y_wgs84 = lambert93_to_wgs84.transform(stations["x_outlet"], stations["y_outlet"])
-geometry_stations = [Point(xy) for xy in zip(x_wgs84, y_wgs84)]
-gdf_stations = gpd.GeoDataFrame(stations, geometry=geometry_stations, crs="EPSG:4326")
-
-# Load watersheds boundaries (already in WGS84) - Should be done once for the stations
-gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds.shp'))
-gdf_watersheds = gdf_watersheds.set_index('index')
-
 watershed_name = cydre_app.UserConfiguration.user_watershed_name
 initial_date = init.params.getgroup("General").getparam("date").getvalue()
 
-results = OU.Outputs(cydre_app, output_path, watershed_name, stations, initial_date, log=True,
+results = OU.Outputs(cydre_app, output_path, watershed_name, gdf_stations, initial_date, log=True,
                      module=True, baseflow=False, options='viz_plotly')
 
 results.plot_typology_map(gdf_stations, gdf_watersheds, cydre_app.UserConfiguration.user_watershed_id)
+
 
 #%%
 end = time.time()
