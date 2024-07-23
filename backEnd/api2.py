@@ -15,7 +15,6 @@ import pandas as pd
 from shapely.geometry import mapping
 import libraries.forecast.initialization as INI
 import libraries.forecast.outputs as OUT
-import plotly.graph_objects as go
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
@@ -49,7 +48,6 @@ gdf_stations, gdf_piezometry, gdf_watersheds = load_data(app_root)
 
 #%% INITIALIZATION OF USER DATABASE (MYSQL)
 Base = declarative_base()
-
 
 # Définition du model Users pour SQLAlchemy
 class Users(db.Model, UserMixin):
@@ -455,6 +453,20 @@ def create_cydre_app(params):
         app.logger.error("Erreur lors de la création de l'app: ",str(e))
         return e
 
+
+def update_simulation(simulation_id, column_name, json_path, json_value):
+    # Préparation de la mise à jour pour stocker les données
+    stmt = (
+        update(Simulation)
+        .where(Simulation.SimulationID == simulation_id)
+        .values({column_name: func.json_set(getattr(Simulation, column_name), json_path, json_value)})
+    )
+    
+    # Exécution de la mise à jour
+    db.session.execute(stmt)
+    db.session.commit()
+
+
 # Route permettant de créer la simulation dans la base de données et renvoie son ID
 @app.route('/api/run_cydre', methods=['POST'])
 @cross_origin()
@@ -515,31 +527,17 @@ def run_spatial_similarity(simulation_id):
     try:
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
+        
         # Lancer le calcul des similarités spatiales
         cydre_app.run_spatial_similarity(hydraulic_path, spatial=True)
-        # Convertir les données nécessaires aux étapes suivantes ou au résulats en JSON
+        
+        # Convertir les données à stocker au format JSON
         clusters_json = cydre_app.Similarity.clusters.to_json()
         similar_watersheds_json = json.dumps(cydre_app.Similarity.similar_watersheds)
-        # Chemin JSON pour la mise à jour
-        json_path_clusters = '$.similarity.clusters'
-        json_path_similar_watersheds = '$.similarity.similar_watersheds'
-
-        # Préparation de la mise à jour pour stocker les données
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_clusters, clusters_json)})
-        )
-
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_similar_watersheds, similar_watersheds_json)})
-        )
-        db.session.execute(stmt)
-        db.session.commit()
+        
+        # Mise à jour de la simulation
+        update_simulation(simulation_id, 'Results', '$.similarity.clusters', clusters_json)
+        update_simulation(simulation_id, 'Results', '$.similarity.similar_watersheds', similar_watersheds_json)
 
     except Exception as e:
         app.logger.error('Error running spatial similarity": %s', str(e))
@@ -555,51 +553,27 @@ def run_timeseries_similarity(simulation_id):
     try:
         # Recréer l'app correspondant à l'id de simulation
         cydre_app,simulation = start_simulation_cydre_app(simulation_id)
+        
         # Lancer le calcul des similarités temporelles, en s'appuyant sur les résultats des similarités spatiales
         cydre_app.run_timeseries_similarity(data_path, json.loads(simulation.Results.get("similarity").get("similar_watersheds")))
+        
         # Récupérer la matrice de correlation
         corr_matrix = cydre_app.Similarity.correlation_matrix
-        # print(corr_matrix)
-        # with open('dataframe_output.txt', 'w') as file:
-        #     for index, row in corr_matrix.iterrows():
-        #         file.write(f"{row['Nom']}, {row['Age']}, {row['Ville']}\n")
-
-        # La transformer en JSON pour la stocker
+        
+        # Convertir les données en JSON
         for key,value in corr_matrix.items():
             if key=="specific_discharge":
                 specific_discharge = value.to_json(orient='split')
             elif key=="recharge":
                 recharge = value.to_json(orient='split')
-        # Chemins JSON pour les mises à jour
-        json_path_specific_discharge = '$.similarity.corr_matrix.specific_discharge'
-        json_path_recharge = '$.similarity.corr_matrix.recharge'
-        json_path_similar_period = '$.similarity.user_similarity_period'
-
-
-        # Préparation de la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_specific_discharge, specific_discharge)})
-        )
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        # Préparation de la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_recharge, recharge)})
-        )
-
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_similar_period, json.dumps(cydre_app.Similarity.user_similarity_period.strftime('%Y-%m-%d').tolist()))})
-        )
-        db.session.execute(stmt)
-        db.session.commit()
+        
+        user_similarity_period_json = json.dumps(cydre_app.Similarity.user_similarity_period.strftime('%Y-%m-%d').tolist())
+        
+        # Mise à jour de la simulation dans la base de données
+        update_simulation(simulation_id, 'Results', '$.similarity.corr_matrix.specific_discharge', specific_discharge)
+        update_simulation(simulation_id, 'Results', '$.similarity.corr_matrix.recharge', recharge)
+        update_simulation(simulation_id, 'Results', '$.similarity.user_similarity_period', user_similarity_period_json)
+        
     except Exception as e:
         app.logger.error('Error running timeseries similarity": %s', str(e))
         return jsonify({'error': str(e)}), 500 
@@ -613,6 +587,7 @@ def select_scenarios(simulation_id):
     try:
         # Recréer l'app correspondant à l'id de simulation
         cydre_app, simulation = start_simulation_cydre_app(simulation_id)
+        
         # Récuperer les éléments nécesssaires
         specific_discharge = simulation.Results.get("similarity").get("corr_matrix").get("specific_discharge")
         recharge = simulation.Results.get("similarity").get("corr_matrix").get("recharge")
@@ -633,59 +608,27 @@ def select_scenarios(simulation_id):
         scenarios_grouped, selected_scenarios, scenarios = cydre_app.select_scenarios(corr_matrix={"specific_discharge": specific_discharge_df, "recharge": recharge_df})
         print("scenarios",scenarios)
 
-
+        # Convertir les données en JSON
         for key, value in selected_scenarios.items():
             if key == "specific_discharge":
                 specific_discharge = value.to_json(orient='split')
-                # print(specific_discharge)
             elif key == "recharge":
                 recharge = value.to_json(orient='split')
-                # print(recharge)
-                # print("fin recharge")
+       
         scenarios_json = scenarios.to_json(orient = 'split')
-        # Chemin JSON de la mise à jour
-        scenarios_grouped_path = '$.scenarios_grouped'
-        scenarios_path = '$.scenarios'
+        scenarios_grouped_json = scenarios_grouped.to_json()
+
+        # Mise à jour de la simulation dans la base de données
         selected_scenarios_path = '$.selected_scenarios'
         json_path_specific_discharge = selected_scenarios_path + '.specific_discharge'
         json_path_recharge = selected_scenarios_path + '.recharge'
-
-        # Préparation de la requête SQL pour la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_grouped_path, scenarios_grouped.to_json())})
-        )
-        db.session.execute(stmt)
-        # Préparation de la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_specific_discharge, specific_discharge)})
-        )
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        # Préparation de la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, json_path_recharge, recharge)})
-        )
-
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        # Préparation de la mise à jour
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, scenarios_path, scenarios_json)})
-        )
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
+         
+        update_simulation(simulation_id, 'Results', '$.scenarios_grouped',scenarios_grouped_json)
+        update_simulation(simulation_id, 'Results', '$.scenarios',scenarios_json)
+        update_simulation(simulation_id, 'Results', json_path_specific_discharge, specific_discharge)
+        update_simulation(simulation_id, 'Results', json_path_recharge, recharge)
         
-        db.session.commit()
-
-        return jsonify({"scenarios grouped": scenarios_grouped.to_json(), "specific discharge": specific_discharge, "recharge": recharge, "scenarios":scenarios_json}), 200
+        return jsonify({"scenarios grouped": scenarios_grouped_json, "specific discharge": specific_discharge, "recharge": recharge, "scenarios":scenarios_json}), 200
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -706,30 +649,15 @@ def start_simulation_cydre_app(simulation_id):
         cydre_app = create_cydre_app(params)
         watershed_name = gdf_stations[gdf_stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
         station_name = cydre_app.UserConfiguration.user_watershed_name
-        # Stocker le nom de la station dans les paramètres
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.watershed_name',watershed_name)})
-        )
         
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        db.session.commit()
-
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Parameters: func.json_set(Simulation.Parameters,'$.station_name',station_name)})
-        )
-        
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        db.session.commit()
-
+        # Stocker le nom de la station dans les paramètres dans la base de données
+        update_simulation(simulation_id, 'Parameters', '$.watershed_name',watershed_name)
+        update_simulation(simulation_id, 'Parameters', '$.station_name',station_name)
+    
         return cydre_app, simulation
     except Exception as e :
         return {"Error starting cydre app":str(e)}
+    
     
 # Route permettant de récupérer les données du graphe observations/prévisions d'une simulation grâce à son ID et les stocker
 @app.route('/api/simulateur/getGraph/<simulation_id>', methods=['GET'])
@@ -760,21 +688,13 @@ def getGraph(simulation_id):
         watershed_name =  db.session.query(
             func.json_extract(Simulation.Parameters, '$.watershed_name')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
+        
         user_similarity_period =db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.user_similarity_period')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         user_similarity_period = json.loads(user_similarity_period)
 
-        similar_watersheds = db.session.query(
-            func.json_extract(Simulation.Results, '$.similarity.similar_watersheds')
-        ).filter(Simulation.SimulationID == simulation_id).scalar()
-        similar_watersheds = json.loads(similar_watersheds)
-
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
-
-        #Créer le graphe 
-        #results = Graph(cydre_app, None, watershed_name, gdf_stations, cydre_app.date,
-         #                   log=True, module=True, baseflow=False, options='viz_plotly')
         
         results = OUT.Outputs(cydre_app, watershed_name, gdf_stations, cydre_app.date, user_similarity_period,
                               log=True, module=True, options='viz_plotly')
@@ -782,8 +702,6 @@ def getGraph(simulation_id):
         reference_df, projection_df, projection_series, merged_df = results.get_projections_data(module=True)
         graph_results = results.projections_angular_format(reference_df, projection_series, merged_df)
 
-        # Calculer les projections
-        #graph_results = results.plot_streamflow_projections(module=True)
         # Transformer les résultats en JSON pour les stocker
         json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],
                                    "last_date":graph_results['last_date'],
@@ -791,17 +709,9 @@ def getGraph(simulation_id):
                                    'last_observation_date':graph_results['last_observation_date'],
                                    'first_prediction_date':graph_results['first_prediction_date'],
                                    'last_prediction_date':graph_results['last_prediction_date']})
-        # Mise à jour de chaque champ
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({
-                Simulation.Results: func.json_set(
-                    Simulation.Results,
-                    text("'$.data'"), json_to_store
-                )
-            })
-        )
+        # Mise à jour de chaque champ        
+        update_simulation(simulation_id, 'Results', '$.data',json_to_store)
+
         # Enregistrer les résultats liés au 1/10 du module dans la colonne Indicators
         mod10_string = {"type":"1/10 du module","value":graph_results['m10'], "color" : "#Ff0000", "results":{
         'proj_values': graph_results['proj_values'],
@@ -826,9 +736,6 @@ def getGraph(simulation_id):
             if not simulation.Indicators:
                 simulation.Indicators = []
             simulation.Indicators.append(mod10_string)
-        # Exécution de la mise à jour
-        db.session.execute(stmt)
-        db.session.commit()
 
         return jsonify({'success':'Graph has been returned and stored'}), 200
 
@@ -1013,15 +920,10 @@ def getCorrMatrix(simulation_id):
         
         # Convertir en dictionnaire
         corr_matrix = df.to_dict(orient='records')
+        corr_matrix_json = json.dumps(corr_matrix)
         
         # Mise à jour de la base de données
-        stmt = (
-            update(Simulation)
-            .where(Simulation.SimulationID == simulation_id)
-            .values({Simulation.Results: func.json_set(Simulation.Results, '$.corr_matrix', json.dumps(corr_matrix))})
-        )
-        db.session.execute(stmt)
-        db.session.commit()
+        update_simulation(simulation_id, 'Results', '$.corr_matrix',corr_matrix_json)
         
         return jsonify(corr_matrix), 200
     except Exception as e:
