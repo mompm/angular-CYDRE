@@ -772,7 +772,7 @@ def getGraph(simulation_id):
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         #Créer le graphe 
-        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
+        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
         app.logger.info('Cydre app and Graph results are initialized and stored')
@@ -884,7 +884,7 @@ def update_indicator(simulation_id):
 
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
-        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date, scenarios_grouped,user_similarity_period,similar_watersheds,
+        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
                             log=True, module=True, baseflow=False, options='viz_plotly')
         
         #Calculer les nouvelles projections
@@ -1138,7 +1138,7 @@ def getBetaSimulations(index):
 
 # Reprise de la classe Outputs (ancienne version) permettant de générer le graphe
 class Graph():
-    def __init__(self,cydre_app,watershed_name, stations, selected_date,scenarios_grouped,user_similarity_period,similar_watersheds,
+    def __init__(self,cydre_app,watershed_name, stations, selected_date,
                     log=True, module=True, baseflow=False, options='viz_plotly'):
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
         self.station_name = cydre_app.UserConfiguration.user_watershed_name
@@ -1149,10 +1149,7 @@ class Graph():
         self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
         self.projection_period = cydre_app.Forecast.forecast_period
         self.station_forecast = cydre_app.df_station_forecast
-        self.scenarios = scenarios_grouped
         self.simulation_date = cydre_app.date
-        self.similarity_period = user_similarity_period
-        self.similar_watersheds = similar_watersheds
 
     def _get_streamflow(self):
         
