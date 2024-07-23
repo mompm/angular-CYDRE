@@ -16,7 +16,7 @@ import requests
 from io import BytesIO
 import gzip
 
-
+#NICOLAS: à déplacer dans utils.py
 def save_object(obj, out_path, name):
     # If folder already exists, removes it
     #if os.path.exists(os.path.join(out_path,name)):
@@ -31,24 +31,51 @@ def load_object(out_path, name):
 
 class Surfex():
     """
-    Inherits from the Climatic Class of HydroModpy
+    Class for a given watershed describing which are the mesh cells and what is the climatic record for them
     
-    Clip and extract .h5 Surfex files at the watershed scale.
+    Attributes
+    ----------
+    surfex_path: string
+        Path of the folder where 
+        - climatic reanalysis is given, as well as the csv for temperature and recharge
+        - shapefile with surfex mesh organization
+    cells_list: list of string
+        surfex mesh list for each of the watersheds
+        
+    Methods (public)
+    ----------------
+    update_reanalysis(self)
+        Updates the reanalysis using api loaded meteofrance database    
+    extract_watershed_scale(self, surfex_path, watershed_shp)
+        Loads (from file and not from internet) the data and organize them as the mean of the results of the different mesh cells
     
-    .h5 files contains:
-
+    Methods (private)
+    -----------------
+    ____extract_cells_from_shapefile(self, surfex_path, watershed_shp):
+        Determines the surfex cells covered by the watershed
+    __extract_values_from_h5file(self, h5file):
+        extracts from the already loaded reanalysis (h5file) the necessary variable 
+    __store_variables(self):
+        stores variables in self from the global recharge
+        converts everything in m/s
+        precipitation remains in mm/day
+        temperateure in degrees (C)
     """
     
     def __init__(self, surfex_path):
-        """
-
-        """
-        
         self.cells_list = False
         self.surfex_path = surfex_path
     
     
     def update_reanalysis(self):
+        """
+        Updates the reanalysis using api loaded meteofrance database
+
+        Returns
+        -------
+        saves-pudates the reanalysis in h5 format (at the end of the file)
+
+        """
         
         # https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7
         # Download last file : URL stable
@@ -117,6 +144,21 @@ class Surfex():
             
 
     def extract_watershed_scale(self, surfex_path, watershed_shp):
+        """
+        Loads (from file and not from internet) the data and organize them as the mean of the results of the different mesh cells
+
+        Parameters
+        ----------
+        surfex_path : string
+            path of the folder with meteorological data
+        watershed_shp : GeoDataFrame
+            watershed shapefile
+
+        Returns
+        -------
+        stores results in the surfex folder
+
+        """
 
         # Load h5 file
         filename = os.path.join(surfex_path, 'reanalysis.h5')
@@ -125,30 +167,25 @@ class Surfex():
 
         # Extract cells from shapefile
         if not self.cells_list:
-            self.extract_cells_from_shapefile(surfex_path, watershed_shp)
+            self.__extract_cells_from_shapefile(surfex_path, watershed_shp)
 
         # Extract values from h5 file
-        self.extract_values_from_h5file(h5file=data)
+        self.__extract_values_from_h5file(h5file=data)
 
         # Store climatic variables
-        self.store_variables()
+        self.__store_variables()
 
 
-    def extract_cells_from_shapefile(self, surfex_path, watershed_shp):
+    def __extract_cells_from_shapefile(self, surfex_path, watershed_shp):
         """
-        
-        Extract cells
+        Determine the surfex cells covered by the watershed
 
         Parameters
         ----------
-        surfex_path : TYPE
-            DESCRIPTION.
-        watershed_shp : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
+        surfex_path : string
+            path of the folder with meteorological data
+        watershed_shp : GeoDataFrame
+            watershed shapefile
 
         """
         
@@ -165,7 +202,20 @@ class Surfex():
         self.cells_list = intersect.num_id.to_list() # wanted Surfex cells list
 
 
-    def extract_values_from_h5file(self, h5file):
+    def __extract_values_from_h5file(self, h5file):
+        """
+        extracts from the already loaded reanalysis (h5file) the necessary variable 
+
+        Parameters
+        ----------
+        h5file : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        Updates self.values
+
+        """
 
         variables = ['DRAINC_Q','RUNC_Q', 'ETP_Q', 'PRELIQ_Q', 'T_Q']
 
@@ -185,7 +235,13 @@ class Surfex():
                 pass
 
 
-    def store_variables(self):
+    def __store_variables(self):
+        """ 
+        stores variables in self from the global recharge
+        converts everything in m/s
+        precipitation remains in mm/day
+        temperateure in degrees (C)
+        """
 
         # -- recharge (mm/d > m/s)
         self.recharge = pd.DataFrame(self.values['DRAINC_Q'].MEAN / (1000*86400))

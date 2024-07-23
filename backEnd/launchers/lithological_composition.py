@@ -2,7 +2,10 @@
 """
 Created on Mon Jul 15 16:56:34 2024
 
-@author: nicol
+@author: Nicolas Cornette
+
+Determines the lithological composition of the watershed defined and given by a shapefile 
+
 """
 
 import sys
@@ -18,14 +21,20 @@ app_root = setup_cydre_path()
 
 import libraries.preprocessing.data.geology as GEOL
 
+# MODE is either
+#       'regional'      : watersheds defined at a regional scale 
+#       'stations_hydro': only hydrological stations 
 MODE = 'regional'
 
 data_path = os.path.join(app_root, 'data')
 geol_path = os.path.join(data_path, 'geology')
 
+# Correspondance table between lithologies to group them geo-logically
 correspondence_table = pd.read_csv(os.path.join(geol_path, 'correspondence_table.csv'), sep=';')
+# Dictionary of colors for each of the lithology (once they are grouped)
 color_dict = pd.read_csv(os.path.join(geol_path, 'color_dict.csv'), sep=';')
 
+# Loads geological map and simplification according to the correspondance table defined before
 Geology = GEOL.Geology(geol_path)
 Geology.update_geology(correspondence_table, color_dict)
 
@@ -40,10 +49,13 @@ elif MODE == 'regional':
 
 lithology = {}
 
+# Loop over watersheds 
 for idx in gdf_watersheds.index:
+    # Extract identifier from dataframe and, after, gets its geometry 
     watershed = gdf_watersheds[gdf_watersheds.index == idx]['geometry']
    
     if MODE == 'stations_hydro':
+        # conversion for the station_hydro to Lambert93 (not necessary for watersheds)
         watershed = watershed.to_crs(epsg=2154)
     
     geol_composition = Geology.geological_composition(Geology.geology_map, watershed)

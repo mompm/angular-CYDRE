@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 from matplotlib_scalebar.scalebar import ScaleBar
 import random
 
-#NICOLAS: est-ce encore utilisé ou utilisable? Est-ce que cela vaut le coup de le garder et de le maintenir? 
 
 
 class Geology():
@@ -36,11 +35,23 @@ class Geology():
         raw regional geological map.
     color_dict : dict
         dictionnary to relate each geological formation to a random color.
+    geological_composition(self, geology_map, watershed):
+        Deterimnes lithological composition of a specific watershed
     
-    Methods:
+    Methods (public):
     ----------
-    load_geology_map(geology_folder)
+    update_geology(self, correspondence_table, color_dict):
+        Update the geological map by grouping the geological formations.
+        This method uses a correspondence table stored in geology_folder.
+    plot_geology_map(self):
+        Display the geological map
+        
+    Methods (private):
+    ----------
+    __load_geology_map(geology_folder)
         Load the geological map stored in a specific folder.
+    __load_lithology(self, bh_id, path):
+        Loads lithological composition of watersheds (the one computed in Nicolas Cornette's thesis')
     plot_geology_map()
         Display the geological map.
     update_geology(correspondence_table)
@@ -50,26 +61,28 @@ class Geology():
 
     def __init__(self, path):
         
-        # Geological map path
+        # Geological map path (shapefile which can be opened with GIS QGis BRGM map)
         filename = os.path.join(path, 'GEOL_001M_MassifArm.shp')
         self.geology_map_file = filename        
         
         # Load the geological map
-        self.geology_map, self.color_dict = self.load_geology_map(self.geology_map_file)
+        self.geology_map, self.color_dict = self.__load_geology_map(self.geology_map_file)
         
         # Store lithological composition
-        #self.get_data(bh_id, path)
+        #self.__load_lithology(bh_id, path)
         
         
-    def get_data(self, bh_id, path):
-        
+    def __load_lithology(self, bh_id, path):
+        """
+        Loads lithological composition of watersheds (the one computed in Nicolas Cornette's thesis')
+        """
         file = os.path.join(path, 'lithology.csv')
         data = pd.read_csv(file, sep=';', decimal=',')
         
         self.lithology = data[data['ID'] == bh_id]
         
         
-    def load_geology_map(self, filename):
+    def __load_geology_map(self, filename):
         """
         Load the geological map stored in a specific folder.
 
@@ -80,7 +93,7 @@ class Geology():
 
         Returns
         -------
-        geology_map : DataFrame
+        geology_map : GeoDataFrame
             raw regional geological map.
         color_dict : dict
             dictionnary to relate each geological formation to a random color.
@@ -115,10 +128,6 @@ class Geology():
             - une colonne Typo qui correspond à la nouvelle typologie
             - une colonne color_dict qui affecte pour chaque typologie une couleur
         !!
-        
-        Returns
-        -------
-        None.
 
         """        
         # Initialization
@@ -195,6 +204,22 @@ class Geology():
         
     
     def geological_composition(self, geology_map, watershed):
+        """
+        Deterimnes lithological composition of a specific watershed
+
+        Parameters
+        ----------
+        geology_map : GeoDataFrame
+            Geological map necessary to determine composition
+        watershed : GeoDataFrame
+            Limits of the watershed 
+
+        Returns
+        -------
+        df_geological_composition : dataframe
+            Lithological composition
+
+        """
         
         # Clip the geological map with the watershed boundaries
         tmp_file = gpd.clip(geology_map, watershed)
@@ -214,7 +239,22 @@ class Geology():
         return df_geological_composition
 
 
+    #NICOLAS: plus utiliser, à supprimer? 
     def group_geological_composition(self, out_folder):
+        """
+        
+
+        Parameters
+        ----------
+        out_folder : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        df_geology : TYPE
+            DESCRIPTION.
+
+        """
         
         # Unique geological formations
         geological_formations = np.unique(self.geology_map['Typo'])

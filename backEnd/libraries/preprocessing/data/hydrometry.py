@@ -3,6 +3,9 @@
 Created on Thu May 25 14:03:30 2023
 
 @author: Nicolas Cornette
+
+Loads flow data using API from HUB'EAU (gestion des APIs de HydroPartail, de la piézométrie, de la qualité...)
+It is necessarily loaded from internet (no internal save to avoid any outdate)
 """
 
 import requests
@@ -29,7 +32,7 @@ class Hydrometry():
     id : str
         national hydrological station identifier (BanqueHydro).
     station_sheet : dict
-        national hydrological station identifier (BanqueHydro).
+        All informations on the stations (BanqueHydro).
     name : str
         national hydrological station name (BanqueHydro).
     area : float
@@ -41,16 +44,13 @@ class Hydrometry():
         Frequency : daily
         Discharge : m3/s
     
-    Methods:
+    Methods (public):
     ----------
     get_data(bh_id)
         Extract hydrological station sheet, discharge timeseries and save object.
-    load_data(filename)
-        Load database object if exists.
-    update_data()
-        update discharge timeseries by running api requests.
-    save_data(filename)
-        Save database object.
+        
+    Methods (private):
+    ----------
     __load_station_sheet(bh_id)
         Extract hydrological station sheet with api requests.
     __api_hubeau()
@@ -89,7 +89,7 @@ class Hydrometry():
         """
         
         # Download hydrological station sheet
-        self.station_sheet = self.load_station_sheet(bh_id)
+        self.station_sheet = self.__load_station_sheet(bh_id)
         self.name = self.station_sheet['libelle_site']
         self.area = self.station_sheet['surface_bv']
         self.outlet = [self.station_sheet['coordonnee_x_site'], self.station_sheet['coordonnee_y_site']]
@@ -99,7 +99,7 @@ class Hydrometry():
         self.specific_discharge = self.discharge / (self.area * 1e+6)
     
     
-    def load_station_sheet(self, bh_id):
+    def __load_station_sheet(self, bh_id):
         """
         Extract hydrological station sheet with api requests.
 
@@ -129,9 +129,7 @@ class Hydrometry():
                 works =+ 1
             except:
                 fails =+ 1
-            
         
-            
         return wb    
     
     
@@ -195,54 +193,4 @@ class Hydrometry():
                 fails += 1
         
         return serie
-    
-    
-    def load_data(self, filename):
-        """
-        Load database object if exists.
-
-        Parameters
-        ----------
-        filename : str
-            path to dictionary saved in pickle format (.pkl).
-
-        Returns
-        -------.
-        """
-        with open(filename, 'rb') as f:
-            return pickle.load(f)
         
-    
-    def update_data(self):
-        """
-        update discharge timeseries by running api requests.
-
-        Returns
-        -------
-        discharge : DataFrame
-            Discharge dataframe (nt, nq).
-            Frequency : daily
-            Discharge : m3/s
-        """
-        self.discharge = self.api_hubeau(self.id)
-        self.specific_discharge = self.discharge / (self.area * 1e+6)
-        
-    
-    def save_data(self, filename):
-        """
-        Save database object.
-
-        Parameters
-        ----------
-        filename : str
-            path to dictionary saved in pickle format (.pkl).
-
-        Returns
-        -------
-        """
-        #with gzip.open(filename, 'wb') as f:  # Overwrites any existing file.
-         #   pickle.dump(self, f)
-        #with bz2.BZ2File(filename, 'wb') as f:  # Overwrites any existing file.
-         #   pickle.dump(self, f)
-        with open(filename, 'wb') as outp:  # Overwrites any existing file.
-            pickle.dump(self, outp, pickle.HIGHEST_PROTOCOL)

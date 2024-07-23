@@ -3,6 +3,8 @@
 Created on Thu May 25 15:33:55 2023
 
 @author: Nicolas Cornette
+
+Piezometry data loaded from internet with API 
 """
 
 import os
@@ -15,7 +17,29 @@ import json
 
 
 class Piezometry():
+    """
+    Attributes
+    ----------
+    data_path: string
+        file where the stations are stored and where piezometrical data will be stored
+        important that the data are stored for the website to effectively display piezometric data
     
+    
+    Methods (public)
+    -----------------
+    get_data(self, site):
+        Loads piezometric data for a specific site
+    get_correspondance_table(self, data_path):
+        Correspondance between piezometric and hdyrometric stations
+            Which BSS station should be associated to which hydrometric station
+    
+    Methods (private)
+    -----------------
+    __get_piezometric_stations(self, data_path):
+        gets the piezometric station list
+        includes the correspondance between old identifier (the one used by the API) and the new identifier given by the BSS
+    
+    """
     
     def __init__(self, bss_id, data_path):
         
@@ -26,18 +50,39 @@ class Piezometry():
         
         
     def __get_piezometric_stations(self, data_path):
+        """
+        gets the piezometric station list
+        includes the correspondance between old identifier (the one used by the API) and the new identifier given by the BSS
+        """
         filename = 'stations.csv'
         return pd.read_csv(os.path.join(data_path, filename), delimiter=';', encoding='ISO-8859-1')
     
     
+    #NICOLAS: à mettre dans le même formar qu'hydrometry, à intergrer dans get_data? 
+    #         à symétriser avec hydrometry
     def update_data(self, old_bss_id):
-        
+        """
+        """
         self.data = self.get_data(old_bss_id)
         self.water_table_level = pd.DataFrame({'Q':self.data['H']})
         self.water_table_depth = pd.DataFrame({'Q':self.data['d']})
     
     
     def get_data(self, site):
+        """
+        Loads piezometric data for a specific site
+        
+        Parameters
+        ----------
+        site : string
+            identifier BSS of the piezometer (old identifier)
+
+        Returns
+        -------
+        serie : dataframe
+            date, piezometric level, depth (different altitude reference)
+
+        """
         
         # get the current date
         end_date = pd.to_datetime(date.today()) 
@@ -72,7 +117,29 @@ class Piezometry():
         
         return serie
     
+    #NICOLAS: renommer en correspondance_hydrometric_piezometric_station
     def get_correspondance_table(self, data_path):
+        """
+        Correspondance between piezometric and hdyrometric stations
+            Which BSS station should be associated to which hydrometric station
+
+        Parameters
+        ----------
+        data_path : string
+            file for 
+
+        Returns
+        -------
+        correspondance_table : dataframe
+            'NOM_BV': watershed name
+            'ID_HYDRO': identifier of hydroloical station (Banque_Hydro)
+            'CODE_BSS': identifier of piezometric station (BSS)
+            'Ancien code national BSS': the old one
+            'NOM_BSS': piezometric station name (name of the city of the station!)
+        stations_bss : dataframe
+            List of BSS Stations (already loaded before)
+
+        """
         
         # Load correspondance tables
         stations_bss = self.__get_piezometric_stations(data_path)
