@@ -33,29 +33,22 @@ class Outputs():
     Class used to manage cydre results and do some plots.
     """
     
-    def __init__(self, cydre_app, output_path, watershed_name, stations, selected_date,
-                 log=True, module=False, baseflow=False, options='viz_matplotlib'):
+    def __init__(self, cydre_app, watershed_name, stations, selected_date, similarity_period, 
+                 log=True, module=False, options='viz_matplotlib'):
         
         # Cydre simulation outputs
         self.version = cydre_app.version
-        self.output_path = output_path
         self.stations = stations
         self.watershed_name = watershed_name
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
-        #self.watershed_area = cydre_app.watersheds[self.watershed_id]['hydrometry']['area']
         self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
-        #self.streamflow = cydre_app.watersheds[self.watershed_id]['hydrometry']['specific_discharge']
         self.streamflow = cydre_app.UserConfiguration.user_streamflow
-        #self.precipitation = cydre_app.watersheds[self.watershed_id]['climatic']['precipitation']
         self.selected_date = selected_date
         self.simulation_date = cydre_app.date
-        self.similarity_period = cydre_app.Similarity.user_similarity_period
-        self.clusters = cydre_app.Similarity.clusters
-        self.watershed_similarity = cydre_app.Similarity.watershed_similarity
-        self.similar_watersheds = cydre_app.Similarity.similar_watersheds
-        self.correlation_matrix = cydre_app.scenarios
-        self.scenarios = cydre_app.scenarios_grouped
-        self.scenarios_chronicles = cydre_app.Forecast.scenarios_with_chronicles
+        #self.similarity_period = cydre_app.Similarity.user_similarity_period
+        self.similarity_period = similarity_period
+        #self.similar_watersheds = cydre_app.Similarity.similar_watersheds
+        #self.correlation_matrix = cydre_app.scenarios
         self.projection_period = cydre_app.Forecast.forecast_period
         self.streamflow_proj = cydre_app.df_streamflow_forecast
         self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
@@ -71,163 +64,168 @@ class Outputs():
             self.user_storage_forecast = cydre_app.UserConfiguration.user_storage[cydre_app.UserConfiguration.user_storage.index.isin(self.projection_period)]
             self.streamflow_projection_period = self.user_streamflow_forecast
             self.storage_projection_period = self.user_storage_forecast
+    
+    
+    def store_results(self, output_path, log=True, fig_format="html"):
+        
+        self.output_path = output_path
+        self.__manage_outputs_path(log, fig_format)
+        #self.__save_correlation_matrix()
+#        self.__save_watershed_similarity()
 
-        # Store results
-        self.manage_outputs_path()
-        self.save_correlation_matrix()
-        self.save_watershed_similarity()
         
-        # Plot results
-        self.streamflow_fig = self.plot_streamflow_projections(log, module, baseflow, options)
-        self.streamflow_volume()
-        self.storage_variations()
-        self.baseflow()
-        
-#        if self.version == 'test':
- #           self.plot_streamflow_volume()
-  #          self.plot_storage_variations()
-    
-    
-    def manage_outputs_path(self):
+    def __manage_outputs_path(self, log, fig_format):
         
         # Watershed folder for storing outputs as plots
-        self.watershed_path = os.path.join(self.output_path, self.watershed_id)
-        self.simulation_path = os.path.join(self.watershed_path, self.selected_date)#.strftime('%Y-%m-%d'))
-        if not os.path.exists(self.watershed_path):
-            os.makedirs(self.watershed_path)
-        if not os.path.exists(self.simulation_path):
-            os.makedirs(self.simulation_path)
-            
-    
-    def save_correlation_matrix(self):
+        self.__watershed_path = os.path.join(self.output_path, self.watershed_id)
+        self.__simulation_path = os.path.join(self.__watershed_path, self.selected_date)
         
-        filename = os.path.join(self.simulation_path, 'corr_matrix.txt')
+        if not os.path.exists(self.__watershed_path):
+            os.makedirs(self.__watershed_path)
+        if not os.path.exists(self.__simulation_path):
+            os.makedirs(self.__simulation_path)
+        
+        # Watershed folder for storing outputs as plots
+        if fig_format=='tiff' and log==True:
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{str(self.simulation_date.date())}.tiff")
+        elif fig_format=='tiff' and log==False:
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{str(self.simulation_date.date())}.tiff")
+        elif fig_format=='html' and log==True:
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{str(self.simulation_date.date())}.html")
+        elif fig_format=='html' and log==False:
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{str(self.simulation_date.date())}.html")
+        
+        print(self.streamflow_fig_path)
+    
+    def __save_correlation_matrix(self):
+        
+        filename = os.path.join(self.__simulation_path, 'corr_matrix.txt')
         self.correlation_matrix.to_csv(filename)
     
     
-    def save_watershed_similarity(self):
+    def __save_watershed_similarity(self):
         
         filename = os.path.join(self.output_path, self.watershed_id, 'watershed_similarity.txt')
-        df = self._filter_watershed_similarity()
+        df = self.__filter_watershed_similarity()
         df.to_csv(filename)
-        
     
-    def save_performance(self, model_quality):
-        
-        filename = os.path.join(self.simulation_path, 'model_quality.pkl')
-        
-        with open(filename, 'wb+') as f:
-            pickle.dump(model_quality, f, pickle.HIGHEST_PROTOCOL)
-        
-        #with open(filename, 'w') as file:
-            #json.dump(model_quality, file)
-        
     
-    def plot_streamflow_projections(self, log=True, module=False, baseflow=False, options='viz_matplotlib'):
+    def get_projections_data(self, module):
         
-        # -------------- FOLDER --------------
-        
-        # Watershed folder for storing outputs as plots
-        if log:
-            filename = os.path.join(self.watershed_path, f"log_{str(self.simulation_date.date())}.tiff")
-        else:
-            filename = os.path.join(self.watershed_path, f"lin_{str(self.simulation_date.date())}.tiff")
-        
-        # -------------- CYDRE RESULTS --------------
-
         # Extract observation and projection timeseries data
-        reference_df, projection_df, projection_series = self._get_streamflow()
-        
-        # Adding stations projections
-        self.station_forecast.index = projection_df.index
-        projection_df['Q50_station'] = self.station_forecast['Q50']
-        projection_df['Q50_station'] *= (self.watershed_area * 1e6)
-        projection_df['Q10_station'] = self.station_forecast['Q10']
-        projection_df['Q10_station'] *= (self.watershed_area * 1e6)
-        projection_df['Q90_station'] = self.station_forecast['Q90']
-        projection_df['Q90_station'] *= (self.watershed_area * 1e6)
-        
-        # -------------- OPERATIONAL INDICATORS --------------
+        reference_df, projection_df, projection_series = self.__get_streamflow_series()
         
         # Calculate the module (1/10 x mean streamflow)
         if module:
-            self.mod, self.mod10 = self._module(reference_df)
+            self.mod, self.mod10 = self.__calculate_module(reference_df)
+            self.__calculate_indicators(reference_df, projection_df, projection_series)
         
-        # Projected streamflow (last day value and evolution)
-        self.proj_values = projection_df.iloc[-1]
-        self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
-        
-        # Number of days before projected streamflow intersect the module
-        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
-        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
-        
-        try:
-            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
-            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q10 = None
-            self.ndays_before_alert_Q10 = 0
-        
-        try:
-            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
-            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q50 = None
-            self.ndays_before_alert_Q50 = 0
-            
-        try:
-            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
-            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q90 = None
-            self.ndays_before_alert_Q90 = 0
-        
-        # Number of cumulated days below the alert threshold
-        self.ndays_below_alert = np.sum(mod10_intersect)
-        
-        # Proportion of past events below the alert threshold
-        n_events = len(projection_series)
-        n_events_alert = 0
-        
-        for events in range(len(projection_series)):
-            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
-            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
-            if projection_series[events]['alert'].any():
-                n_events_alert += 1
-            else:
-                n_events_alert += 0
-        
-        self.prop_alert_all_series = n_events_alert / n_events
-        
-        # Volume to supply low flows
-        alert_df = projection_df[mod10_alert['Q10']]
-        q_values = alert_df['Q10'] * 86400
-        self.volume10 = ((self.mod10*86400) - q_values).sum()
-        
-        alert_df = projection_df[mod10_alert['Q50']]
-        q_values = alert_df['Q50'] * 86400
-        self.volume50 = ((self.mod10*86400) - q_values).sum()
-        
-        alert_df = projection_df[mod10_alert['Q90']]
-        q_values = alert_df['Q90'] * 86400
-        self.volume90 = ((self.mod10*86400) - q_values).sum()
-        
-        
-      
-        # Calculate baseflow
-        if baseflow:
-            self.Q_baseflow = self.baseflow()
-            reference_df['baseflow'] = self.Q_baseflow * self.watershed_area * 1e6
-        
-       
-            
-
-            
         # Merge observation and projection timeseries data
         merged_df = pd.merge(reference_df, projection_df, left_on=reference_df.index,
                              right_on=projection_df.index, how='right')
         merged_df = merged_df.set_index(merged_df['key_0'])
-
+        
+        return reference_df, projection_df, projection_series, merged_df
+    
+   
+    def __get_streamflow_series(self):     
+   
+        # Observation
+        reference_df = self.streamflow.copy()
+        reference_df['daily'] = reference_df.index.strftime('%m-%d')
+        reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
+        
+        # Projections
+        projection_df = self.streamflow_proj.copy()
+        projection_df = projection_df.set_index(self.projection_period)
+        projection_df *= self.watershed_area * 1e6 # m/s > m3/s
+        
+        # Individual projections
+        projection_series = []
+        
+        for serie in self.streamflow_proj_series:
+            serie = pd.DataFrame(serie)
+            serie['Q_streamflow'] *= (self.watershed_area * 1e6)
+            serie = serie.set_index(self.projection_period)
+            projection_series.append(serie)
+        
+        return reference_df, projection_df, projection_series
+    
+    
+    def __calculate_module(self, reference_df):
+        reference_df['year'] = reference_df.index.year
+        df = reference_df.groupby('year')['Q'].mean()
+        mod = df.mean()
+        mod10 = mod/10
+        return mod, mod10
+    
+    
+    def __calculate_indicators(self, reference_df, projection_df, projection_series):
+       
+       # Projected streamflow (last day value and evolution)
+       self.proj_values = projection_df.iloc[-1]
+       self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
+       
+       # Number of days before projected streamflow intersect the module
+       mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
+       mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
+       
+       try:
+           mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
+           self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
+       except:
+           mod10_first_occurence_Q10 = None
+           self.ndays_before_alert_Q10 = 0
+       
+       try:
+           mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
+           self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
+       except:
+           mod10_first_occurence_Q50 = None
+           self.ndays_before_alert_Q50 = 0
+           
+       try:
+           mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
+           self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
+       except:
+           mod10_first_occurence_Q90 = None
+           self.ndays_before_alert_Q90 = 0
+       
+       # Number of cumulated days below the alert threshold
+       self.ndays_below_alert = np.sum(mod10_intersect)
+       
+       # Proportion of past events below the alert threshold
+       n_events = len(projection_series)
+       n_events_alert = 0
+       
+       for events in range(len(projection_series)):
+           projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
+           projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
+           if projection_series[events]['alert'].any():
+               n_events_alert += 1
+           else:
+               n_events_alert += 0
+       
+       self.prop_alert_all_series = n_events_alert / n_events
+       
+       # Volume to supply low flows
+       alert_df = projection_df[mod10_alert['Q10']]
+       q_values = alert_df['Q10'] * 86400
+       self.volume10 = ((self.mod10*86400) - q_values).sum()
+       
+       alert_df = projection_df[mod10_alert['Q50']]
+       q_values = alert_df['Q50'] * 86400
+       self.volume50 = ((self.mod10*86400) - q_values).sum()
+       
+       alert_df = projection_df[mod10_alert['Q90']]
+       q_values = alert_df['Q90'] * 86400
+       self.volume90 = ((self.mod10*86400) - q_values).sum()
+    
+    
+    def plot_streamflow_projections(self, log=True, module=False, options='viz_matplotlib'):
+        
+        reference_df, projection_df, projection_series, merged_df = self.get_projections_data(module)
+        
         if options == 'viz_matplotlib':
                
             # Plot initialization
@@ -251,17 +249,6 @@ class Outputs():
             ax.plot(merged_df.index, merged_df['Q50'], color='blue', linewidth=1.5, linestyle='dotted',
                 label='projection médiane')
             
-            # Add the uncertainty area of station projetions (between Q10 and Q90)
-            #ax.fill_between(merged_df.index, merged_df['Q10_station'], merged_df['Q90_station'], color='purple',
-            #                alpha=0.10, edgecolor='purple', linewidth=0, label="zone d'incertitude [station]")
-            #ax.plot(merged_df.index, merged_df['Q10_station'], color='purple', linewidth=0.3)        
-            #ax.plot(merged_df.index, merged_df['Q90_station'], color='purple', linewidth=0.3)
-            
-            # Add the staiton forecast
-            #ax.plot(merged_df.index, merged_df['Q50_station'], color='purple', linewidth=1.5, linestyle='dotted',
-             #       label='stats sur la station')
-            
-            # Add the real data measured at the hydrological station
             ax.plot(reference_df.index, reference_df['Q'], color='k', linewidth=1,
                 label="observation")
             
@@ -271,16 +258,6 @@ class Outputs():
             # Add module if selected by the user
             if module:
                 ax.axhline(y=self.mod10, color='r', linestyle='--', linewidth=0.6, label='1/10 du module')
-            
-            # Add baseflow if selected by the user
-            if baseflow:
-                ax.plot(merged_df.index, merged_df['baseflow'], color='green', linewidth=1, linestyle='--', label='baseflow')
-                #ax.plot(merged_df.index, merged_df['baseflow2'], color='purple', linewidth=1, linestyle='--', label='baseflow2')
-            
-            #ax2 = ax.twinx()
-            #ax2.plot(self.precipitation.index, self.precipitation['Q'], color='red', linewidth=0.8, label='Précipitations journalières')
-            #ax2.invert_yaxis()
-
             
             # Set axis parameters
             ax.tick_params(axis="both", direction = "inout")
@@ -292,29 +269,14 @@ class Outputs():
             ax.set_xlabel("Date", fontsize=12)
             ax.set_ylabel("Débit (m3/s)", fontsize=12)
             ax.legend(ncol=4, fontsize=8)
-            ax.set_title(f"{self.watershed_name}" + f" - {len(self.scenarios)} événements ", fontsize=14)
+            ax.set_title(f"{self.watershed_name}", fontsize=14)
             
-            #ax2.set_ylabel('Pluies journalières (mm)', fontsize=12)
-            #ax2.tick_params(axis='y', labelcolor='red')
-            #ax2.set_xlim(self.similarity_period[0], self.projection_period[-1])
-            #ax2.set_ylim(0, 100)
-
-            
-            plt.savefig(filename, dpi=500, format="tiff", pil_kwargs={"compression": "tiff_lzw"}, bbox_inches='tight', pad_inches=0.1)
-            plt.show()
-
+            if self.streamflow_fig_path:
+                plt.savefig(self.streamflow_fig_path, dpi=500, format="tiff", pil_kwargs={"compression": "tiff_lzw"},
+                            bbox_inches='tight', pad_inches=0.1)
             return fig
         
         elif options == 'viz_plotly':
-            
-            # Watershed folder for storing outputs as plots
-            if log:
-                filename = os.path.join(self.watershed_path, f"log_{str(self.simulation_date.date())}.html")
-            else:
-                filename = os.path.join(self.watershed_path, f"lin_{str(self.simulation_date.date())}.html")
-            
-            # Projection events
-            scenarios, n_scenarios = self._get_projection_origin(self.scenarios_chronicles)
             
             # Plot initialization
             plt.style.use('seaborn-dark-palette')
@@ -374,13 +336,6 @@ class Outputs():
                     name='1/10 du module'
                 ))
 
-            # Add baseflow if selected by the user
-            if baseflow:
-                fig.add_trace(go.Scatter(x=merged_df.index, y=merged_df['baseflow'], mode='lines', 
-                                        line=dict(color='green', width=1, dash='dash'), name='baseflow'))
-                #fig.add_trace(go.Scatter(x=merged_df.index, y=merged_df['baseflow2'], mode='lines', 
-                #                         line=dict(color='purple', width=1, dash='dash'), name='baseflow2'))
-
             # Set axis parameters
             fig.update_xaxes(range=[self.similarity_period[0], self.projection_period[-1]], 
                              tickformat="%d-%m-%Y",
@@ -400,10 +355,7 @@ class Outputs():
                              gridcolor = 'rgba(0,0,0,0.1)',
                              )
 
-
-            #fig.update_xaxes(tickvals=pd.date_range(start=self.similarity_period[0], end=self.projection_period[-1], freq='Y'),
-            #                tickformat="%Y", title="Date")
-            fig.update_layout(title=f"{self.watershed_id} | {self.watershed_name}" + f" - {len(self.scenarios)} événements ", 
+            fig.update_layout(title=f"{self.watershed_id} | {self.watershed_name}", 
                               width=1200,
                               height=675,
                               legend=dict(x=0.5, y=1.1, orientation="h", xanchor='center'),
@@ -412,21 +364,167 @@ class Outputs():
                               plot_bgcolor = "rgba(0,0,0,0)",
                               paper_bgcolor = "rgba(0,0,0,0)",)
             
-
-           # fig.update_layout(hovermode='closest')  # Affiche les informations pour la trace la plus proche du point de survol
-        
             # Save and show plot
-            fig.write_html(filename)
-            fig.show()
-
+            if self.streamflow_fig_path:
+                fig.write_html(self.streamflow_fig_path)
+            
             return fig
      
         
-    def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id):
+    def projections_angular_format(self, reference_df, projection_series, merged_df):
+       
+        #On ne stocke pas les données en x qui sont des dates générables dans le front
+        data =[
+            go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
+            go.Scatter(x=None, y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
+            go.Scatter(x=None, y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
+        ]
+
+        # Convert each projection series DataFrame to a Plotly trace
+        for idx, serie in enumerate(projection_series):
+            serie_trace = go.Scatter(
+                x=None, #On ne stocke pas les données en x qui sont des dates générables dans le front
+                y=serie['Q_streamflow'].tolist(),
+                mode='lines',
+                line=dict(color='rgba(0, 0, 255, 0.2)', width=1),  # Semi-transparent blue lines
+                name=f'Projection {idx + 1}'
+            ).to_plotly_json()
+            data.append(serie_trace)
+
+        data = {
+        'graph': data,
+        'first_observation_date': reference_df.index.tolist()[0].isoformat(),#la première date d'observations
+        'last_observation_date': reference_df.index.tolist()[len(reference_df.index.tolist())-1].isoformat(),#la dernière date d'observations
+        'first_prediction_date': merged_df.index.tolist()[0].isoformat(),#la première date de perdicitions
+        'last_prediction_date': merged_df.index.tolist()[len(merged_df.index.tolist())-1].isoformat(),#la dernière date de predictions
+        'proj_values': {
+            'Q50': float(self.proj_values.Q50),
+            'Q10': float(self.proj_values.Q10),
+            'Q90': float(self.proj_values.Q90)
+        },
+        'ndays_before_alert':{
+            'Q50': float(self.ndays_before_alert_Q50),
+            'Q90': float(self.ndays_before_alert_Q90),
+            'Q10': float(self.ndays_before_alert_Q10)
+        },
+        'ndays_below_alert': {
+            'Q50': float(self.ndays_below_alert['Q50']),
+            'Q90': float(self.ndays_below_alert['Q90']),
+            'Q10': float(self.ndays_below_alert['Q10'])
+        },
+        'prop_alert_all_series': float(self.prop_alert_all_series),
+        'volume50': float(self.volume50),
+        'volume10': float(self.volume10),
+        'volume90': float(self.volume90),
+        'last_date': self.projection_period[-1].strftime("%d/%m/%Y"),
+        'first_date': self.simulation_date.strftime('%d/%m/%Y'),
+        # 'first_date': self.simulation_date.strftime('%Y-%m-%d'),
+        'm10':self.mod10
+        }
         
-        gdf_stations_filter = gdf_stations[gdf_stations["ID"].isin(self.clusters.index)]
-        gdf_watersheds_filter = gdf_watersheds[gdf_watersheds.index.isin(self.clusters.index)]
-        gdf_watersheds_filter = gdf_watersheds_filter.merge(self.clusters[['typology']], left_index=True, right_index=True, how='left')
+        return data
+    
+    
+    def new_projections(self, m10):
+        
+        reference_df, projection_df, projection_series = self.__get_streamflow_series()
+        
+        # Update the module calculation
+        self.mod10 = m10
+        
+        # Proportion of past events below the alert threshold
+        n_events = len(projection_series)
+        n_events_alert = 0
+        
+        for events in range(len(projection_series)):
+            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
+            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
+            if projection_series[events]['alert'].any():
+                n_events_alert += 1
+            else:
+                n_events_alert += 0
+        
+        self.prop_alert_all_series = n_events_alert / n_events
+
+        # Initialize volumes
+        self.volume10 = 0
+        self.volume50 = 0
+        self.volume90 = 0
+        
+
+        # Ensure proper calculation and error handling for each volume
+        try:
+            alert_df = projection_df[projection_df['Q10'] <= self.mod10]
+            q_values = alert_df['Q10'] * 86400
+            self.volume10 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume10 calculation: {e}")
+
+        try:
+            alert_df = projection_df[projection_df['Q50'] <= self.mod10]
+            q_values = alert_df['Q50'] * 86400
+            self.volume50 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume50 calculation: {e}")
+
+        try:
+            alert_df = projection_df[projection_df['Q90'] <= self.mod10]
+            q_values = alert_df['Q90'] * 86400
+            self.volume90 = ((self.mod10 * 86400) - q_values).sum()
+        except Exception as e:
+            print(f"Error in volume90 calculation: {e}")
+
+        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
+        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
+
+        try:
+            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
+            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q10 = None
+            self.ndays_before_alert_Q10 = 0
+        
+        try:
+            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
+            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q50 = None
+            self.ndays_before_alert_Q50 = 0
+            
+        try:
+            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
+            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q90 = None
+            self.ndays_before_alert_Q90 = 0
+        # Number of cumulated days below the alert threshold
+        self.ndays_below_alert = np.sum(mod10_intersect)
+
+        results = {
+            'volume50': float(self.volume50),
+            'volume10': float(self.volume10),
+            'volume90': float(self.volume90),
+            'prop_alert_all_series': float(self.prop_alert_all_series),
+            'ndays_before_alert':{
+                'Q10': float(self.ndays_before_alert_Q10),
+                'Q50': float(self.ndays_before_alert_Q50),
+                'Q90': float(self.ndays_before_alert_Q90),
+            },
+            'ndays_below_alert': {
+                'Q10': float(self.ndays_below_alert['Q10']),
+                'Q50': float(self.ndays_below_alert['Q50']),
+                'Q90': float(self.ndays_below_alert['Q90']),
+            },
+        }
+        return results
+    
+    
+    def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id, clusters):
+        
+        gdf_stations_filter = gdf_stations[gdf_stations["ID"].isin(clusters.index)]
+        gdf_watersheds_filter = gdf_watersheds[gdf_watersheds.index.isin(clusters.index)]
+        gdf_watersheds_filter = gdf_watersheds_filter.merge(clusters[['typology']], left_index=True, right_index=True, how='left')
         gdf_watersheds_filter['typology'] = gdf_watersheds_filter['typology'].astype(str)        
         
         colors = {
@@ -458,43 +556,21 @@ class Outputs():
         
         # Afficher la figure
         fig.show()
-        fig.write_html(os.path.join(self.watershed_path, "typo2.html"))
+        fig.write_html(os.path.join(self.__watershed_path, "typo2.html"))
         
 
         return fig
+
     
-    
-    def _get_streamflow(self):
+    def save_performance(self, model_quality):
         
-        # Observation
-        reference_df = self.streamflow.copy()
-        reference_df['daily'] = reference_df.index.strftime('%m-%d')
-        reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
+        filename = os.path.join(self.simulation_path, 'model_quality.pkl')
         
-        # Projections
-        projection_df = self.streamflow_proj.copy()
-        projection_df = projection_df.set_index(self.projection_period)
-        projection_df *= self.watershed_area * 1e6 # m/s > m3/s
+        with open(filename, 'wb+') as f:
+            pickle.dump(model_quality, f, pickle.HIGHEST_PROTOCOL)
         
-        # Individual projections
-        projection_series = []
-        
-        for serie in self.streamflow_proj_series:
-            serie = pd.DataFrame(serie)
-            serie['Q_streamflow'] *= (self.watershed_area * 1e6)
-            serie = serie.set_index(self.projection_period)
-            projection_series.append(serie)
-        
-        return reference_df, projection_df, projection_series
-    
-    
-    def _module(self, reference_df):
-        reference_df['year'] = reference_df.index.year
-        df = reference_df.groupby('year')['Q'].mean()
-        mod = df.mean()
-        mod10 = mod/10
-        return mod, mod10
-    
+        #with open(filename, 'w') as file:
+            #json.dump(model_quality, file)
     
     def streamflow_volume(self):
         """
@@ -615,72 +691,6 @@ class Outputs():
         plt.savefig(filename, dpi=500, format="tiff", pil_kwargs={"compression": "tiff_lzw"}, bbox_inches='tight', pad_inches=0.1)
         plt.show()
                
-    
-    def baseflow(self):
-        
-        df = self.streamflow.copy() #* self.watershed_area * 1e6
-        
-        # Pas de temps (jours) pour les moyennes
-        T_Wind = 10
-        
-        ### Valeur du turning point
-        T_Point_val = 0.9
-        
-        # Calculer la valeur minimale tous les XX jours
-        df['Date'] = pd.to_datetime(df.index, format='%d/%m/%Y')
-        df.reset_index(drop=True, inplace=True)
-        df['Min_XX_days'] = df['Q'].rolling(window=T_Wind, min_periods=1).min()
-        
-        # Trouver les minimums locaux dans les valeurs originales
-        peaks, _ = find_peaks(-df['Q'], distance=5)
-        
-        # Créer une fonction d'interpolation basée sur les points de retournement
-        interpolation_function = interp1d(df['Date'].apply(lambda x: x.timestamp()), df['Q'], kind='linear', fill_value="extrapolate")
-        
-        # Créer une nouvelle colonne pour les valeurs interpolées sur chaque date
-        df['Interpolated_Values'] = interpolation_function(df['Date'].apply(lambda x: x.timestamp()))
-        
-        # Convertir la colonne 'Days_since_reference' en jours numériques
-        df['Days_since_reference'] = (df['Date'] - df['Date'].min()).dt.days
-        df['Days_since_reference'] = df['Days_since_reference'].astype('int')
-        
-        # Remplacer les valeurs manquantes par la différence de jours précédente
-        df['Days_since_reference'] = df['Days_since_reference'].ffill()
-        
-        # Convertir la colonne 'Interpolated_Values' en float64
-        df['Interpolated_Values'] = df['Interpolated_Values'].astype('float64')
-        
-        # Effectuer une interpolation entre les points de 5 jours
-        interpolation_dates = df['Date']
-        interpolation_values = np.interp(np.arange(len(interpolation_dates)), df.index, df['Min_XX_days'])
-        
-        # Ajouter une colonne pour les turning points
-        df['Turning_Point'] = False
-        
-        # Identifier les turning points
-        for i in range(1, len(df)-1):
-            min_value = df['Min_XX_days'][i]
-            prev_min = df['Min_XX_days'][i-1]
-            next_min = df['Min_XX_days'][i+1]
-        
-            if T_Point_val * min_value < prev_min and T_Point_val * min_value < next_min:
-                df.at[i, 'Turning_Point'] = True
-        
-        # Minima 
-        test = df['Q'].iloc[peaks]
-        dates = df[df.index.isin(test.index)].Date
-        test.index = pd.to_datetime(dates)
-        test_complete_index = test.reindex(self.streamflow.index)
-        test_interpolated = test_complete_index.interpolate(method='linear')
-        test_interpolated = test_interpolated[test_interpolated.index.isin(self.projection_period)]
-
-        
-        #self.plot_baseflow(df, T_Wind, interpolation_dates, interpolation_dates,
-         #                  Date_Debut=pd.to_datetime('2011-01-01'), Date_Fin=pd.to_datetime('2021-01-01'))
-        
-        return test_interpolated
-        #return interpolation_values, df['Interpolated_Values'].values
-    
 
     def plot_baseflow(self, df, T_Wind, interpolation_dates, interpolation_values, Date_Debut, Date_Fin):
         
@@ -844,7 +854,7 @@ class Outputs():
         return gdf
 
     
-    def _filter_watershed_similarity(self):
+    def __filter_watershed_similarity(self):
         
         sim = self.watershed_similarity
         sim = sim[sim.index.isin(self.similar_watersheds)]
@@ -1042,3 +1052,64 @@ class Outputs():
             plt.savefig(name+'.tiff', dpi=500, format="tiff", bbox_inches='tight', pad_inches=0.1)
     
         plt.show()
+        
+        
+    def __calculate_baseflow(self):
+       
+       df = self.streamflow.copy() #* self.watershed_area * 1e6
+       
+       # Pas de temps (jours) pour les moyennes
+       T_Wind = 10
+       
+       ### Valeur du turning point
+       T_Point_val = 0.9
+       
+       # Calculer la valeur minimale tous les XX jours
+       df['Date'] = pd.to_datetime(df.index, format='%d/%m/%Y')
+       df.reset_index(drop=True, inplace=True)
+       df['Min_XX_days'] = df['Q'].rolling(window=T_Wind, min_periods=1).min()
+       
+       # Trouver les minimums locaux dans les valeurs originales
+       peaks, _ = find_peaks(-df['Q'], distance=5)
+       
+       # Créer une fonction d'interpolation basée sur les points de retournement
+       interpolation_function = interp1d(df['Date'].apply(lambda x: x.timestamp()), df['Q'], kind='linear', fill_value="extrapolate")
+       
+       # Créer une nouvelle colonne pour les valeurs interpolées sur chaque date
+       df['Interpolated_Values'] = interpolation_function(df['Date'].apply(lambda x: x.timestamp()))
+       
+       # Convertir la colonne 'Days_since_reference' en jours numériques
+       df['Days_since_reference'] = (df['Date'] - df['Date'].min()).dt.days
+       df['Days_since_reference'] = df['Days_since_reference'].astype('int')
+       
+       # Remplacer les valeurs manquantes par la différence de jours précédente
+       df['Days_since_reference'] = df['Days_since_reference'].ffill()
+       
+       # Convertir la colonne 'Interpolated_Values' en float64
+       df['Interpolated_Values'] = df['Interpolated_Values'].astype('float64')
+       
+       # Effectuer une interpolation entre les points de 5 jours
+       interpolation_dates = df['Date']
+       interpolation_values = np.interp(np.arange(len(interpolation_dates)), df.index, df['Min_XX_days'])
+       
+       # Ajouter une colonne pour les turning points
+       df['Turning_Point'] = False
+       
+       # Identifier les turning points
+       for i in range(1, len(df)-1):
+           min_value = df['Min_XX_days'][i]
+           prev_min = df['Min_XX_days'][i-1]
+           next_min = df['Min_XX_days'][i+1]
+       
+           if T_Point_val * min_value < prev_min and T_Point_val * min_value < next_min:
+               df.at[i, 'Turning_Point'] = True
+       
+       # Minima 
+       test = df['Q'].iloc[peaks]
+       dates = df[df.index.isin(test.index)].Date
+       test.index = pd.to_datetime(dates)
+       test_complete_index = test.reindex(self.streamflow.index)
+       test_interpolated = test_complete_index.interpolate(method='linear')
+       test_interpolated = test_interpolated[test_interpolated.index.isin(self.projection_period)]
+       
+       return test_interpolated

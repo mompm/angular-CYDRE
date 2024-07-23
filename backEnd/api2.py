@@ -14,6 +14,7 @@ import os,csv
 import pandas as pd
 from shapely.geometry import mapping
 import libraries.forecast.initialization as INI
+import libraries.forecast.outputs as OUT
 import plotly.graph_objects as go
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
@@ -772,13 +773,17 @@ def getGraph(simulation_id):
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
 
         #Créer le graphe 
-        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
-                            log=True, module=True, baseflow=False, options='viz_plotly')
+        #results = Graph(cydre_app, None, watershed_name, gdf_stations, cydre_app.date,
+         #                   log=True, module=True, baseflow=False, options='viz_plotly')
         
+        results = OUT.Outputs(cydre_app, watershed_name, gdf_stations, cydre_app.date, user_similarity_period,
+                              log=True, module=True, options='viz_plotly')
         app.logger.info('Cydre app and Graph results are initialized and stored')
+        reference_df, projection_df, projection_series, merged_df = results.get_projections_data(module=True)
+        graph_results = results.projections_angular_format(reference_df, projection_series, merged_df)
 
         # Calculer les projections
-        graph_results = results.plot_streamflow_projections(module=True)
+        #graph_results = results.plot_streamflow_projections(module=True)
         # Transformer les résultats en JSON pour les stocker
         json_to_store =json.dumps({"graph":graph_results['graph'],"first_date":graph_results['first_date'],
                                    "last_date":graph_results['last_date'],
@@ -883,12 +888,16 @@ def update_indicator(simulation_id):
         similar_watersheds = json.loads(similar_watersheds)
 
         cydre_app.df_streamflow_forecast, cydre_app.df_storage_forecast = cydre_app.streamflow_forecast(data_path)
+        
+        results = OUT.Outputs(cydre_app, watershed_name, gdf_stations, cydre_app.date, user_similarity_period,
+                              log=True, module=True, options='viz_plotly')
+        new_projections = results.new_projections(data.get('value'))
 
-        results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
-                            log=True, module=True, baseflow=False, options='viz_plotly')
+        #results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
+         #                   log=True, module=True, baseflow=False, options='viz_plotly')
         
         #Calculer les nouvelles projections
-        new_projections = results.new_projections(data.get('value'))
+        #new_projections = results.new_projections(data.get('value'))
         new_indicator = {"type": data['type'], "value": data['value'], "color" : data.get("color"),"results":new_projections}
 
         if not simulation.Indicators:
@@ -1136,292 +1145,6 @@ def getBetaSimulations(index):
     except Exception as e:
         return jsonify({"Error": str(e)}), 500
 
-# Reprise de la classe Outputs (ancienne version) permettant de générer le graphe
-class Graph():
-    def __init__(self,cydre_app,watershed_name, stations, selected_date,
-                    log=True, module=True, baseflow=False, options='viz_plotly'):
-        self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
-        self.station_name = cydre_app.UserConfiguration.user_watershed_name
-        self.streamflow_proj = cydre_app.df_streamflow_forecast
-        self.watershed_name = watershed_name
-        self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
-        self.streamflow = cydre_app.UserConfiguration.user_streamflow
-        self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
-        self.projection_period = cydre_app.Forecast.forecast_period
-        self.station_forecast = cydre_app.df_station_forecast
-        self.simulation_date = cydre_app.date
-
-    def _get_streamflow(self):
-        
-        # Observation
-        reference_df = self.streamflow.copy()
-        reference_df['daily'] = reference_df.index.strftime('%m-%d')
-        reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
-        
-        # Projections
-        projection_df = self.streamflow_proj.copy()
-        projection_df = projection_df.set_index(self.projection_period)
-        projection_df *= self.watershed_area * 1e6 # m/s > m3/s
-        
-        # Individual projections
-        projection_series = []
-        
-        for serie in self.streamflow_proj_series:
-            serie = pd.DataFrame(serie)
-            serie['Q_streamflow'] *= (self.watershed_area * 1e6)
-            serie = serie.set_index(self.projection_period)
-            projection_series.append(serie)
-        
-        return reference_df, projection_df, projection_series
-    
-    def new_projections(self, m10):
-        reference_df, projection_df, projection_series = self._get_streamflow()
-        # Update the module calculation
-        self.mod10 = m10
-        
-        # Proportion of past events below the alert threshold
-        n_events = len(projection_series)
-        n_events_alert = 0
-        
-        for events in range(len(projection_series)):
-            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
-            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
-            if projection_series[events]['alert'].any():
-                n_events_alert += 1
-            else:
-                n_events_alert += 0
-        
-        self.prop_alert_all_series = n_events_alert / n_events
-
-        # Initialize volumes
-        self.volume10 = 0
-        self.volume50 = 0
-        self.volume90 = 0
-        
-
-        # Ensure proper calculation and error handling for each volume
-        try:
-            alert_df = projection_df[projection_df['Q10'] <= self.mod10]
-            q_values = alert_df['Q10'] * 86400
-            self.volume10 = ((self.mod10 * 86400) - q_values).sum()
-        except Exception as e:
-            print(f"Error in volume10 calculation: {e}")
-
-        try:
-            alert_df = projection_df[projection_df['Q50'] <= self.mod10]
-            q_values = alert_df['Q50'] * 86400
-            self.volume50 = ((self.mod10 * 86400) - q_values).sum()
-        except Exception as e:
-            print(f"Error in volume50 calculation: {e}")
-
-        try:
-            alert_df = projection_df[projection_df['Q90'] <= self.mod10]
-            q_values = alert_df['Q90'] * 86400
-            self.volume90 = ((self.mod10 * 86400) - q_values).sum()
-        except Exception as e:
-            print(f"Error in volume90 calculation: {e}")
-
-        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
-        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
-
-        try:
-            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
-            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q10 = None
-            self.ndays_before_alert_Q10 = 0
-        
-        try:
-            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
-            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q50 = None
-            self.ndays_before_alert_Q50 = 0
-            
-        try:
-            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
-            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q90 = None
-            self.ndays_before_alert_Q90 = 0
-        # Number of cumulated days below the alert threshold
-        self.ndays_below_alert = np.sum(mod10_intersect)
-
-        results = {
-            'volume50': float(self.volume50),
-            'volume10': float(self.volume10),
-            'volume90': float(self.volume90),
-            'prop_alert_all_series': float(self.prop_alert_all_series),
-            'ndays_before_alert':{
-                'Q10': float(self.ndays_before_alert_Q10),
-                'Q50': float(self.ndays_before_alert_Q50),
-                'Q90': float(self.ndays_before_alert_Q90),
-            },
-            'ndays_below_alert': {
-                'Q10': float(self.ndays_below_alert['Q10']),
-                'Q50': float(self.ndays_below_alert['Q50']),
-                'Q90': float(self.ndays_below_alert['Q90']),
-            },
-        }
-        return results
-
-    
-    def plot_streamflow_projections(self, log=True, module=False, baseflow=False, options='viz_plotly'):
-        # -------------- CYDRE RESULTS --------------
-
-        # Extract observation and projection timeseries data
-        reference_df, projection_df, projection_series = self._get_streamflow()
-        
-        # Adding stations projections
-        self.station_forecast.index = projection_df.index
-        projection_df['Q50_station'] = self.station_forecast['Q50']
-        projection_df['Q50_station'] *= (self.watershed_area * 1e6)
-        projection_df['Q10_station'] = self.station_forecast['Q10']
-        projection_df['Q10_station'] *= (self.watershed_area * 1e6)
-        projection_df['Q90_station'] = self.station_forecast['Q90']
-        projection_df['Q90_station'] *= (self.watershed_area * 1e6)
-        
-        # -------------- OPERATIONAL INDICATORS --------------
-        
-        # Calculate the module (1/10 x mean streamflow)
-        if module:
-            self.mod, self.mod10 = self._module(reference_df)
-        
-        
-        # Projected streamflow (last day value and evolution)
-        self.proj_values = projection_df.iloc[-1]
-        self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
-        
-        # Number of days before projected streamflow intersect the module
-        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
-        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
-        
-        try:
-            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
-            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q10 = None
-            self.ndays_before_alert_Q10 = 0
-        
-        try:
-            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
-            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q50 = None
-            self.ndays_before_alert_Q50 = 0
-            
-        try:
-            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
-            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
-        except:
-            mod10_first_occurence_Q90 = None
-            self.ndays_before_alert_Q90 = 0
-        
-        # Number of cumulated days below the alert threshold
-        self.ndays_below_alert = np.sum(mod10_intersect)
-        
-        # Proportion of past events below the alert threshold
-        n_events = len(projection_series)
-        n_events_alert = 0
-        
-        for events in range(len(projection_series)):
-            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
-            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
-            if projection_series[events]['alert'].any():
-                n_events_alert += 1
-            else:
-                n_events_alert += 0
-        
-        self.prop_alert_all_series = n_events_alert / n_events
-        
-        # Volume to supply low flows
-        alert_df = projection_df[mod10_alert['Q10']]
-        q_values = alert_df['Q10'] * 86400
-        self.volume10 = ((self.mod10*86400) - q_values).sum()
-        
-        alert_df = projection_df[mod10_alert['Q50']]
-        q_values = alert_df['Q50'] * 86400
-        self.volume50 = ((self.mod10*86400) - q_values).sum()
-        
-        alert_df = projection_df[mod10_alert['Q90']]
-        q_values = alert_df['Q90'] * 86400
-        self.volume90 = ((self.mod10*86400) - q_values).sum()
-        
-        
-
-        # Calculate baseflow
-        if baseflow:
-            self.Q_baseflow = self.baseflow()
-            reference_df['baseflow'] = self.Q_baseflow * self.watershed_area * 1e6
-            
-        # Merge observation and projection timeseries data
-        merged_df = pd.merge(reference_df, projection_df, left_on=reference_df.index,
-                             right_on=projection_df.index, how='right')
-        merged_df = merged_df.set_index(merged_df['key_0'])
-
-         #On ne stocke pas les données en x qui sont des dates générables dans le front
-        data =[
-            go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
-            go.Scatter(x=None, y=merged_df['Q50'].tolist(), mode='lines', line=dict(color='blue', width=1.5, dash='dot'), name='Q50').to_plotly_json(),
-            go.Scatter(x=None, y=merged_df['Q10'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q10").to_plotly_json(),
-            go.Scatter(x=None, y=reference_df['Q'].tolist(), mode='lines', line=dict(color='black', width=1.5), name="observations").to_plotly_json()
-        ]
-
-
-        # Convert each projection series DataFrame to a Plotly trace
-        for idx, serie in enumerate(projection_series):
-            serie_trace = go.Scatter(
-                x=None, #On ne stocke pas les données en x qui sont des dates générables dans le front
-                y=serie['Q_streamflow'].tolist(),
-                mode='lines',
-                line=dict(color='rgba(0, 0, 255, 0.2)', width=1),  # Semi-transparent blue lines
-                name=f'Projection {idx + 1}'
-            ).to_plotly_json()
-            data.append(serie_trace)
-
-        # #convert Timestamp data for json serialisation
-        # for entry in data:
-        #     entry['x'] = [ts.isoformat() if not isinstance(ts, str) else ts for ts in entry['x']]
-
-        data = {
-        'graph': data,
-        'first_observation_date': reference_df.index.tolist()[0].isoformat(),#la première date d'observations
-        'last_observation_date': reference_df.index.tolist()[len(reference_df.index.tolist())-1].isoformat(),#la dernière date d'observations
-        'first_prediction_date': merged_df.index.tolist()[0].isoformat(),#la première date de perdicitions
-        'last_prediction_date': merged_df.index.tolist()[len(merged_df.index.tolist())-1].isoformat(),#la dernière date de predictions
-        'proj_values': {
-            'Q50': float(self.proj_values.Q50),
-            'Q10': float(self.proj_values.Q10),
-            'Q90': float(self.proj_values.Q90)
-        },
-        'ndays_before_alert':{
-            'Q50': float(self.ndays_before_alert_Q50),
-            'Q90': float(self.ndays_before_alert_Q90),
-            'Q10': float(self.ndays_before_alert_Q10)
-        },
-        'ndays_below_alert': {
-            'Q50': float(self.ndays_below_alert['Q50']),
-            'Q90': float(self.ndays_below_alert['Q90']),
-            'Q10': float(self.ndays_below_alert['Q10'])
-        },
-        'prop_alert_all_series': float(self.prop_alert_all_series),
-        'volume50': float(self.volume50),
-        'volume10': float(self.volume10),
-        'volume90': float(self.volume90),
-        'last_date': self.projection_period[-1].strftime("%d/%m/%Y"),
-        'first_date': self.simulation_date.strftime('%d/%m/%Y'),
-        # 'first_date': self.simulation_date.strftime('%Y-%m-%d'),
-        'm10':self.mod10
-        }
-
-        return data
-
-    def _module(self, reference_df):
-        reference_df['year'] = reference_df.index.year
-        df = reference_df.groupby('year')['Q'].mean()
-        mod = df.mean()
-        mod10 = mod/10
-        return mod, mod10
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
