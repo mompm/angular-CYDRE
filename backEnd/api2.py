@@ -194,28 +194,6 @@ def delete_default_simulation():
         return jsonify({"Error": str(e)}), 500
 
 
-@app.route('/osur/getoldBSS', methods=['GET'])
-@cross_origin()
-def get_oldBSS():
-   # We don't use this one yet
-    request_id = flask.request.args.get('ID')
-
-    json_list = []
-
-    with open("data/piezometry/stations.csv", 'r') as csv_file:
-        # Attention faire attention au delimiter (sinon y a un erreur)
-        csv_reader = csv.DictReader(csv_file, delimiter=';')
-        for row in csv_reader:
-            json_object = {
-                'X_WGS84': row['X_WGS84'],
-                'Y_WGS84': row['Y_WGS84'],
-                'Identifiant_BSS': row['Identifiant BSS'],
-                'Ancien_code_national_BSS': row['Ancien code national BSS']
-            }
-            json_list.append(json_object)
-
-    return json_list
-
 # gdf_stations conversion in a json format
 @app.route('/osur/GetGDFStations', methods=['GET'])
 @cross_origin()
