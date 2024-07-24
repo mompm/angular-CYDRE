@@ -59,102 +59,13 @@ private baseUrl = '';
 		return lastValueFrom(this.http.get<Array<dataPrecipitation>>(url));
 	}
 
-	getRunCydre(params: any): Promise<any> {
-		return this.http.post(`${this.baseUrl}/api/run_cydre`, params).toPromise()
-		  .then(response => {
-			console.log('Running Cydre app...');
-			return response;
-		  });
-	  }
-	
-	  getGraph(taskId: string): Promise<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/getGraph/` + taskId).toPromise()
-		  .then(response => {
-			console.log('Generating graph...');
-			return response;
-		  });
-	  }
-	
-	  get_indicators_value(simulation_id: string): Promise<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/` + simulation_id).toPromise()
-		  .then(response => {
-			console.log('Fetching M10 values...');
-			return response;
-		  });
-	  }
-	
-	  removeIndicator(simulationId: string, indicatorType: string): Promise<any> {
-		const url = `${this.baseUrl}/api/simulateur/remove_indicator/${simulationId}`;
-		return this.http.post(url, { type: indicatorType }).toPromise();
-	  }
-	
-	  updateIndicatorsValue(simulation_id: string, indicators: any[]): Promise<any> {
-		const updatePromises = indicators.map(indicator => {
-		  console.log("Updating indicator:", indicator.type);
-		  return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator).toPromise();
-		});
-	
-		return Promise.all(updatePromises)
-		  .then(() => {
-			console.log('All indicators updated');
-			return this.get_indicators_value(simulation_id);
-		  });
-	  }
-	
-	  updateM10Value(params: any): Promise<any> {
-		return this.http.post(`${this.baseUrl}/api/update_indicator`, params).toPromise()
-		  .then(response => {
-			console.log('Fetching M10 values...');
-			return response;
-		  });
-	  }
-	
-	  getCorrMatrix(taskId: string): Promise<any> {
-		return this.http.get(`${this.baseUrl}/api/simulateur/getCorrMatrix/` + taskId).toPromise()
-		  .then(response => {
-			console.log('Fetching correlation matrix...');
-			return response;
-		  });
-	  }
-	
-	  getResults(taskId: string): Promise<any> {
-		return this.http.get(`${this.baseUrl}/api/results/` + taskId).toPromise()
-		  .then(response => {
-			console.log('Fetching results...');
-			return response;
-		  });
-	  }
-	
-	  runSpatialSimilarity(simulation_id: string): Promise<any> {
-		return this.http.post(`${this.baseUrl}/api/run_spatial_similarity/${simulation_id}`, { simulation_id }).toPromise()
-		  .then(response => {
-			console.log('Running spatial similarity');
-			return response;
-		  });
-	  }
-	
-	  runTimeseriesSimilarity(simulation_id: string): Promise<any> {
-		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity/${simulation_id}`, { simulation_id }).toPromise()
-		  .then(response => {
-			console.log('Running timeseries similarity');
-			return response;
-		  });
-	  }
-	
-	  runScenarios(simulation_id: string): Promise<any> {
-		return this.http.post(`${this.baseUrl}/api/select_scenarios/${simulation_id}`, { simulation_id }).toPromise()
-		  .then(response => {
-			console.log('Running scenarios');
-			return response;
-		  });
-	  }
-	
-	  async runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Promise<any> {
+	async runSimulation(params: any, progressCallback: (message: string, progress: number) => void): Promise<any> {
 		let simulation_id: string;
 		try {
 		  progressCallback('Préparation de la simulation...', 0);
-		  const runCydreResponse = await this.getRunCydre(params);
-		  simulation_id = runCydreResponse.SimulationID;
+		  
+		  const CreateSimulationResponse = await this.CreateSimulation(params);
+		  simulation_id = CreateSimulationResponse.SimulationID;
 		  progressCallback('Récupération des conditions de la prévision', 10);
 		  console.log('Simulation ID:', simulation_id);
 	
@@ -170,13 +81,13 @@ private baseUrl = '';
 		  progressCallback('Sélection des événements similaires : OK', 60);
 		  console.log('Scenarios exécutés');
 	
-		  await this.getGraph(simulation_id);
+		  await this.getForecastResults(simulation_id);
 		  progressCallback('Préparation des résultats', 75);
 		  console.log('Graphe généré');
 	
-		  await this.getCorrMatrix(simulation_id);
-		  // progressCallback('Matrice de corrélation récupérée.', 85);
-		  console.log('Matrice de corrélation récupérée');
+		//   await this.getCorrMatrix(simulation_id);
+		//   // progressCallback('Matrice de corrélation récupérée.', 85);
+		//   console.log('Matrice de corrélation récupérée');
 	
 		  const results = await this.getResults(simulation_id);
 		  progressCallback('Fin de la prévision !', 100);
@@ -191,6 +102,96 @@ private baseUrl = '';
 		  console.log('Chaîne d\'opérations terminée');
 		}
 	  }
+
+	CreateSimulation(params: any): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/create_simulation`, params).toPromise()
+		  .then(response => {
+			console.log('Create simulation in the database...');
+			return response;
+		  });
+	  }
+	
+	runSpatialSimilarity(simulation_id: string): Promise<any> {
+	return this.http.post(`${this.baseUrl}/api/run_spatial_similarity/${simulation_id}`, { simulation_id }).toPromise()
+		.then(response => {
+		console.log('Running spatial similarity');
+		return response;
+		});
+	}
+
+	runTimeseriesSimilarity(simulation_id: string): Promise<any> {
+		return this.http.post(`${this.baseUrl}/api/run_timeseries_similarity/${simulation_id}`, { simulation_id }).toPromise()
+		  .then(response => {
+			console.log('Running timeseries similarity');
+			return response;
+		  });
+	  }
+	
+	runScenarios(simulation_id: string): Promise<any> {
+	return this.http.post(`${this.baseUrl}/api/select_scenarios/${simulation_id}`, { simulation_id }).toPromise()
+		.then(response => {
+		console.log('Running scenarios');
+		return response;
+		});
+	}
+
+	getForecastResults(taskId: string): Promise<any> {
+	return this.http.get(`${this.baseUrl}/api/simulateur/getForecastResults/` + taskId).toPromise()
+		.then(response => {
+		console.log('Generating graph...');
+		return response;
+		});
+	}
+
+	get_indicators_value(simulation_id: string): Promise<any> {
+	return this.http.get(`${this.baseUrl}/api/simulateur/get_indicators_value/` + simulation_id).toPromise()
+		.then(response => {
+		console.log('Fetching M10 values...');
+		return response;
+		});
+	}
+	
+	removeIndicator(simulationId: string, indicatorType: string): Promise<any> {
+	const url = `${this.baseUrl}/api/simulateur/remove_indicator/${simulationId}`;
+	return this.http.post(url, { type: indicatorType }).toPromise();
+	}
+	
+	updateIndicatorsValue(simulation_id: string, indicators: any[]): Promise<any> {
+	const updatePromises = indicators.map(indicator => {
+		console.log("Updating indicator:", indicator.type);
+		return this.http.post(`${this.baseUrl}/api/simulateur/update_indicator/${simulation_id}`, indicator).toPromise();
+	});
+	
+	return Promise.all(updatePromises)
+		.then(() => {
+		console.log('All indicators updated');
+		return this.get_indicators_value(simulation_id);
+		});
+	}
+	
+	updateM10Value(params: any): Promise<any> {
+	return this.http.post(`${this.baseUrl}/api/update_indicator`, params).toPromise()
+		.then(response => {
+		console.log('Fetching M10 values...');
+		return response;
+		});
+	}
+	
+	getCorrMatrix(taskId: string): Promise<any> {
+	return this.http.get(`${this.baseUrl}/api/simulateur/getCorrMatrix/` + taskId).toPromise()
+		.then(response => {
+		console.log('Fetching correlation matrix...');
+		return response;
+		});
+	}
+
+	getResults(taskId: string): Promise<any> {
+	return this.http.get(`${this.baseUrl}/api/results/` + taskId).toPromise()
+		.then(response => {
+		console.log('Fetching results...');
+		return response;
+		});
+	}
 	  
 	getUserSimulations(): Observable<any[]> {
 		return this.http.get<any[]>(`${this.baseUrl}/api/simulations`,{ withCredentials: true });

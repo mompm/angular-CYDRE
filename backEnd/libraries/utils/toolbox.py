@@ -9,6 +9,8 @@ import pickle
 import pyproj
 import csv
 from flask import jsonify
+import json
+from collections import OrderedDict
 
 
 def create_folder(path):
@@ -55,3 +57,22 @@ def read_csv_and_generate_response(csv_file_path, id_upper, gdf_stations, keys):
         return jsonify(json_list), 200
     else:
         return jsonify({"filename": os.path.basename(csv_file_path)}), 404
+    
+
+# Fonction qui extrait récursivement les noms des paramètres d'un json
+def extract_param_names(params, prefix=""):
+    param_names = []
+    for key, value in params.items():
+        current_path = f"{prefix}.{key}" if prefix else key
+        if isinstance(value, dict):
+            param_names.extend(extract_param_names(value, current_path))
+        else:
+            param_names.append(current_path)
+    return param_names
+
+# Classe permettant de ne pas organiser les paramètres dans l'ordre alphabétique mais dans l'ordre du fichier xml
+class OrderedDictEncoder(json.JSONEncoder):
+    def encode(self, obj):
+        if isinstance(obj, OrderedDict):
+            return json.dumps(obj, default=self.default, sort_keys=False, indent=4)
+        return super().encode(obj)
