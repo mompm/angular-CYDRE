@@ -710,21 +710,26 @@ def getGraph(simulation_id):
                                    'first_prediction_date':graph_results['first_prediction_date'],
                                    'last_prediction_date':graph_results['last_prediction_date']})
         # Mise à jour de chaque champ        
-        update_simulation(simulation_id, 'Results', '$.data',json_to_store)
+        update_simulation(simulation_id, 'Results', text("'$.data'"),json_to_store)
 
         # Enregistrer les résultats liés au 1/10 du module dans la colonne Indicators
-        mod10_string = {"type":"1/10 du module","value":graph_results['m10'], "color" : "#Ff0000", "results":{
-        'proj_values': graph_results['proj_values'],
-        'ndays_before_alert':graph_results['ndays_before_alert'],
-        'ndays_below_alert': graph_results['ndays_below_alert'],
-        'prop_alert_all_series': graph_results["prop_alert_all_series"],
-        'volume50': graph_results['volume50'],
-        'volume10': graph_results['volume10'],
-        'volume90': graph_results['volume90'],
-        }}
-
+        mod10_string = {"type":"1/10 du module",
+                        "value":graph_results['m10'], 
+                        "color" : "#Ff0000",
+                        "results":{
+                            'proj_values': graph_results['proj_values'],
+                            'ndays_before_alert':graph_results['ndays_before_alert'],
+                            'ndays_below_alert': graph_results['ndays_below_alert'],
+                            'prop_alert_all_series': graph_results["prop_alert_all_series"],
+                            'volume50': graph_results['volume50'],
+                            'volume10': graph_results['volume10'],
+                            'volume90': graph_results['volume90'],
+                            }
+                        }
+        
         # Trouver l'indicateur existant ou ajouter un nouvel indicateur
         found = False
+        
         if simulation.Indicators:
             for indicator in simulation.Indicators:
                 if indicator['type'] == "1/10 du module":
@@ -736,7 +741,12 @@ def getGraph(simulation_id):
             if not simulation.Indicators:
                 simulation.Indicators = []
             simulation.Indicators.append(mod10_string)
+                
+        # Ce commit est essentiel pour que mod10_string soit pris en compte dans la base de données.
+        # Pourquoi cet ajout ne se fait pas comme les autres mises à jour de la simulation ?
+        db.session.commit()
 
+        
         return jsonify({'success':'Graph has been returned and stored'}), 200
 
     except Exception as e:
@@ -800,11 +810,6 @@ def update_indicator(simulation_id):
                               log=True, module=True, options='viz_plotly')
         new_projections = results.new_projections(data.get('value'))
 
-        #results = Graph(cydre_app, watershed_name, gdf_stations, cydre_app.date,
-         #                   log=True, module=True, baseflow=False, options='viz_plotly')
-        
-        #Calculer les nouvelles projections
-        #new_projections = results.new_projections(data.get('value'))
         new_indicator = {"type": data['type'], "value": data['value'], "color" : data.get("color"),"results":new_projections}
 
         if not simulation.Indicators:

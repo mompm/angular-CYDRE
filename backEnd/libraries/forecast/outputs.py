@@ -34,7 +34,7 @@ class Outputs():
     """
     
     def __init__(self, cydre_app, watershed_name, stations, selected_date, similarity_period, 
-                 log=True, module=False, options='viz_matplotlib'):
+                 log=True, module=True, options='viz_matplotlib'):
         
         # Cydre simulation outputs
         self.version = cydre_app.version
@@ -372,7 +372,7 @@ class Outputs():
      
         
     def projections_angular_format(self, reference_df, projection_series, merged_df):
-       
+                
         #On ne stocke pas les données en x qui sont des dates générables dans le front
         data =[
             go.Scatter(x=None, y=merged_df['Q90'].tolist(), mode='lines', line=dict(color='#407fbd', width=1), name="Q90").to_plotly_json(),
