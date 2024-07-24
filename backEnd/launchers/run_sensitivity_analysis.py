@@ -45,6 +45,7 @@ filename = f"_{current_date}"
 output_path = os.path.join(app_root, 'outputs', 'projections', filename)
 if not os.path.exists(output_path):
     os.makedirs(output_path)
+#NICOLAS: ces deux lignes servent-elles encore? à supprimer? 
 xml_path = os.path.join(app_root, 'libraries', 'forecast', 'cydre_params.xml')
 shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 
@@ -106,7 +107,8 @@ for params in param_combinations:
         toolbox.save_object(results, os.path.join(output_path, 
                                                   cydre_app.UserConfiguration.user_watershed_id, params['date'].strftime('%Y-%m-%d')), f'results_{watershed_name}')
         
-        # Model evaluation
+        #NICOLAS: à déplacer dans senstivity analysis
+        # Model evaluation: observed to projected successively taken to targets (Q10,Q50,Q90,means)
         model_quality = {'streamflow': {}, 'volume': {}, 'storage': {}}
         if baseflow_option:
             model_quality['baseflow'] = {}
@@ -115,6 +117,7 @@ for params in param_combinations:
         
         for target in targets:
             
+            #NICOLAS: factorisation possible
             # Daily streamflow
             obs = results.user_streamflow_forecast['Q'].values
             #sim = df_streamflow_forecast[target].values

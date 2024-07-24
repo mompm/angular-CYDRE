@@ -4,7 +4,9 @@ Created on Wed Jun  7 17:30:16 2023
 
 @author: Nicolas Cornette
 
-Launchers for updating time series.
+Launchers for updating time series, i.e. csv of chronicles (piezo, flow, climate)
+Should be launched automatically on server
+Takes at least one hour
 """
 
 # Python modules

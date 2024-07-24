@@ -78,7 +78,7 @@ if isinstance(new_geometry, MultiPolygon):
 new_geometry.crs = 'EPSG:2154'    
 new_geometry = new_geometry.to_crs(epsg=4326)
     
-# Prepare the geodataframe concetenation
+# Prepare the geodataframe concatenation
 new_data = {
     'name': station_info.station_name.values[0],
     'geometry_a': BV.geographic.area,
