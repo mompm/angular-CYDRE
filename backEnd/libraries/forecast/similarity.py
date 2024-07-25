@@ -15,9 +15,13 @@ from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 
+import warnings
+warnings.filterwarnings("ignore", message="KMeans is known to have a memory leak on Windows with MKL")
+
 # Cydre modules
 from libraries.forecast import indicator as IN
 from libraries.forecast import time_management as TI
+
 
 
 class Similarity:

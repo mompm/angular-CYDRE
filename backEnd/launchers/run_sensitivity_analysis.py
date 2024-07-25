@@ -21,31 +21,31 @@ import libraries.forecast.initialization as IN
 import libraries.forecast.outputs as OU
 import libraries.forecast.sensitivity_analysis as SA
 import libraries.forecast.evaluation as EV
-import utils.toolbox as toolbox
+import libraries.utils.toolbox as toolbox
+from libraries.load_data import define_paths, load_data
 
 start = time.time()
 
 
 #%% PREPARATION
-
+#sys.exit()
 # Load the CSV file containing information about hydrological stations,
 # including national identifier, river name and coordinates.
-data_path = os.path.join(app_root, 'data')
-stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
+(data_path, _, _, _, hydraulic_path, _) = define_paths(app_root)
+gdf_stations, _, _ = load_data(app_root)
 
 # Initialize Cydre application, loading input parameters, datasets, etc.
-init = IN.Initialization(app_root)
+init = IN.Initialization(app_root, gdf_stations)
 cydre_app = init.cydre_initialization()
 
 # Create output path
-#ndays = cydre_app.Similarity.params.getgroup("specific_discharge").getgroup("Time").getparam("ndays_before_forecast").getvalue()
 current_date = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
-#filename = f"_{current_date}_ndays{ndays}"
 filename = f"_{current_date}"
-output_path = os.path.join(app_root, 'outputs', 'projections', filename)
+output_path = os.path.join(app_root, 'outputs', 'projections', 'sensitivity_analysis', filename)
 if not os.path.exists(output_path):
     os.makedirs(output_path)
-#NICOLAS: ces deux lignes servent-elles encore? à supprimer? 
+    
+# Copie du fichier de paramètres vers le répertoire de sortie pour conserver une trace
 xml_path = os.path.join(app_root, 'libraries', 'forecast', 'cydre_params.xml')
 shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 
@@ -64,7 +64,6 @@ param_names = ['user_watershed_id', 'date']
 param_ranges = [['J0626610', 'J0014010', 'J2404010', 'J3834010', 'J7513010', 'J1524010'], 
                 pd.date_range('1980-05-01', '2024-05-01', freq='AS-MAY').tolist()]
 num_values = [1, 1]
-
 
 # Get parameter path
 param_paths = init.get_parameters_path(param_names)
@@ -90,29 +89,29 @@ for params in param_combinations:
             newvalue = params[param]
             exists1 = init.params.find_and_replace_param(path,newvalue)
         
-        # Create cydre application with updated parameters
-        cydre_app = init.create_cydre_app()
-        watershed_name = stations[stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
-        
-        # Run the Cydre application
-        cydre_app.run_spatial_similarity(spatial=True)
-        cydre_app.run_timeseries_similarity()
-        cydre_app.select_scenarios(spatial=True)
-        df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast()
+        # Create cydre application with updated parameters and run main modules
+        cydre_app = init.create_cydre_app()        
+        cydre_app.run_spatial_similarity(hydraulic_path)
+        cydre_app.run_timeseries_similarity(data_path, cydre_app.Similarity.similar_watersheds)
+        cydre_app.select_scenarios(cydre_app.Similarity.correlation_matrix)
+        df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast(data_path)
         
         # VISUALIZATION AND RESULTS STORAGE
-        baseflow_option = False
-        results = OU.Outputs(cydre_app, output_path, watershed_name, stations, 
-                             selected_date=str(params['date']).split(' ')[0], log=True, module=True, baseflow=baseflow_option)
+        watershed_name = gdf_stations[gdf_stations['ID'] == cydre_app.UserConfiguration.user_watershed_id].name.values[0]
+
+        results = OU.Outputs(cydre_app, watershed_name, gdf_stations, str(params['date']).split(' ')[0],
+                             cydre_app.Similarity.user_similarity_period, log=True, module=True, options='viz_plotly')
+        
+        results.store_results(output_path, log=True, fig_format='html')
+        results.plot_streamflow_projections(log=True, module=True, options='viz_plotly')
+        results.streamflow_volume()
+        
         toolbox.save_object(results, os.path.join(output_path, 
                                                   cydre_app.UserConfiguration.user_watershed_id, params['date'].strftime('%Y-%m-%d')), f'results_{watershed_name}')
         
         #NICOLAS: à déplacer dans senstivity analysis
         # Model evaluation: observed to projected successively taken to targets (Q10,Q50,Q90,means)
         model_quality = {'streamflow': {}, 'volume': {}, 'storage': {}}
-        if baseflow_option:
-            model_quality['baseflow'] = {}
-        
         targets = ['Q10', 'Q50', 'Q90', 'Qmean']
         
         for target in targets:
@@ -132,18 +131,11 @@ for params in param_combinations:
             model_quality['volume'][target] = Metrics.model_performance()
             
             # Storage variations
-            obs = results.storage_user['Q'].values
+            obs = results.user_storage_forecast['Q'].values
             sim = results.storage_proj[target].values
             Metrics = EV.Evaluation(sim, obs)
             model_quality['storage'][target] = Metrics.model_performance()
-            
-            # Baseflow
-            if baseflow_option:
-                obs = results.Q_baseflow.values
-                sim = df_streamflow_forecast[target].values
-                Metrics = EV.Evaluation(sim, obs)
-                model_quality['baseflow'][target] = Metrics.model_performance()
-        
+                    
         # Dictionnary to dataframe
         for variable in model_quality.keys():
             dfs = [model_quality[variable][key] for key in model_quality[variable].keys()]
@@ -153,7 +145,6 @@ for params in param_combinations:
         results.save_performance(model_quality)
         
     except:
-        print(watershed_name)
         print(params['date'].strftime('%Y-%m-%d'))
         print(f'{count}/{len(param_combinations)} failed')
         pass

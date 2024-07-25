@@ -9,9 +9,7 @@ Created on Thu Jun 22 14:50:29 2023
 import os
 import pickle
 import numpy as np
-import json
 import matplotlib as mpl 
-import matplotlib.dates as mdates
 from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -19,18 +17,26 @@ import geopandas as gpd
 import plotly.express as px
 import plotly.offline as pyo
 import plotly.graph_objects as go
-from shapely.geometry import MultiPolygon, Polygon
+from shapely.geometry import MultiPolygon
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 
-# Cydre modules
-import libraries.forecast.evaluation as EV
 
 
 class Outputs():
     
     """
     Class used to manage cydre results and do some plots.
+    
+    Attributes
+    ----------
+    
+    Methods (public)
+    ----------------
+    
+    Methods (private)
+    -----------------
+        
     """
     
     def __init__(self, cydre_app, watershed_name, stations, selected_date, similarity_period, 
@@ -67,6 +73,23 @@ class Outputs():
     
     
     def store_results(self, output_path, log=True, fig_format="html"):
+        """
+        
+
+        Parameters
+        ----------
+        output_path : TYPE
+            DESCRIPTION.
+        log : TYPE, optional
+            DESCRIPTION. The default is True.
+        fig_format : TYPE, optional
+            DESCRIPTION. The default is "html".
+
+        Returns
+        -------
+        None.
+
+        """
         
         self.output_path = output_path
         self.__manage_outputs_path(log, fig_format)
@@ -75,6 +98,21 @@ class Outputs():
 
         
     def __manage_outputs_path(self, log, fig_format):
+        """
+        
+
+        Parameters
+        ----------
+        log : TYPE
+            DESCRIPTION.
+        fig_format : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         
         # Watershed folder for storing outputs as plots
         self.__watershed_path = os.path.join(self.output_path, self.watershed_id)
@@ -87,13 +125,13 @@ class Outputs():
         
         # Watershed folder for storing outputs as plots
         if fig_format=='tiff' and log==True:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{str(self.simulation_date.date())}.tiff")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.selected_date}.tiff")
         elif fig_format=='tiff' and log==False:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{str(self.simulation_date.date())}.tiff")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.selected_date}.tiff")
         elif fig_format=='html' and log==True:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{str(self.simulation_date.date())}.html")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.selected_date}.html")
         elif fig_format=='html' and log==False:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{str(self.simulation_date.date())}.html")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.selected_date}.html")
         
         print(self.streamflow_fig_path)
     
@@ -111,6 +149,26 @@ class Outputs():
     
     
     def get_projections_data(self, module):
+        """
+        
+
+        Parameters
+        ----------
+        module : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        reference_df : TYPE
+            DESCRIPTION.
+        projection_df : TYPE
+            DESCRIPTION.
+        projection_series : TYPE
+            DESCRIPTION.
+        merged_df : TYPE
+            DESCRIPTION.
+
+        """
         
         # Extract observation and projection timeseries data
         reference_df, projection_df, projection_series = self.__get_streamflow_series()
@@ -129,6 +187,19 @@ class Outputs():
     
    
     def __get_streamflow_series(self):     
+        """
+        
+
+        Returns
+        -------
+        reference_df : TYPE
+            DESCRIPTION.
+        projection_df : TYPE
+            DESCRIPTION.
+        projection_series : TYPE
+            DESCRIPTION.
+
+        """
    
         # Observation
         reference_df = self.streamflow.copy()
@@ -153,6 +224,22 @@ class Outputs():
     
     
     def __calculate_module(self, reference_df):
+        """
+        
+
+        Parameters
+        ----------
+        reference_df : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        mod : TYPE
+            DESCRIPTION.
+        mod10 : TYPE
+            DESCRIPTION.
+
+        """
         reference_df['year'] = reference_df.index.year
         df = reference_df.groupby('year')['Q'].mean()
         mod = df.mean()
@@ -161,7 +248,23 @@ class Outputs():
     
     
     def __calculate_indicators(self, reference_df, projection_df, projection_series):
-       
+       """
+        
+
+        Parameters
+        ----------
+        reference_df : TYPE
+            DESCRIPTION.
+        projection_df : TYPE
+            DESCRIPTION.
+        projection_series : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
        # Projected streamflow (last day value and evolution)
        self.proj_values = projection_df.iloc[-1]
        self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
@@ -223,6 +326,24 @@ class Outputs():
     
     
     def plot_streamflow_projections(self, log=True, module=False, options='viz_matplotlib'):
+        """
+        
+
+        Parameters
+        ----------
+        log : TYPE, optional
+            DESCRIPTION. The default is True.
+        module : TYPE, optional
+            DESCRIPTION. The default is False.
+        options : TYPE, optional
+            DESCRIPTION. The default is 'viz_matplotlib'.
+
+        Returns
+        -------
+        fig : TYPE
+            DESCRIPTION.
+
+        """
         
         reference_df, projection_df, projection_series, merged_df = self.get_projections_data(module)
         
@@ -372,6 +493,24 @@ class Outputs():
      
         
     def projections_angular_format(self, reference_df, projection_series, merged_df):
+        """
+        
+
+        Parameters
+        ----------
+        reference_df : TYPE
+            DESCRIPTION.
+        projection_series : TYPE
+            DESCRIPTION.
+        merged_df : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        data : TYPE
+            DESCRIPTION.
+
+        """
                 
         #On ne stocke pas les données en x qui sont des dates générables dans le front
         data =[
@@ -427,6 +566,20 @@ class Outputs():
     
     
     def new_projections(self, m10):
+        """
+        
+
+        Parameters
+        ----------
+        m10 : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        results : TYPE
+            DESCRIPTION.
+
+        """
         
         reference_df, projection_df, projection_series = self.__get_streamflow_series()
         
@@ -521,6 +674,26 @@ class Outputs():
     
     
     def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id, clusters):
+        """
+        
+
+        Parameters
+        ----------
+        gdf_stations : TYPE
+            DESCRIPTION.
+        gdf_watersheds : TYPE
+            DESCRIPTION.
+        watershed_id : TYPE
+            DESCRIPTION.
+        clusters : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        fig : TYPE
+            DESCRIPTION.
+
+        """
         
         gdf_stations_filter = gdf_stations[gdf_stations["ID"].isin(clusters.index)]
         gdf_watersheds_filter = gdf_watersheds[gdf_watersheds.index.isin(clusters.index)]
@@ -563,8 +736,21 @@ class Outputs():
 
     
     def save_performance(self, model_quality):
+        """
         
-        filename = os.path.join(self.simulation_path, 'model_quality.pkl')
+
+        Parameters
+        ----------
+        model_quality : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
+        
+        filename = os.path.join(self.__simulation_path, 'model_quality.pkl')
         
         with open(filename, 'wb+') as f:
             pickle.dump(model_quality, f, pickle.HIGHEST_PROTOCOL)

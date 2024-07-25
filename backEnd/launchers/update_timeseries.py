@@ -22,7 +22,7 @@ app_root = setup_cydre_path()
 import libraries.preprocessing.data.surfex as surfex
 import libraries.preprocessing.data.hydrometry as hydrometry
 import libraries.preprocessing.data.piezometry as piezometry
-
+sys.exit()
 
 #%% Path Definitions
 data_path = os.path.join(app_root, 'data')
@@ -34,7 +34,7 @@ piezo_path = os.path.join(app_root, 'data', 'piezometry')
 #%% Load hydrological stations and watershed delineation 
 hydro_stations = pd.read_csv(os.path.join(data_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
 piezo_stations = pd.read_csv(os.path.join(piezo_path, 'stations.csv'), delimiter=';', encoding='ISO-8859-1')
-gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds.shp'))
+gdf_watersheds = gpd.read_file(os.path.join(data_path, 'watersheds2.shp'))
 gdf_watersheds = gdf_watersheds.set_index('index')
 
 
