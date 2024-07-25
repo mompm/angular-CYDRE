@@ -16,7 +16,7 @@ from setup_cydre_path import setup_cydre_path
 app_root = setup_cydre_path()
 
 import libraries.forecast.initialization as IN
-import libraries.forecast.outputs as OU
+import libraries.postprocessing.outputs as OU
 from libraries.load_data import define_paths, load_data
 
 start = time.time()

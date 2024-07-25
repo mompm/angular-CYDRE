@@ -18,7 +18,7 @@ from setup_cydre_path import setup_cydre_path
 app_root = setup_cydre_path()
 
 import libraries.forecast.initialization as IN
-import libraries.forecast.outputs as OU
+import libraries.postprocessing.outputs as OU
 import libraries.performance.sensitivity_analysis as SA
 import libraries.performance.evaluation as EV
 import libraries.utils.toolbox as toolbox

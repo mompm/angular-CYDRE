@@ -45,7 +45,7 @@ from libraries.interface.plots import *
 from libraries.interface.cydre_results import *
 from libraries.interface.style import *
 import libraries.forecast.initialization as IN
-import libraries.forecast.outputs as OU
+import libraries.postprocessing.outputs as OU
 
 
 #%% PREPARATION
