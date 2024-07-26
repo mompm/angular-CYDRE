@@ -30,51 +30,117 @@ class Outputs():
     
     Attributes
     ----------
+    version : string
+        Usage version of the cydre application. 
+        It can be 'application' to perform a standalone simulation or 'test' to perform a sensitivity analysis.
+    stations : GeoDataFrame
+        File with all stations.
+    watershed_id : string
+        Watershed id (from BanqueHydro).
+    watershed_name : string
+        Watershed name (explicit).
+    watershed_area : float
+        Area of watershed.
+    initial_date : pandas Datetime
+        Initial date selected by the user to start the projection (prior to recalculation).
+    simulation_date : pandas Datetime
+        Date set for the projections (after recalculation).
+    similarity_period : DatetimeIndex
+        Vector of dates on which similarity should be performed.
+    projection_period : DatetimeIndex
+        Vector of dates on which projections should be performed.   
+    user_streamflow : DataFrame
+        Time series of streamflow from the reference watershed.
+    streamflow_forecast : DataFrame
+        Forecast on streamflow (Q10, Q50, Q90).
+    streamflow_forecast_individuals : list of DataFrame
+        Individual time series used to forecast streamflow.
+    storage_forecast : DataFrame
+        Forecast on storage (Q10, Q50, Q90).
+    station_forecast : DataFrame
+        Forecast using only the data at the station, all the past years (not only the selected ones!)
+        used as a reference for comparison
+    
+    Sensitivity analysis mode (for comparison):
+    
+    user_streamflow_forecast : DataFrame
+        Time series of streamflow from the reference watershed extracted during the projection period.
+    user_recharge_forecast : DataFrame
+        Time series of recharge from the reference watershed extracted during the projection period.
+    user_runoff_forecast : DataFrame
+        Time series of runoff from the reference watershed extracted during the projection period.
+    user_storage_forecast : DataFrame
+        Time series of storage from the reference watershed extracted during the projection period.
+    
     
     Methods (public)
     ----------------
+    store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="html"):
+        Method used to create output directories, store similarity results, and define the path for saving graphs.
+    get_projections_data(self, module):
+        Preparation of seasonal forecast visualization and calculation of operational indicators.
+    plot_streamflow_projections(self, log=True, module=False, options='viz_matplotlib'):
+        Plot projections (matplotlib or plotly).
+    projections_angular_format(self, reference_df, projection_series, merged_df):
+        Convert projections data in JSON format for Angular front-end.
+    new_projections(self, m10):
+        Methods use for add new thresholds and recalculate indicators in the cydre web application.
+    plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id, clusters):
+        Plot the typology map generated with the hydraulic properties.
     
     Methods (private)
     -----------------
-        
+    __manage_outputs_path(self, log, fig_format):
+        Create output directories and define the path for saving graphs.
+    __save_correlation_matrix(self, correlation_matrix):
+        Save the correlation matrix in the watershed output folder.
+    __save_watershed_similarity(self, watershed_similarity, similar_watersheds):
+        Save similarities coefficients between watersheds (alltogether)
+    __get_streamflow_series(self):     
+        Get observation and projections time series for vizualisation.
+    __calculate_module(self, reference_df):
+        Calculate the streamflow module, commonly used for operational purposes to maintain minimum water levels in the stream network.
+    __calculate_indicators(self, reference_df, projection_df, projection_series):
+        Calculate each operationnal indicators necessary for the Cydre web application users.
+    
     """
     
-    def __init__(self, cydre_app, watershed_name, stations, selected_date, similarity_period, 
+    def __init__(self, cydre_app, watershed_name, stations, initial_date, similarity_period, 
                  log=True, module=True, options='viz_matplotlib'):
         
-        # Cydre simulation outputs
+        # Configuration
         self.version = cydre_app.version
+        
+        # Stations infos
         self.stations = stations
         self.watershed_name = watershed_name
         self.watershed_id = cydre_app.UserConfiguration.user_watershed_id
         self.watershed_area = cydre_app.UserConfiguration.user_watershed_area
-        self.streamflow = cydre_app.UserConfiguration.user_streamflow
-        self.selected_date = selected_date
+        
+        # Dates
+        self.initial_date = initial_date
         self.simulation_date = cydre_app.date
-        #self.similarity_period = cydre_app.Similarity.user_similarity_period
         self.similarity_period = similarity_period
-        #self.similar_watersheds = cydre_app.Similarity.similar_watersheds
-        #self.correlation_matrix = cydre_app.scenarios
         self.projection_period = cydre_app.Forecast.forecast_period
-        self.streamflow_proj = cydre_app.df_streamflow_forecast
-        self.streamflow_proj_series = cydre_app.Forecast.Q_streamflow_forecast_normalized
-        self.streamflow_proj_series_raw = cydre_app.Forecast.Q_streamflow_forecast
-        self.storage_proj = cydre_app.df_storage_forecast
+        
+        # Time series
+        self.user_streamflow = cydre_app.UserConfiguration.user_streamflow
+        self.streamflow_forecast = cydre_app.df_streamflow_forecast
+        self.streamflow_forecast_individuals = cydre_app.Forecast.Q_streamflow_forecast_normalized
+        self.storage_forecast = cydre_app.df_storage_forecast
         self.station_forecast = cydre_app.df_station_forecast
         
-        # Evaluation version
+        # Only if we set the version to "test" for sensitivy analysis use.
         if self.version == 'test':
             self.user_streamflow_forecast = cydre_app.UserConfiguration.user_streamflow[cydre_app.UserConfiguration.user_streamflow.index.isin(self.projection_period)]
             self.user_recharge_forecast = cydre_app.UserConfiguration.user_recharge[cydre_app.UserConfiguration.user_recharge.index.isin(self.projection_period)]
             self.user_runoff_forecast = cydre_app.UserConfiguration.user_runoff[cydre_app.UserConfiguration.user_runoff.index.isin(self.projection_period)]
             self.user_storage_forecast = cydre_app.UserConfiguration.user_storage[cydre_app.UserConfiguration.user_storage.index.isin(self.projection_period)]
-            self.streamflow_projection_period = self.user_streamflow_forecast
-            self.storage_projection_period = self.user_storage_forecast
     
     
-    def store_results(self, output_path, log=True, fig_format="html"):
+    def store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="html"):
         """
-        
+        Method used to create output directories, store similarity results, and define the path for saving graphs.
 
         Parameters
         ----------
@@ -93,14 +159,14 @@ class Outputs():
         
         self.output_path = output_path
         self.__manage_outputs_path(log, fig_format)
-        #self.__save_correlation_matrix()
-#        self.__save_watershed_similarity()
+        self.__save_correlation_matrix(correlation_matrix)
+        self.__save_watershed_similarity(watershed_similarity, similar_watersheds)
 
         
     def __manage_outputs_path(self, log, fig_format):
         """
+        Create output directories and define the path for saving graphs.
         
-
         Parameters
         ----------
         log : TYPE
@@ -116,7 +182,7 @@ class Outputs():
         
         # Watershed folder for storing outputs as plots
         self.__watershed_path = os.path.join(self.output_path, self.watershed_id)
-        self.__simulation_path = os.path.join(self.__watershed_path, self.selected_date)
+        self.__simulation_path = os.path.join(self.__watershed_path, self.initial_date)
         
         if not os.path.exists(self.__watershed_path):
             os.makedirs(self.__watershed_path)
@@ -125,32 +191,62 @@ class Outputs():
         
         # Watershed folder for storing outputs as plots
         if fig_format=='tiff' and log==True:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.selected_date}.tiff")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.initial_date}.tiff")
         elif fig_format=='tiff' and log==False:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.selected_date}.tiff")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.initial_date}.tiff")
         elif fig_format=='html' and log==True:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.selected_date}.html")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"log_{self.initial_date}.html")
         elif fig_format=='html' and log==False:
-            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.selected_date}.html")
+            self.streamflow_fig_path = os.path.join(self.__watershed_path, f"lin_{self.initial_date}.html")
         
-        print(self.streamflow_fig_path)
     
-    def __save_correlation_matrix(self):
+    def __save_correlation_matrix(self, correlation_matrix):
+        """
+        Save the correlation matrix in the watershed output folder. 
+
+        Parameters
+        ----------
+        correlation_matrix : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         
         filename = os.path.join(self.__simulation_path, 'corr_matrix.txt')
-        self.correlation_matrix.to_csv(filename)
+        correlation_matrix.to_csv(filename)
     
     
-    def __save_watershed_similarity(self):
+    def __save_watershed_similarity(self, watershed_similarity, similar_watersheds):
+        """
+        Save similarities coefficients between watersheds (alltogether)
+
+        Parameters
+        ----------
+        watershed_similarity : TYPE
+            DESCRIPTION.
+        similar_watersheds : TYPE
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         
         filename = os.path.join(self.output_path, self.watershed_id, 'watershed_similarity.txt')
-        df = self.__filter_watershed_similarity()
+        df = watershed_similarity
+        df = df[df.index.isin(similar_watersheds)]
+        df = df.filter(items=similar_watersheds, axis=1)
+        
         df.to_csv(filename)
     
     
     def get_projections_data(self, module):
         """
-        
+        Preparation of seasonal forecast visualization and calculation of operational indicators.
 
         Parameters
         ----------
@@ -188,7 +284,7 @@ class Outputs():
    
     def __get_streamflow_series(self):     
         """
-        
+        Get observation and projections time series for vizualisation.
 
         Returns
         -------
@@ -202,19 +298,19 @@ class Outputs():
         """
    
         # Observation
-        reference_df = self.streamflow.copy()
+        reference_df = self.user_streamflow.copy()
         reference_df['daily'] = reference_df.index.strftime('%m-%d')
         reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
         
         # Projections
-        projection_df = self.streamflow_proj.copy()
+        projection_df = self.user_streamflow_forecast.copy()
         projection_df = projection_df.set_index(self.projection_period)
         projection_df *= self.watershed_area * 1e6 # m/s > m3/s
         
         # Individual projections
         projection_series = []
         
-        for serie in self.streamflow_proj_series:
+        for serie in self.streamflow_forecast_individuals:
             serie = pd.DataFrame(serie)
             serie['Q_streamflow'] *= (self.watershed_area * 1e6)
             serie = serie.set_index(self.projection_period)
@@ -225,7 +321,7 @@ class Outputs():
     
     def __calculate_module(self, reference_df):
         """
-        
+        Calculate the streamflow module, commonly used for operational purposes to maintain minimum water levels in the stream network. 
 
         Parameters
         ----------
@@ -248,8 +344,9 @@ class Outputs():
     
     
     def __calculate_indicators(self, reference_df, projection_df, projection_series):
-       """
         
+        """
+        Calculate each operationnal indicators necessary for the Cydre web application users.
 
         Parameters
         ----------
@@ -265,69 +362,69 @@ class Outputs():
         None.
 
         """
-       # Projected streamflow (last day value and evolution)
-       self.proj_values = projection_df.iloc[-1]
-       self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
-       
-       # Number of days before projected streamflow intersect the module
-       mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
-       mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
-       
-       try:
-           mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
-           self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
-       except:
-           mod10_first_occurence_Q10 = None
-           self.ndays_before_alert_Q10 = 0
-       
-       try:
-           mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
-           self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
-       except:
-           mod10_first_occurence_Q50 = None
-           self.ndays_before_alert_Q50 = 0
-           
-       try:
-           mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
-           self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
-       except:
-           mod10_first_occurence_Q90 = None
-           self.ndays_before_alert_Q90 = 0
-       
-       # Number of cumulated days below the alert threshold
-       self.ndays_below_alert = np.sum(mod10_intersect)
-       
-       # Proportion of past events below the alert threshold
-       n_events = len(projection_series)
-       n_events_alert = 0
-       
-       for events in range(len(projection_series)):
-           projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
-           projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
-           if projection_series[events]['alert'].any():
-               n_events_alert += 1
-           else:
-               n_events_alert += 0
-       
-       self.prop_alert_all_series = n_events_alert / n_events
-       
-       # Volume to supply low flows
-       alert_df = projection_df[mod10_alert['Q10']]
-       q_values = alert_df['Q10'] * 86400
-       self.volume10 = ((self.mod10*86400) - q_values).sum()
-       
-       alert_df = projection_df[mod10_alert['Q50']]
-       q_values = alert_df['Q50'] * 86400
-       self.volume50 = ((self.mod10*86400) - q_values).sum()
-       
-       alert_df = projection_df[mod10_alert['Q90']]
-       q_values = alert_df['Q90'] * 86400
-       self.volume90 = ((self.mod10*86400) - q_values).sum()
-    
+        # Projected streamflow (last day value and evolution)
+        self.proj_values = projection_df.iloc[-1]
+        self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
+        
+        # Number of days before projected streamflow intersect the module
+        mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
+        mod10_alert = mod10_intersect & mod10_intersect.shift(-1)
+        
+        try:
+            mod10_first_occurence_Q10 = projection_df[mod10_alert['Q10']].iloc[0].name 
+            self.ndays_before_alert_Q10 = (mod10_first_occurence_Q10 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q10 = None
+            self.ndays_before_alert_Q10 = 0
+        
+        try:
+            mod10_first_occurence_Q50 = projection_df[mod10_alert['Q50']].iloc[0].name 
+            self.ndays_before_alert_Q50 = (mod10_first_occurence_Q50 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q50 = None
+            self.ndays_before_alert_Q50 = 0
+            
+        try:
+            mod10_first_occurence_Q90 = projection_df[mod10_alert['Q90']].iloc[0].name
+            self.ndays_before_alert_Q90 = (mod10_first_occurence_Q90 - projection_df.index[0]).days
+        except:
+            mod10_first_occurence_Q90 = None
+            self.ndays_before_alert_Q90 = 0
+        
+        # Number of cumulated days below the alert threshold
+        self.ndays_below_alert = np.sum(mod10_intersect)
+        
+        # Proportion of past events below the alert threshold
+        n_events = len(projection_series)
+        n_events_alert = 0
+        
+        for events in range(len(projection_series)):
+            projection_series[events]['intersection'] = projection_series[events]['Q_streamflow'] <= self.mod10
+            projection_series[events]['alert'] = projection_series[events]['intersection'] & projection_series[events]['intersection'].shift(-1)
+            if projection_series[events]['alert'].any():
+                n_events_alert += 1
+            else:
+                n_events_alert += 0
+        
+        self.prop_alert_all_series = n_events_alert / n_events
+        
+        # Volume to supply low flows
+        alert_df = projection_df[mod10_alert['Q10']]
+        q_values = alert_df['Q10'] * 86400
+        self.volume10 = ((self.mod10*86400) - q_values).sum()
+        
+        alert_df = projection_df[mod10_alert['Q50']]
+        q_values = alert_df['Q50'] * 86400
+        self.volume50 = ((self.mod10*86400) - q_values).sum()
+        
+        alert_df = projection_df[mod10_alert['Q90']]
+        q_values = alert_df['Q90'] * 86400
+        self.volume90 = ((self.mod10*86400) - q_values).sum()
+     
     
     def plot_streamflow_projections(self, log=True, module=False, options='viz_matplotlib'):
         """
-        
+        Plot projections (matplotlib or plotly)/
 
         Parameters
         ----------
@@ -494,7 +591,7 @@ class Outputs():
         
     def projections_angular_format(self, reference_df, projection_series, merged_df):
         """
-        
+        Convert projections data in JSON format for Angular front-end.
 
         Parameters
         ----------
@@ -567,7 +664,7 @@ class Outputs():
     
     def new_projections(self, m10):
         """
-        
+        Methods use for add new thresholds and recalculate indicators in the cydre web application.
 
         Parameters
         ----------
@@ -675,7 +772,7 @@ class Outputs():
     
     def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id, clusters):
         """
-        
+        Plot the typology map generated with the hydraulic properties.
 
         Parameters
         ----------
@@ -775,13 +872,13 @@ class Outputs():
 
         """
         # Cumulated volume for projections series
-        df_proj = self.streamflow_proj.copy() * self.watershed_area * 1e6
+        df_proj = self.streamflow_forecast.copy() * self.watershed_area * 1e6
         self.volume_proj = pd.Series.cumsum(df_proj)
         self.volume_proj *= 86400
         
         # Cumulated volume for observation series
         if self.version == 'test':
-            df_user = self.streamflow_projection_period.copy() * self.watershed_area * 1e6
+            df_user = self.user_streamflow_forecast.copy() * self.watershed_area * 1e6
             self.volume_user = pd.Series.cumsum(df_user)
             self.volume_user *= 86400
     
@@ -833,13 +930,13 @@ class Outputs():
     def storage_variations(self):
         
         # Cumulated volume for projections series
-        df_proj = self.storage_proj.copy() * self.watershed_area * 1e6
-        self.storage_proj = pd.Series.cumsum(df_proj)
-        self.storage_proj *= 86400
+        df_proj = self.storage_forecast.copy() * self.watershed_area * 1e6
+        self.storage_forecast = pd.Series.cumsum(df_proj)
+        self.storage_forecast *= 86400
         
         # Cumulated volume for observation series
         if self.version == 'test':
-            df_user = self.storage_projection_period.copy() * self.watershed_area * 1e6
+            df_user = self.user_storage_forecast.copy() * self.watershed_area * 1e6
             self.storage_user = pd.Series.cumsum(df_user)
             self.storage_user *= 86400
         
@@ -855,15 +952,15 @@ class Outputs():
         
         fig, ax = plt.subplots()
         
-        ax.fill_between(self.storage_user['Q'].index, self.storage_proj['Q10'], self.storage_proj['Q90'], color='#407fbd',
+        ax.fill_between(self.storage_user['Q'].index, self.storage_forecast['Q10'], self.storage_forecast['Q90'], color='#407fbd',
                         alpha=0.20, edgecolor='#407fbd', linewidth=0, label="zone d'incertitude")
-        ax.plot(self.storage_user['Q'].index, self.storage_proj['Q10'], color='#407fbd', linewidth=0.3)        
-        ax.plot(self.storage_user['Q'].index, self.storage_proj['Q90'], color='#407fbd', linewidth=0.3)
+        ax.plot(self.storage_user['Q'].index, self.storage_forecast['Q10'], color='#407fbd', linewidth=0.3)        
+        ax.plot(self.storage_user['Q'].index, self.storage_forecast['Q90'], color='#407fbd', linewidth=0.3)
         
         # Add observation and projection storage variations lines
         ax.plot(self.storage_user['Q'].index, self.storage_user['Q'], color='black', label='observation')
-        ax.plot(self.storage_user['Q'].index, self.storage_proj['Q50'], color='blue', linestyle='--', label='projection médiane')
-        ax.plot(self.storage_user['Q'].index, self.storage_proj['Qmean'], color='blue', linestyle='-', linewidth=0.5, label='projection moyenne')
+        ax.plot(self.storage_user['Q'].index, self.storage_forecast['Q50'], color='blue', linestyle='--', label='projection médiane')
+        ax.plot(self.storage_user['Q'].index, self.storage_forecast['Qmean'], color='blue', linestyle='-', linewidth=0.5, label='projection moyenne')
         
         # Set axis parameters
         ax.tick_params(axis="both", direction = "inout")
@@ -1038,15 +1135,6 @@ class Outputs():
         gdf = gpd.GeoDataFrame(merged_df, geometry='geometry')
         
         return gdf
-
-    
-    def __filter_watershed_similarity(self):
-        
-        sim = self.watershed_similarity
-        sim = sim[sim.index.isin(self.similar_watersheds)]
-        sim = sim.filter(items=self.similar_watersheds, axis=1)
-        
-        return sim
 
 
     def plot_forecast_streamflow(self,cydre_app, df_forecast):
@@ -1242,7 +1330,7 @@ class Outputs():
         
     def __calculate_baseflow(self):
        
-       df = self.streamflow.copy() #* self.watershed_area * 1e6
+       df = self.user_streamflow.copy() #* self.watershed_area * 1e6
        
        # Pas de temps (jours) pour les moyennes
        T_Wind = 10
@@ -1294,7 +1382,7 @@ class Outputs():
        test = df['Q'].iloc[peaks]
        dates = df[df.index.isin(test.index)].Date
        test.index = pd.to_datetime(dates)
-       test_complete_index = test.reindex(self.streamflow.index)
+       test_complete_index = test.reindex(self.user_streamflow.index)
        test_interpolated = test_complete_index.interpolate(method='linear')
        test_interpolated = test_interpolated[test_interpolated.index.isin(self.projection_period)]
        

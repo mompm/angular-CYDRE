@@ -45,7 +45,8 @@ initial_date = init.params.getgroup("General").getparam("date").getvalue()
 
 results = OU.Outputs(cydre_app, watershed_name, gdf_stations, initial_date, cydre_app.Similarity.user_similarity_period,
                      log=True, module=True, options='viz_plotly')
-results.store_results(output_path, log=True, fig_format='html')
+results.store_results(output_path, cydre_app.scenarios, cydre_app.Similarity.watershed_similarity,
+                      cydre_app.Similarity.similar_watersheds, log=True, fig_format='html')
 results.plot_streamflow_projections(log=True, module=True, options='viz_plotly')
 results.plot_typology_map(gdf_stations, gdf_watersheds, cydre_app.UserConfiguration.user_watershed_id, cydre_app.Similarity.clusters)
 
