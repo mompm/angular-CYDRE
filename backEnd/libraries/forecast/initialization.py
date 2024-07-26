@@ -18,6 +18,15 @@ import tools.Parameters.Parameters.ParametersGroup as pg
 class Initialization():
     """
     
+    Attributes
+    ----------
+    
+    
+    Methods
+    -------
+    get_parameters_path(self, param_names):
+        Finds the path to the parameter in xml loaded structure
+        Requires that there is only one occurence in the structure
     """    
     
     def __init__(self, app_root, stations):
@@ -77,6 +86,21 @@ class Initialization():
 
     #NICOLAS:à déplacer dans la classe paramètres
     def get_parameters_path(self, param_names):
+        """
+        Finds the path to the parameter in xml loaded structure
+        Requires that there is only one occurence in the structure
+
+        Parameters
+        ----------
+        param_names : list of strings
+            parameter names that should be found in the xml structure
+
+        Returns
+        -------
+        param_paths : list of strings
+            full parameter paths from the root to the parameter searched
+
+        """
         param_paths = []
 
         for param_name in param_names:

@@ -27,6 +27,8 @@ class Outputs():
     
     """
     Class used to manage cydre results and do some plots.
+    Note: Only outputs, all computations and analysis have been performed before
+            All what is necessary for forecast is in the files of forecast and not here
     
     Attributes
     ----------
@@ -141,20 +143,6 @@ class Outputs():
     def store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="html"):
         """
         Method used to create output directories, store similarity results, and define the path for saving graphs.
-
-        Parameters
-        ----------
-        output_path : TYPE
-            DESCRIPTION.
-        log : TYPE, optional
-            DESCRIPTION. The default is True.
-        fig_format : TYPE, optional
-            DESCRIPTION. The default is "html".
-
-        Returns
-        -------
-        None.
-
         """
         
         self.output_path = output_path
@@ -169,15 +157,14 @@ class Outputs():
         
         Parameters
         ----------
-        log : TYPE
-            DESCRIPTION.
-        fig_format : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+        log : boolean
+            log-scale
+            true: logarithmic
+            false: linear
+        fig_format : string
+            Format in which graphs/figures are saved    
+            "html"
+            "tiff"
         """
         
         # Watershed folder for storing outputs as plots
@@ -203,16 +190,6 @@ class Outputs():
     def __save_correlation_matrix(self, correlation_matrix):
         """
         Save the correlation matrix in the watershed output folder. 
-
-        Parameters
-        ----------
-        correlation_matrix : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
         """
         
         filename = os.path.join(self.__simulation_path, 'corr_matrix.txt')
@@ -225,15 +202,12 @@ class Outputs():
 
         Parameters
         ----------
-        watershed_similarity : TYPE
-            DESCRIPTION.
-        similar_watersheds : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+        watershed_similarity : dataframe
+            Lines and columns (basins), 
+            value: indicator (between 0 and 1)
+        similar_watersheds : list of strings
+            List of watershed which are effectively similar
+            Eventually, only those watersheds will be kept for the display
         """
         
         filename = os.path.join(self.output_path, self.watershed_id, 'watershed_similarity.txt')
@@ -250,19 +224,20 @@ class Outputs():
 
         Parameters
         ----------
-        module : TYPE
-            DESCRIPTION.
+        module : boolean
+            should it be displayed on streamflow figure
 
         Returns
         -------
-        reference_df : TYPE
-            DESCRIPTION.
-        projection_df : TYPE
-            DESCRIPTION.
-        projection_series : TYPE
-            DESCRIPTION.
-        merged_df : TYPE
-            DESCRIPTION.
+        reference_df : dataframe
+            Observations
+        projection_df : dataframe
+            Projections (q10, q50, q90, qmean)
+            Already computed before (no weighting involved, as it is already done if should be)
+        projection_series : list of dataframes
+            All chronicles used
+        merged_df : dataframe
+            combination of reference_df and projection_df
 
         """
         
@@ -285,21 +260,12 @@ class Outputs():
     def __get_streamflow_series(self):     
         """
         Get observation and projections time series for vizualisation.
-
-        Returns
-        -------
-        reference_df : TYPE
-            DESCRIPTION.
-        projection_df : TYPE
-            DESCRIPTION.
-        projection_series : TYPE
-            DESCRIPTION.
-
         """
    
         # Observation
         reference_df = self.user_streamflow.copy()
         reference_df['daily'] = reference_df.index.strftime('%m-%d')
+        # Conversion of surface from km^2 to m^2
         reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
         
         # Projections
@@ -325,15 +291,8 @@ class Outputs():
 
         Parameters
         ----------
-        reference_df : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        mod : TYPE
-            DESCRIPTION.
-        mod10 : TYPE
-            DESCRIPTION.
+        reference_df : dataframe
+            Observations
 
         """
         reference_df['year'] = reference_df.index.year
@@ -347,20 +306,7 @@ class Outputs():
         
         """
         Calculate each operationnal indicators necessary for the Cydre web application users.
-
-        Parameters
-        ----------
-        reference_df : TYPE
-            DESCRIPTION.
-        projection_df : TYPE
-            DESCRIPTION.
-        projection_series : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+            
         """
         # Projected streamflow (last day value and evolution)
         self.proj_values = projection_df.iloc[-1]
@@ -428,17 +374,18 @@ class Outputs():
 
         Parameters
         ----------
-        log : TYPE, optional
-            DESCRIPTION. The default is True.
-        module : TYPE, optional
-            DESCRIPTION. The default is False.
-        options : TYPE, optional
-            DESCRIPTION. The default is 'viz_matplotlib'.
+        log : bool 
+            log-scale
+        module : bool
+            should module be displayed (red horizontal line)
+        options : string
+            Matplotlib -> tiff
+            Plotly -> html
 
         Returns
         -------
-        fig : TYPE
-            DESCRIPTION.
+        fig : plotly.graph_objects
+            the handle to the figure
 
         """
         
@@ -592,6 +539,7 @@ class Outputs():
     def projections_angular_format(self, reference_df, projection_series, merged_df):
         """
         Convert projections data in JSON format for Angular front-end.
+        Figures will be done in the frontend
 
         Parameters
         ----------
@@ -604,8 +552,8 @@ class Outputs():
 
         Returns
         -------
-        data : TYPE
-            DESCRIPTION.
+        data : dictionary (json)
+            All the data necessary for the display in angular
 
         """
                 
@@ -668,13 +616,13 @@ class Outputs():
 
         Parameters
         ----------
-        m10 : TYPE
-            DESCRIPTION.
+        m10 : float
+            threshold selected (not only 10ème du module)
 
         Returns
         -------
-        results : TYPE
-            DESCRIPTION.
+        results : json dictionary
+            indicators.
 
         """
         
@@ -696,6 +644,8 @@ class Outputs():
                 n_events_alert += 0
         
         self.prop_alert_all_series = n_events_alert / n_events
+
+        #NICOLAS: factorisation du calcul des indicateurs
 
         # Initialize volumes
         self.volume10 = 0
@@ -773,6 +723,8 @@ class Outputs():
     def plot_typology_map(self, gdf_stations, gdf_watersheds, watershed_id, clusters):
         """
         Plot the typology map generated with the hydraulic properties.
+        Note: Map is the geographic representation
+                Classes are represented by dots of different colors
 
         Parameters
         ----------
@@ -832,19 +784,10 @@ class Outputs():
         return fig
 
     
+#NICOLAS: à déplacer dans l'analyse de sensibilité
     def save_performance(self, model_quality):
         """
-        
-
-        Parameters
-        ----------
-        model_quality : TYPE
-            DESCRIPTION.
-
-        Returns
-        -------
-        None.
-
+        Saves dictionary issued by the sensitivity analysis
         """
         
         filename = os.path.join(self.__simulation_path, 'model_quality.pkl')
@@ -854,6 +797,7 @@ class Outputs():
         
         #with open(filename, 'w') as file:
             #json.dump(model_quality, file)
+    
     
     def streamflow_volume(self):
         """
@@ -1019,6 +963,7 @@ class Outputs():
         plt.show()
     
     
+    #NICOLAS: supprimer ou mettre à jour
     def _get_projection_origin(self, scenarios):
         station_id_to_name = dict(zip(self.stations['ID'], self.stations['name']))
         scenarios['ID'] = scenarios['watershed']
@@ -1027,7 +972,11 @@ class Outputs():
         return scenarios, n_scenarios
 
         
+    #NICOLAS: supprimer ou mettre à jour
     def plot_watersheds(self, watersheds):
+        """
+        Plot of watersheds on geographic map
+        """
         
         gdf = self.create_watershed_geodataframe(watersheds)
         
@@ -1084,7 +1033,7 @@ class Outputs():
                 # Afficher la carte
         pyo.plot(fig)
 
-    
+    #NICOLAS: supprimer ou mettre à jour
     def create_watershed_geodataframe(self, watersheds):
         
         geometry = []
@@ -1137,6 +1086,7 @@ class Outputs():
         return gdf
 
 
+    #NICOLAS: supprimer ou mettre à jour
     def plot_forecast_streamflow(self,cydre_app, df_forecast):
         
         # Get forecast watershed properties and streamflow
@@ -1230,6 +1180,7 @@ class Outputs():
         #plot(forecast_figure, filename='forecast_figure.html')
     
     
+    #NICOLAS: supprimer ou mettre à jour
     def plot_seasonal_streamflow(self, Forecast, savefig=False, 
                                  fig_size=(8, 7), lw=2, 
                                  labelsize=22, ticksize=18, legendsize=12, 
@@ -1327,7 +1278,8 @@ class Outputs():
     
         plt.show()
         
-        
+    
+    #NICOLAS: supprimer ou mettre à jour
     def __calculate_baseflow(self):
        
        df = self.user_streamflow.copy() #* self.watershed_area * 1e6
