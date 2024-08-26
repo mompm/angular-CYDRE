@@ -116,18 +116,10 @@ togglePanel() {
     }).unsubscribe();  // Important de désabonner pour éviter les fuites de mémoire
 }
 
-  private deleteSimulation(simulation_id:string) {
-    this.http.post(`http://localhost:5000/api/delete_default_simulation`, {}).subscribe({
-      next: (response) => console.log('Simulation deleted successfully'),
-      error: (error) => console.error('Failed to delete simulation', error)
-    });
-  }
 
   initGDFStations() {
     this.jsonService.getGDFStations().then(data => {
       this.stations = data;
-
-
       // Initialise `filteredOptions` après avoir chargé les données
       this.filteredOptions = this.myControl.valueChanges.pipe(
         startWith(''),
@@ -143,17 +135,83 @@ togglePanel() {
     });
   }
 
+  /**
+   * Filtre les options de stations en fonction de la valeur saisie par l'utilisateur dans le dropdown.
+   * La fonction cherche les stations dont l'index ou le nom contient la chaîne de caractères fournie.
+   *
+   * @param value - La chaîne de caractères entrée par l'utilisateur dans le champ de recherche du dropdown.
+   * @returns Un tableau d'objets contenant l'index et le nom des stations correspondant au critère de recherche.
+   */
   private _filter(value: string): { index: string, station_name: string }[] {
+    // Convertit la valeur entrée en chaîne de caractères pour éviter les erreurs
     value = value.toString()
+    // Transforme la valeur en minuscules pour éviter des erreurs
     const filterValue = value.toLowerCase();
-
+    // Filtre les stations dont l'index ou le nom de station contient la valeur filtrée
     return this.stations
       .filter(station =>
         station.index.toLowerCase().includes(filterValue) ||
         station.station_name.toLowerCase().includes(filterValue)
       )
+       // Retourne un tableau d'objets avec l'index et le nom de la station correspondante
       .map(station => ({ index: station.index, station_name: station.station_name }));
   }
+
+  
+  /**
+   * Gère la sélection d'une option dans le dropdown.
+   * Met à jour les valeurs sélectionnées et les enregistre dans le service partagé.
+   *
+   * @param event - L'événement de sélection déclenché par l'utilisateur lors du choix d'une option dans le dropdown.
+   */
+  onOptionSelected(event: any) {
+     // Récupère l'option sélectionnée à partir de l'événement
+    const selectedOption = event.option.value;
+    this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response)=>{
+      this.results = this.deepParseJson(response);
+      this.showResults = true;
+      //console.log("results:",this.results)
+      //console.log("Showresults:",this.showResults)
+    });
+    // mise à jour les données de sharedService
+    this.sharedService.setSelectedValue(selectedOption.index);
+    this.selectedStation = selectedOption.index;
+    const name = this.stations.find(station => station.index === selectedOption.index)?.name;
+    const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
+    if (select){
+      this.selectedStationBSS = select;
+      this.sharedService.setSelectedValueBSS(select);
+    }
+    if (name){
+      this.selectedStationName = name;
+      this.sharedService.setSelectedStationName(name);
+    }
+  }
+
+      /**
+     * Vérifie si une option du dropdown est désactivée.
+     * Une option est désactivée si son index figure dans `list_of_disabled_options`.
+     *
+     * @param option - L'option à vérifier, contenant l'index et le nom de la station.
+     * @returns `true` si l'option est désactivée, sinon `false`.
+     */
+    isOptionDisabled(option: { index: string, station_name: string }): boolean {
+      //Retourne true si l'index de l'option figure dans la liste des options désactivées
+      return this.list_of_disabled_options.includes(option.index);
+    }
+
+    /**
+     * Définit la manière dont les options sont affichées dans le dropdown.
+     * Concatène l'index et le nom de la station pour afficher une chaîne de caractères lisible.
+     *
+     * @param option - L'option à afficher, contenant l'index et le nom de la station.
+     * @returns Une chaîne de caractères formatée pour être affichée dans le dropdown.
+     */
+    displayFn(option: { index: string, station_name: string }): string {
+      // Si une option est sélectionnée, retourne une chaîne formatée "index - station_name"
+      return option ? `${option.index} - ${option.station_name}` : '';
+    }
+
 
 
   deepParseJson(obj: any): any {
@@ -171,24 +229,20 @@ togglePanel() {
     return obj;
 }
 
-async updateSimulationsBeta() {
-  this.filteredOptions.subscribe(async (stationsArray) => {
-    for (const station of stationsArray) {
-      console.log("Updating station : " + station.index);
-      try {
-        await this.jsonService.updateSimualtionsBetaDatabase(station.index);
-      } catch (error) {
-        console.error(`Failed to update station ${station.index}`, error);
-      }
-    }
-  });
-}
+
 
 handleParametersChanged(parameters: any) {
   this.parameters = parameters;
   console.log('Parameters received in parent:', this.parameters);
   // Add your logic to handle the parameters and start the simulation
 }
+
+updateProgress(message: string, progress: number) {
+    this.currentProgressMessage = message;
+    this.progressValue = progress;
+    this.progressMessages.push(message);
+  }
+
   async onStartSimulation() {
     let params = {}
     let UserID = 0
@@ -253,50 +307,26 @@ handleParametersChanged(parameters: any) {
   saveSimulationId(simulationId: string) {
     sessionStorage.setItem('lastSimulationId', simulationId);
   }
-  
-  updateProgress(message: string, progress: number) {
-    this.currentProgressMessage = message;
-    this.progressValue = progress;
-    this.progressMessages.push(message);
-  }
-
-  onOptionSelected(event: any) {
-    const selectedOption = event.option.value;
-    this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response)=>{
-      this.results = this.deepParseJson(response);
-      this.showResults = true;
-      console.log("results:",this.results)
-      console.log("Showresults:",this.showResults)
-
+  async updateSimulationsBeta() {
+    this.filteredOptions.subscribe(async (stationsArray) => {
+      for (const station of stationsArray) {
+        console.log("Updating station : " + station.index);
+        try {
+          await this.jsonService.updateSimualtionsBetaDatabase(station.index);
+        } catch (error) {
+          console.error(`Failed to update station ${station.index}`, error);
+        }
+      }
     });
+  }
 
-
+  private deleteSimulation(simulation_id:string) {
+    this.http.post(`http://localhost:5000/api/delete_default_simulation`, {}).subscribe({
+        next: (response) => console.log('Simulation deleted successfully'),
+        error: (error) => console.error('Failed to delete simulation', error)
+      });
+    }
     
-    this.sharedService.setSelectedValue(selectedOption.index);
-    this.selectedStation = selectedOption.index;
-    const name = this.stations.find(station => station.index === selectedOption.index)?.name;
-    const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
-    if (select){
-      this.selectedStationBSS = select;
-      this.sharedService.setSelectedValueBSS(select);
-    }
-    if (name){
-      this.selectedStationName = name;
-      this.sharedService.setSelectedStationName(name);
-    }
-
-
-    // console.log('Selected Value:', this.selectedStation, this.selectedStationBSS, test);
-  }
-
-  isOptionDisabled(option: { index: string, station_name: string }): boolean {
-    return this.list_of_disabled_options.includes(option.index);
-  }
-
-  displayFn(option: { index: string, station_name: string }): string {
-    return option ? `${option.index} - ${option.station_name}` : '';
-  }
-
   openDialog() {
     this.dialog.open(PopupDialogSimulateur);
   }

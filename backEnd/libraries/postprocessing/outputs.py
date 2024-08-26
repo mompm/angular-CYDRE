@@ -269,7 +269,7 @@ class Outputs():
         reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
         
         # Projections
-        projection_df = self.user_streamflow_forecast.copy()
+        projection_df = self.streamflow_forecast.copy()
         projection_df = projection_df.set_index(self.projection_period)
         projection_df *= self.watershed_area * 1e6 # m/s > m3/s
         
