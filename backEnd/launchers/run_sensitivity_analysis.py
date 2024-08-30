@@ -103,8 +103,8 @@ for params in param_combinations:
                              cydre_app.Similarity.user_similarity_period, log=True, module=True, options='viz_plotly')
         
         results.store_results(output_path, cydre_app.scenarios, cydre_app.Similarity.watershed_similarity,
-                              cydre_app.Similarity.similar_watersheds, log=True, fig_format='html')
-        results.plot_streamflow_projections(log=True, module=True, options='viz_plotly')
+                              cydre_app.Similarity.similar_watersheds, log=True, fig_format='tiff')
+        results.plot_streamflow_projections(log=True, module=True, stats_stations=True, options='viz_matplotlib')
         results.streamflow_volume()
         
         toolbox.save_object(results, os.path.join(output_path, 

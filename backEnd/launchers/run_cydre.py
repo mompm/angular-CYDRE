@@ -28,7 +28,7 @@ gdf_stations, gdf_piezometry, gdf_watersheds = load_data(app_root)
 
 
 #%% CYDRE APPLICATION
- # Initialize the Cydre application
+# Initialize the Cydre application
 init = IN.Initialization(app_root, gdf_stations)
 cydre_app = init.cydre_initialization()
 
@@ -46,8 +46,8 @@ initial_date = init.params.getgroup("General").getparam("date").getvalue()
 results = OU.Outputs(cydre_app, watershed_name, gdf_stations, initial_date, cydre_app.Similarity.user_similarity_period,
                      log=True, module=True, options='viz_plotly')
 results.store_results(output_path, cydre_app.scenarios, cydre_app.Similarity.watershed_similarity,
-                      cydre_app.Similarity.similar_watersheds, log=True, fig_format='html')
-results.plot_streamflow_projections(log=True, module=True, options='viz_plotly')
+                      cydre_app.Similarity.similar_watersheds, log=True, fig_format='tiff')
+results.plot_streamflow_projections(log=True, module=True, stats_stations=True, options='viz_matplotlib')
 results.plot_typology_map(gdf_stations, gdf_watersheds, cydre_app.UserConfiguration.user_watershed_id, cydre_app.Similarity.clusters)
 
 
