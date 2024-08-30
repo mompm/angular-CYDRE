@@ -140,7 +140,7 @@ class Outputs():
             self.user_storage_forecast = cydre_app.UserConfiguration.user_storage[cydre_app.UserConfiguration.user_storage.index.isin(self.projection_period)]
     
     
-    def store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="html"):
+    def store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="tiff"):
         """
         Method used to create output directories, store similarity results, and define the path for saving graphs.
         """
@@ -269,7 +269,7 @@ class Outputs():
         reference_df['Q'] *= (self.watershed_area * 1e6) # m/s > m3/s
         
         # Projections
-        projection_df = self.user_streamflow_forecast.copy()
+        projection_df = self.streamflow_forecast.copy()
         projection_df = projection_df.set_index(self.projection_period)
         projection_df *= self.watershed_area * 1e6 # m/s > m3/s
         
@@ -368,7 +368,7 @@ class Outputs():
         self.volume90 = ((self.mod10*86400) - q_values).sum()
      
     
-    def plot_streamflow_projections(self, log=True, module=False, options='viz_matplotlib'):
+    def plot_streamflow_projections(self, log=True, module=False, stats_stations=False, options='viz_matplotlib'):
         """
         Plot projections (matplotlib or plotly)/
 
@@ -378,6 +378,8 @@ class Outputs():
             log-scale
         module : bool
             should module be displayed (red horizontal line)
+        stats_stations : bool
+            Trends forecasted from analysis without any similarity are added to the graph (True option).
         options : string
             Matplotlib -> tiff
             Plotly -> html
@@ -390,6 +392,12 @@ class Outputs():
         """
         
         reference_df, projection_df, projection_series, merged_df = self.get_projections_data(module)
+        
+        if stats_stations:
+            station_df = self.station_forecast.copy()
+            station_df = station_df.set_index(self.projection_period)
+            station_df *= self.watershed_area * 1e6 # m/s > m3/s
+        
         
         if options == 'viz_matplotlib':
                
@@ -414,6 +422,18 @@ class Outputs():
             ax.plot(merged_df.index, merged_df['Q50'], color='blue', linewidth=1.5, linestyle='dotted',
                 label='projection médiane')
             
+            # Add data obtained from stastical analysis at the station (wihout any similarity)
+            if stats_stations:
+                ax.fill_between(merged_df.index, station_df['Q10'], station_df['Q90'], color='purple',
+                                alpha=0.1, edgecolor='purple', linewidth=0, label="zone d'incertitude [station]")
+                
+                ax.plot(merged_df.index, station_df['Q10'], color='purple', linewidth=0.3)        
+                ax.plot(merged_df.index, station_df['Q90'], color='purple', linewidth=0.3)
+                ax.plot(merged_df.index, station_df['Q50'], color='purple', linewidth=1.5, linestyle='dotted',
+                       label='stats sur la station')
+
+
+            # Add the observations
             ax.plot(reference_df.index, reference_df['Q'], color='k', linewidth=1,
                 label="observation")
             
