@@ -527,7 +527,7 @@ def run_spatial_similarity(simulation_id):
         cydre_app,simulation = start_simulation(simulation_id)
         
         # Lancer le calcul des similarités spatiales
-        cydre_app.run_spatial_similarity(hydraulic_path, spatial=True)
+        cydre_app.run_spatial_similarity(hydraulic_path, gdf_stations)
         
         # Convertir les données à stocker au format JSON
         clusters_json = cydre_app.Similarity.clusters.to_json()
