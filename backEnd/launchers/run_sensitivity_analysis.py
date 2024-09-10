@@ -49,7 +49,6 @@ if not os.path.exists(output_path):
 xml_path = os.path.join(app_root, 'libraries', 'forecast', 'cydre_params.xml')
 shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 
-
 #%% PARAMTERES DEFINITION
 
 # - param_names : cydre parameter referenced in the XML configuration file.
@@ -61,7 +60,7 @@ shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 param_names = ['user_watershed_id', 'date']
 #param_ranges = [['J0626610', 'J0014010', 'J2404010', 'J3834010', 'J7513010', 'J1524010'],
 #                pd.date_range('2015-01-01', '2019-12-31', periods=25).tolist()]
-param_ranges = [['J0626610', 'J0014010', 'J2404010', 'J3834010', 'J7513010', 'J1524010'], 
+param_ranges = [list(gdf_stations['ID']), 
                 pd.date_range('1980-05-01', '2024-05-01', freq='AS-MAY').tolist()]
 num_values = [1, 1]
 
@@ -91,7 +90,7 @@ for params in param_combinations:
         
         # Create cydre application with updated parameters and run main modules
         cydre_app = init.create_cydre_app()        
-        cydre_app.run_spatial_similarity(hydraulic_path)
+        cydre_app.run_spatial_similarity(hydraulic_path, gdf_stations)
         cydre_app.run_timeseries_similarity(data_path, cydre_app.Similarity.similar_watersheds)
         cydre_app.select_scenarios(cydre_app.Similarity.correlation_matrix)
         df_streamflow_forecast, df_storage_forecast = cydre_app.streamflow_forecast(data_path)
