@@ -37,8 +37,18 @@ class Evaluation():
         - obs (numpy array): Observed streamflow data.
         """
         
-        self.sim = sim
-        self.obs = obs
+#        self.sim = sim
+ #       self.obs = obs
+        
+        obs_aligned, sim_aligned = obs.align(sim, join='inner')
+        obs_aligned = obs_aligned.dropna()
+        sim_aligned = sim_aligned.dropna()
+        
+        if len(obs_aligned) == 0 or len(sim_aligned) == 0:
+            raise ValueError("Les séries observées et simulées ne contiennent pas de données communes après suppression des valeurs manquantes.")
+        
+        self.sim = sim_aligned
+        self.obs = obs_aligned
         
         
     def model_performance(self):

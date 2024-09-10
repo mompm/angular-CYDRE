@@ -55,7 +55,9 @@ class Similarity:
     watershed_similarity 
         indicator of similarity between watersheds (alltogether)
     similar_watersheds
-        gets list of watershed within the same class of a given watershed
+        gets list of watershed ID within the same class of a given watershed
+    similar_watersheds_names
+        gets list of watershed names within the same class of a given watershed
     user_similarity_period
         vector of dates on which similarity should be performed
     
@@ -216,14 +218,16 @@ class Similarity:
         return similarity_df
 
     
-    def get_similar_watersheds(self, user_watershed_id):
+    def get_similar_watersheds(self, user_watershed_id, gdf_stations):
         """
         Selection of watersheds of cluster of index "user_watershed_id"
         """
         # index of class of the watershed numbered "user_watershed_id"
         user_watershed_typology = int(self.clusters.loc[user_watershed_id].typology)        
         # gets list of watershed within the same class
-        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)        
+        self.similar_watersheds = list(self.clusters[self.clusters['typology'] == user_watershed_typology].index)
+        gdf_similars = gdf_stations[gdf_stations['ID'].isin(self.similar_watersheds)]
+        self.similar_watersheds_names = gdf_similars["name"].values        
         
     
     def timeseries_similarity(self, data_path, user_watershed_id, similar_watersheds):

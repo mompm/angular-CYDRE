@@ -9,6 +9,7 @@ Created on Thu Jun 22 14:50:29 2023
 import os
 import pickle
 import numpy as np
+import plotly.colors
 import matplotlib as mpl 
 from matplotlib.dates import DateFormatter
 import matplotlib.pyplot as plt
@@ -20,6 +21,15 @@ import plotly.graph_objects as go
 from shapely.geometry import MultiPolygon
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
+
+
+def hex_to_rgba(hex_color, alpha=1.0):
+    """
+    Convertit une couleur hexadécimale en format rgba avec une valeur alpha spécifiée.
+    """
+    hex_color = hex_color.lstrip('#')
+    r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
+    return f'rgba({r}, {g}, {b}, {alpha})'
 
 
 
@@ -129,8 +139,13 @@ class Outputs():
         self.user_streamflow = cydre_app.UserConfiguration.user_streamflow
         self.streamflow_forecast = cydre_app.df_streamflow_forecast
         self.streamflow_forecast_individuals = cydre_app.Forecast.Q_streamflow_forecast_normalized
+        self.watersheds_id_individuals = cydre_app.Forecast.scenario_watershed
+        id_to_name = dict(zip(self.stations['ID'], self.stations['name']))
+        self.watersheds_name_individuals = [id_to_name.get(station_id, station_id) for station_id in self.watersheds_id_individuals]
+        self.years_individuals = cydre_app.Forecast.scenario_year
         self.storage_forecast = cydre_app.df_storage_forecast
         self.station_forecast = cydre_app.df_station_forecast
+        
         
         # Only if we set the version to "test" for sensitivy analysis use.
         if self.version == 'test':
@@ -552,6 +567,8 @@ class Outputs():
             # Save and show plot
             if self.streamflow_fig_path:
                 fig.write_html(self.streamflow_fig_path)
+            
+            pyo.plot(fig)
             
             return fig
      
@@ -990,15 +1007,14 @@ class Outputs():
         scenarios['watershed'] = scenarios['watershed'].map(station_id_to_name)
         n_scenarios = len(scenarios)
         return scenarios, n_scenarios
-
+    
+    
+    def plot_watersheds(self, gdf, similar_watersheds=None):
         
-    #NICOLAS: supprimer ou mettre à jour
-    def plot_watersheds(self, watersheds):
-        """
-        Plot of watersheds on geographic map
-        """
-        
-        gdf = self.create_watershed_geodataframe(watersheds)
+        if similar_watersheds is not None:
+            gdf = gdf[gdf.index.isin(similar_watersheds)]
+        else:
+            gdf = gdf
         
         # Créer une carte vide
         fig = go.Figure()
@@ -1009,12 +1025,7 @@ class Outputs():
             geometry = row['geometry']
             watershed_name = row['name']
             watershed_id = index
-            
-            # Extract and convert outlets
-            gdf_outlet = watersheds[index].geographic.gdf
-            gdf_outlet.crs = 'EPSG:2154'
-            gdf_outlet = gdf_outlet.to_crs(epsg=4326)
-            
+                        
             try:
                 polygon_coords = geometry.exterior.coords.xy
                 polygon_lat = list(polygon_coords[1])
@@ -1025,20 +1036,11 @@ class Outputs():
                     lat=polygon_lat,
                     lon=polygon_lon,
                     mode="lines",
-                    line=dict(width=1, color="blue"),
+                    line=dict(width=1, color="black"),
                     name=watershed_id,
                     text=f"{watershed_name}<br>{watershed_id}",
                     hoverinfo="text",
                 ))
-                
-                fig.add_trace(go.Scattermapbox(
-                   lat=gdf_outlet.geometry.y,
-                   lon=gdf_outlet.geometry.x,
-                   mode="markers",
-                   marker=dict(size=8, color="red", opacity=0.8),
-                   name=f"Outlets for {watershed_id}",
-                   hoverinfo="none",
-               ))
             except:
                 print("MultiPolygon")
         
@@ -1046,12 +1048,94 @@ class Outputs():
         fig.update_layout(
             mapbox=dict(
                 style="open-street-map",  # Choisissez un style de carte (par exemple, "open-street-map")
+                center=dict(lat=48.2141667, lon=-2.9424167),
+                zoom=6.8,
             ),
             showlegend=False,
         )
 
-                # Afficher la carte
+        # Afficher la carte
         pyo.plot(fig)
+        
+    
+    def seasonal_hydrograph(self, watershed_ids, hydro_path):
+    
+        if not watershed_ids:
+            raise ValueError("Au moins un bassin versant doit être fourni.")
+        
+        # Couleurs prédéfinies pour les bassins
+        colors = ['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+        fig = go.Figure()
+        
+        for i, watershed_id in enumerate(watershed_ids):
+            
+            watershed_name = self.stations[self.stations['ID'] == watershed_id].name.values[0]
+            watershed_area = self.stations[self.stations['ID'] == watershed_id]['area'].values[0]
+            print(watershed_name)
+            
+            # Lecture des données
+            df = pd.read_csv(os.path.join(hydro_path, f'{watershed_id}.csv'), delimiter=',')
+            df['t'] = pd.to_datetime(df['t'])
+            df = df.set_index('t')
+            df['year'] = df.index.year
+            df['daily'] = df.index.strftime('%m-%d')
+            
+            # Calcul des statistiques saisonnières
+            q10 = (df.groupby('daily')['Q'].quantile(0.1)) * 86400 / (watershed_area*1e6)
+            q50 = (df.groupby('daily')['Q'].median()) * 86400 / (watershed_area*1e6)
+            q90 = (df.groupby('daily')['Q'].quantile(0.9)) * 86400 / (watershed_area*1e6)
+            
+            # Ajout de la trace pour la médiane
+            fig.add_trace(go.Scatter(
+                x=q50.index,
+                y=q50,
+                name=f"{watershed_name} [{df['year'].min()} - {df['year'].max()}]",
+                line=dict(color=colors[i % len(colors)], width=2.5)
+            ))
+            
+            # Ajout de la trace pour la variabilité
+            fig.add_trace(go.Scatter(
+                x=q10.index.tolist() + q10.index[::-1].tolist(),
+                y=q10.tolist() + q90[::-1].tolist(),
+                fill='toself',
+                fillcolor=hex_to_rgba(colors[i % len(colors)], 0.05),  # Opacité élevée (0.1)
+                line=dict(color='rgba(0, 0, 0, 0)'),
+                hoverinfo='none',
+                showlegend=False
+            ))
+    
+        # Configuration des axes
+        months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
+        
+        fig.update_xaxes(
+            type="category",
+            tickvals=[f"{month:02d}-01" for month in range(1, 13)],
+            ticktext=[months[month-1] for month in range(1, 13)],
+            tickfont=dict(size=14, family='Segoe UI Semibold', color='black'),
+            gridwidth=0.01,
+            gridcolor='rgba(0,0,0,0.1)'
+        )
+        
+        fig.update_yaxes(
+            title=dict(text="Débit de cours d'eau [m3/s]", font=dict(size=14, family='Segoe UI Semibold', color='black')),
+            type="log",
+            exponentformat="power",
+            showticklabels=True,
+            tickfont=dict(size=14, family='Segoe UI Semibold', color='black'),
+            gridwidth=0.01,
+            gridcolor='rgba(0,0,0,0.1)'
+        )
+    
+        # Mise à jour de la mise en page pour un fond blanc
+        fig.update_layout(
+            paper_bgcolor='white',  # Fond de la zone extérieure
+            plot_bgcolor='white',   # Fond de la zone de tracé
+            margin=dict(l=50, r=50, t=50, b=50)
+        )
+    
+        pyo.plot(fig)
+        
+    
 
     #NICOLAS: supprimer ou mettre à jour
     def create_watershed_geodataframe(self, watersheds):
@@ -1106,197 +1190,6 @@ class Outputs():
         return gdf
 
 
-    #NICOLAS: supprimer ou mettre à jour
-    def plot_forecast_streamflow(self,cydre_app, df_forecast):
-        
-        # Get forecast watershed properties and streamflow
-        forecast_year = cydre_app.date.year
-        forecast_watershed = cydre_app.UserConfiguration.user_watershed_id
-        df_watershed = cydre_app.watersheds[forecast_watershed]['hydrometry']['specific_discharge']
-        df_watershed = df_watershed[df_watershed.index.year == forecast_year]
-        
-        # Preprate the plot
-        months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
-        tickvals = [f"{month:02d}-01" for month in range(1, 13)]    
-        ticktext = [f"{months[month-1]}" for month in range(1, 13)]
-        df_watershed['daily'] = df_watershed.index.strftime('%m-%d')
-        df_watershed['Q'] = df_watershed['Q'] * 86400
-        
-        # Plot streamflow
-        scatter_plot = go.Scatter(
-            x = df_watershed['daily'],
-            y = df_watershed['Q'],
-            mode = 'lines',
-            name=f"{cydre_app.watersheds[forecast_watershed]} en ({forecast_year})",
-            line = dict(color='red', width=2)
-            )
-        
-        median_plot = go.Scatter(
-            x = df_forecast.index,
-            y=df_forecast.Q50 * 86400,
-            mode='lines',
-            name='Q50',
-            line=dict(color='darkblue', width=2)
-        )
-        
-        upper_curve = go.Scatter(
-            x=df_forecast.index,
-            y=df_forecast.Q90 * 86400,
-            mode='lines',
-            name='Q90',
-            line=dict(color='silver', width=2)
-        )
-        
-        lower_curve = go.Scatter(
-            x=df_forecast.index,
-            y=df_forecast.Q10 * 86400,
-            mode='lines',
-            name='Q10',
-            line=dict(color='silver', width=2)
-        )
-        
-        fill_area = go.Scatter(
-            x=df_forecast.index,  
-            y=df_forecast.Q90 * 86400,
-            fill='tonexty',
-            mode='none',  
-            name='zone incertitude',
-            #fillcolor='rgba(0, 255, 255, 0.1)'  # Couleur de remplissage avec opacité
-            fillcolor='rgba(191, 191, 191, 0.4)'
-        )
-        
-        layout = go.Layout(
-            xaxis=dict(title="Date"),
-            yaxis=dict(title="Débit spécifique (m/j)"),
-            legend=dict(
-                x=0.5,           # Position horizontale (0 = gauche, 1 = droite)
-                y=1.2,           # Position verticale (1 = haut, -1 = bas)
-                xanchor='center', # Ancrage horizontal ('left', 'center', 'right')
-                yanchor='bottom', # Ancrage vertical ('top', 'middle', 'bottom')
-                orientation='h', # Orientation ('v' pour vertical, 'h' pour horizontal)
-                font=dict(size=9)) # Taille de la police des légendes
-        )
-        
-        forecast_figure = go.Figure(data=[scatter_plot, median_plot, lower_curve, fill_area, upper_curve], layout=layout)
-        #forecast_figure = go.Figure(data=[scatter_plot, median_plot, fill_area], layout=layout)
-        forecast_figure.update_xaxes(type="category", tickvals=tickvals, ticktext=ticktext)
-        forecast_figure.update_yaxes(
-            type="log",
-            range=[-5, -1],
-            #tickformat=".1e",
-            #showexponent="last",
-            exponentformat="power",
-            #showline=True,
-            #linewidth=2,
-            showticklabels=True,
-            tickfont=dict(size=10),
-            #dtick=1,
-        )
-        forecast_figure.update_layout(
-          plot_bgcolor="rgba(0,0,0,0)",
-          paper_bgcolor="rgba(0,0,0,0)")
-        
-        pyo.plot(forecast_figure, filename='test_forecast.html')
-        #plot(forecast_figure, filename='forecast_figure.html')
-    
-    
-    #NICOLAS: supprimer ou mettre à jour
-    def plot_seasonal_streamflow(self, Forecast, savefig=False, 
-                                 fig_size=(8, 7), lw=2, 
-                                 labelsize=22, ticksize=18, legendsize=12, 
-                                 facecolor='cyan', alpha=0.1):
-        
-        # Name of the watershed
-        name = Forecast.watershed_target.hydrometry.name
-        year = Forecast.forecast_year
-        
-        # Extract streamflow from forecasting watersehd
-        q_to_forecast = Forecast.df_site
-        q_to_forecast = q_to_forecast['Q'] * 86400 # m/s to m/d
-        
-        
-        
-        
-        # ---- Extract streamflow from simlar scenarios ----
-        
-        # Best scenarios based on similarity
-        best_scenarios = Forecast.scenarios
-        
-        # Watersheds information
-        watersheds_refs = [best_scenarios.iloc[1].watershed, 
-                           best_scenarios.iloc[2].watershed,
-                           best_scenarios.iloc[3].watershed,
-                           best_scenarios.iloc[78].watershed]
-        
-        # Hydrological station's names
-        watersheds_names = [Forecast.obs_events[watersheds_refs[0]].hydrometry.name,
-                           Forecast.obs_events[watersheds_refs[1]].hydrometry.name,
-                           Forecast.obs_events[watersheds_refs[2]].hydrometry.name,
-                           Forecast.obs_events[watersheds_refs[3]].hydrometry.name]
-        
-        # Year of similarity
-        watersheds_years = [best_scenarios.iloc[1].years, 
-                           best_scenarios.iloc[2].years,
-                           best_scenarios.iloc[3].years,
-                           best_scenarios.iloc[78].years]
-        
-        # Extract streamflow
-        idx = Forecast.df_obs["HydroYear"] == int(year)
-        q_scenario_1 = Forecast.df_obs[watersheds_refs[0]] * 86400
-        q_scenario_2 = Forecast.df_obs[watersheds_refs[1]] * 86400
-        q_scenario_3 = Forecast.df_obs[watersheds_refs[2]] * 86400
-        q_scenario_4 = Forecast.df_obs[watersheds_refs[3]] * 86400
-        
-        
-        
-        # ---- Plot the seasonal streamflow ----
-        
-        # Plot parameters
-        mpl.rcParams.update(mpl.rcParamsDefault)
-        plt.style.use('seaborn-dark-palette')
-        plt.rcParams.update({'font.family':'Arial'})
-        
-        # Create the figure and axes
-        fig, ax = plt.subplots(figsize=fig_size)
-        
-        # Add the discharge
-        ax.plot(np.array(list(q_to_forecast.index)), q_to_forecast.values, color='darkblue',
-                lw=2, label='{watershed} - {year}'.format(watershed=name, year=year))
-        
-        ax.plot(np.array(list(q_to_forecast.index)), q_scenario_1[idx].values, color='green',
-                lw=0.7, linestyle = '--',
-                label='{watershed} - {year}'.format(watershed=watersheds_names[0], year=watersheds_years[0]))
-        
-        ax.plot(np.array(list(q_to_forecast.index)), q_scenario_2[idx].values, color='red',
-                lw=0.7, linestyle = '--', 
-                label='{watershed} - {year}'.format(watershed=watersheds_names[1], year=watersheds_years[1]))
-        
-        ax.plot(np.array(list(q_to_forecast.index)), q_scenario_3[idx].values, color='magenta',
-                lw=0.7, linestyle = '--', 
-                label='{watershed} - {year}'.format(watershed=watersheds_names[2], year=watersheds_years[2]))
-        
-        ax.plot(np.array(list(q_to_forecast.index)), q_scenario_4[idx].values, color='brown',
-                lw=0.7, linestyle = '--', 
-                label='{watershed} - {year}'.format(watershed=watersheds_names[3], year=watersheds_years[3]))
-        
-        ax.tick_params(axis='x', which='both',
-                       labelsize=ticksize,direction='inout', rotation=0)
-        ax.tick_params(axis='y', which='both',
-                       labelsize=ticksize,direction='in')
-        fmt_month = mpl.dates.MonthLocator(interval = 1)
-        ax.xaxis.set_major_locator(fmt_month)
-        ax.xaxis.set_major_formatter(mpl.dates.DateFormatter('%m'))
-        ax.set_ylim(1e-5, 1e-2)
-        ax.set_yscale('log')
-        ax.set_ylabel('Specific discharge (m/d)', fontsize=labelsize)
-        ax.set_xlabel('Months', fontsize=labelsize)
-        ax.set_title(name, fontsize=26)
-        ax.legend(fontsize = legendsize, ncol=1)
-        
-        if savefig:
-            plt.savefig(name+'.tiff', dpi=500, format="tiff", bbox_inches='tight', pad_inches=0.1)
-    
-        plt.show()
         
     
     #NICOLAS: supprimer ou mettre à jour
@@ -1359,3 +1252,193 @@ class Outputs():
        test_interpolated = test_interpolated[test_interpolated.index.isin(self.projection_period)]
        
        return test_interpolated
+   
+    def plot_streamflow_projections_test(self, log=True, module=False, stats_stations=False, options='viz_matplotlib'):
+        """
+        Plot projections (matplotlib or plotly)/
+
+        Parameters
+        ----------
+        log : bool 
+            log-scale
+        module : bool
+            should module be displayed (red horizontal line)
+        stats_stations : bool
+            Trends forecasted from analysis without any similarity are added to the graph (True option).
+        options : string
+            Matplotlib -> tiff
+            Plotly -> html
+
+        Returns
+        -------
+        fig : plotly.graph_objects
+            the handle to the figure
+
+        """
+        
+        reference_df, projection_df, projection_series, merged_df = self.get_projections_data(module)
+        
+        if stats_stations:
+            station_df = self.station_forecast.copy()
+            station_df = station_df.set_index(self.projection_period)
+            station_df *= self.watershed_area * 1e6 # m/s > m3/s
+        
+        
+        if options == 'viz_matplotlib':
+               
+            # Plot initialization
+            plt.style.use('seaborn-dark-palette')
+            plt.rcParams.update({'font.family':'Arial'})
+            mpl.rcParams['figure.figsize'] = 7, 4
+
+            fig, ax = plt.subplots()
+            
+            # Add the uncertainty area of streamflow projetions (between Q10 and Q90)
+            ax.fill_between(merged_df.index, merged_df['Q10'], merged_df['Q90'], color='#407fbd',
+                            alpha=0.10, edgecolor='#407fbd', linewidth=0, label="zone d'incertitude [projection]")
+            ax.plot(merged_df.index, merged_df['Q10'], color='#407fbd', linewidth=0.3)        
+            ax.plot(merged_df.index, merged_df['Q90'], color='#407fbd', linewidth=0.3)
+            
+            # Add the individual series used for the projections trends
+            for i, line in enumerate(projection_series):
+                ax.plot(line.index, line['Q_streamflow'], color='grey', linewidth=0.10, linestyle='--')
+                
+            # Add the Median projection
+            ax.plot(merged_df.index, merged_df['Q50'], color='blue', linewidth=1.5, linestyle='dotted',
+                label='projection médiane')
+            
+            # Add data obtained from stastical analysis at the station (wihout any similarity)
+            if stats_stations:
+                ax.fill_between(merged_df.index, station_df['Q10'], station_df['Q90'], color='purple',
+                                alpha=0.1, edgecolor='purple', linewidth=0, label="zone d'incertitude [station]")
+                
+                ax.plot(merged_df.index, station_df['Q10'], color='purple', linewidth=0.3)        
+                ax.plot(merged_df.index, station_df['Q90'], color='purple', linewidth=0.3)
+                ax.plot(merged_df.index, station_df['Q50'], color='purple', linewidth=1.5, linestyle='dotted',
+                       label='stats sur la station')
+
+
+            # Add the observations
+            ax.plot(reference_df.index, reference_df['Q'], color='k', linewidth=1,
+                label="observation")
+            
+            # Add a vertical line representing the simualtion date
+            ax.axvline(x=self.simulation_date, color='k', linestyle='--', linewidth=0.8)
+            
+            # Add module if selected by the user
+            if module:
+                ax.axhline(y=self.mod10, color='r', linestyle='--', linewidth=0.6, label='1/10 du module')
+            
+            # Set axis parameters
+            ax.tick_params(axis="both", direction = "inout")
+            ax.tick_params(axis='x', rotation=45)
+            if log:
+                ax.set_yscale('log')
+            ax.set_xlim(self.similarity_period[0], self.projection_period[-1])
+            ax.set_ylim(bottom=0.001)
+            ax.set_xlabel("Date", fontsize=12)
+            ax.set_ylabel("Débit (m3/s)", fontsize=12)
+            ax.legend(ncol=4, fontsize=8)
+            ax.set_title(f"{self.watershed_name}", fontsize=14)
+            
+            if self.streamflow_fig_path:
+                plt.savefig(self.streamflow_fig_path, dpi=500, format="tiff", pil_kwargs={"compression": "tiff_lzw"},
+                            bbox_inches='tight', pad_inches=0.1)
+            return fig
+        
+        elif options == 'viz_plotly':
+            
+            # Plot initialization
+            plt.style.use('seaborn-dark-palette')
+            plt.rcParams.update({'font.family':'Arial'})
+            
+            fig = go.Figure()
+            
+            # Add the individual series used for the projections trends with different colors
+            colors = plotly.colors.qualitative.Alphabet
+            
+            for i, line in enumerate(projection_series):
+                
+                station_name = self.watersheds_name_individuals[i]  # Obtenir la station correspondante
+                year = self.years_individuals[i]  # Obtenir l'année correspondante
+                name = f"{station_name} - ({year})"  # Combiner les deux infos pour la légende
+                
+                fig.add_trace(go.Scatter(
+                    x=line.index, 
+                    y=line['Q_streamflow'], 
+                    mode='lines', 
+                    line=dict(color=colors[i % len(colors)], width=1),  # Convert to RGB and add alpha = 1
+                    name=name
+                ))
+            
+            # Add the real data measured at the hydrological station
+            fig.add_trace(go.Scatter(
+                x=reference_df.index, 
+                y=reference_df['Q'], 
+                mode='lines', 
+                line=dict(color='black', width=1.5), 
+                name="Observation"
+            ))
+            
+            # Add a vertical line representing the simulation date
+            max_value = np.nanmax([
+                reference_df.loc[self.similarity_period]['Q'].max()
+            ])
+            
+            fig.add_shape(type="line", x0=self.simulation_date, y0=0, x1=self.simulation_date, y1=1, yref='paper', 
+                          line=dict(color="rgba(0, 0, 0, 1)", width=1, dash="dot"))
+            
+            fig.add_annotation(
+                x=self.simulation_date,  # Position x de l'annotation
+                y=1.1,  # Position y de l'annotation (au-dessus de la ligne)
+                text="Début de la simulation",  # Texte de l'annotation
+                showarrow=True,  # Masquer la flèche
+                font=dict(
+                    family="Arial",
+                    size=12,
+                    color="black"
+                ),
+                align="center"  # Alignement du texte
+            )
+            
+            
+            # Set axis parameters
+            fig.update_xaxes(range=[self.similarity_period[0], self.projection_period[-1]], 
+                             tickformat="%d-%m-%Y",
+                             type='date',
+                             tickfont = dict(size=14, family='Segoe UI Semibold', color='black'),
+                             gridwidth = 0.01,
+                             gridcolor = 'rgba(0,0,0,0.1)',
+                             )
+            
+            fig.update_yaxes(range=[1e-3, None],
+                             type='log' if log else None,
+                             title="Débit (m3/s)",
+                             rangemode='tozero',
+                             tickfont = dict(size=14, family='Segoe UI Semibold', color='black'),
+                             gridwidth = 0.01,
+                             gridcolor = 'rgba(0,0,0,0.1)',
+                             )
+            
+            fig.update_layout(title=f"{self.watershed_id} | {self.watershed_name}", 
+                              width=1200,
+                              height=675,
+                              legend=dict(
+                                  x=1,  # Positionnement sur l'axe x
+                                  y=0.5,  # Centré verticalement
+                                  xanchor='left',  # Ancrage à gauche pour décaler la légende vers l'extérieur
+                                  yanchor='middle',
+                                  orientation="v",  # Légende verticale
+                                ),
+                              title_x = 0.5,
+                              hovermode = "x unified",
+                              plot_bgcolor = "rgba(0,0,0,0)",
+                              paper_bgcolor = "rgba(0,0,0,0)",)
+            
+            # Save and show plot
+            if self.streamflow_fig_path:
+                fig.write_html(self.streamflow_fig_path)
+            
+            pyo.plot(fig)
+            
+            return fig

@@ -115,6 +115,10 @@ class Forecast():
                 else:
                     # Extract watershed timeseries (streamflow, recharge, runoff and volume)
                     df_watershed = self.__extract_timeseries(data_path, watershed_id)
+                    comp_ti = pd.to_datetime(str(year)+'-'+simulation_date.strftime('%m-%d'))
+                    
+                    # Recalculate time origin
+                    forecast_date = self.__recalculate_time_origin(comp_ti, df_watershed)
                     
                     # Time series smoothing for noise reduction
                     #df_watershed = self.__timeseries_smoothing(df_watershed)
@@ -122,7 +126,7 @@ class Forecast():
                     # Subset of the time series for the forecast period
                     df_subset, comp_Qi = self.__extract_forecast_period(df_watershed,
                                                                        year,
-                                                                       simulation_date,
+                                                                       forecast_date,
                                                                        user_Qi)
                     
                     # Time series normalization to impose the same "initial" flow
@@ -235,12 +239,18 @@ class Forecast():
         with open(runoff_path) as file:
             runoff = pd.read_csv(file, index_col="t")
             runoff.index = pd.to_datetime(runoff.index)
+        
+        precipitation_path = os.path.join(data_path, "climatic", "surfex", "precipitation", "{}.csv".format(watershed_id)) 
+        with open(precipitation_path) as file:
+            precipitation = pd.read_csv(file, index_col="t")
+            precipitation.index = pd.to_datetime(precipitation.index)
             
         storage = recharge + runoff - streamflow 
         
         df = pd.merge(streamflow, recharge, left_index=True, right_index=True, suffixes=('_streamflow', '_recharge'))
         df = pd.merge(df, runoff, left_index=True, right_index=True, suffixes=('', '_runoff'))
         df = pd.merge(df, storage, left_index=True, right_index=True, suffixes=('_runoff', '_storage'))
+        df = pd.merge(df, precipitation, left_index=True, right_index=True, suffixes=('_runoff', '_storage', '_precipitation'))
 
         return df
     
@@ -249,13 +259,36 @@ class Forecast():
         return df.rolling(window=7, min_periods=1).mean()
     
     
-    def __extract_forecast_period(self, df, year, user_ti, user_Qi):
+    def __recalculate_time_origin(self, comp_ti, df):
         
-        # Extract time series data for the forecast period (comparison watershed case)
-        comp_ti = pd.to_datetime(str(year)+'-'+user_ti.strftime('%m-%d'))
-        comp_Qi = df[df.index == comp_ti]
-        comp_forecast_period = pd.date_range(start=comp_ti + timedelta(days=1),
-                                             end=comp_ti + timedelta(days=self.forecast_horizon))
+        # Check precipitaiton conditions
+        NDAYS_BELOW_CONDITIONS = 4 # days
+        CONDITIONS = 3 # mm
+        rolling_precipitation = df['Q'].rolling(window=NDAYS_BELOW_CONDITIONS).max()   
+        check_conditions = rolling_precipitation <= CONDITIONS
+        df['conditions'] = check_conditions
+        
+        # Recalculate the simulation date if necessary
+        if df.loc[comp_ti].conditions == False:
+            filtered_df = df.loc[:comp_ti]
+            latest_true_date = filtered_df[filtered_df['conditions'] == True].index.max()
+            forecast_date = pd.to_datetime(latest_true_date)
+        
+        return forecast_date
+    
+    
+    def __extract_forecast_period(self, df, year, forecast_date, user_Qi):
+        
+        # Initial streamflow
+        comp_Qi = df[df.index == forecast_date]
+        
+        # Forecast period
+        #comp_forecast_period = pd.date_range(start=comp_ti + timedelta(days=1),
+         #                                    end=comp_ti + timedelta(days=self.forecast_horizon))
+        
+        comp_forecast_period = pd.date_range(start=forecast_date + timedelta(days=1),
+                                             end=forecast_date + timedelta(days=self.forecast_horizon))
+        
         df_subset = df[df.index.isin(comp_forecast_period)]
         
         return df_subset, comp_Qi
@@ -286,11 +319,12 @@ class Forecast():
             
             try:
                 print(year)
+                comp_ti = pd.to_datetime(str(year)+'-'+simulation_date.strftime('%m-%d'))
                 
                 # Subset the time series for the forecast period
                 df_subset, comp_Qi = self.__extract_forecast_period(user_df,
                                                                    year,
-                                                                   simulation_date,
+                                                                   comp_ti,
                                                                    user_Qi)
                 
                 comp_Qi['Q_streamflow'] = comp_Qi['Q']

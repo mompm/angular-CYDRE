@@ -86,10 +86,10 @@ class Cydre():
         self.Similarity = SIM.Similarity(similarity_params, self.date)
         
     
-    def run_spatial_similarity(self, hydraulic_path, spatial=True):
+    def run_spatial_similarity(self, hydraulic_path, gdf_stations, spatial=True):
         if spatial:
             self.Similarity.spatial_similarity(hydraulic_path)
-            self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id)
+            self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id, gdf_stations)
     
             
     def run_timeseries_similarity(self, data_path, similar_watersheds):
@@ -167,6 +167,7 @@ class Cydre():
             raise ValueError("There are no past events with a correlation coefficient above the defined threshold.")
         
         # Projection using station stats (for matter of comparison made later in postprocessing)
+        #self.Forecast.stats_station_forecast(self.date, self.UserConfiguration.user_streamflow, self.user_Qi)
         self.Forecast.stats_station_forecast(self.date, self.UserConfiguration.user_streamflow, self.user_Qi)
         
         try:
