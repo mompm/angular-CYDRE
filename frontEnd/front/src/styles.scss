@@ -18,7 +18,7 @@ html, body {
   min-height: 100%;
 }
 body {
-  overflow-x: hidden;
+  // overflow-x: hidden;
 }
 
 .p-button.p-button-icon-tiny{
@@ -45,3 +45,12 @@ strong{
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.cdk-overlay-backdrop {
+  background-color: rgba(0, 0, 0, 0.3); /* Opacité à 30% pour voir les graphiques derrière */
+}
+
+.mat-dialog-container {
+  backdrop-filter: blur(3px); /* Effet de flou pour accentuer le contraste */
+  background-color: rgba(255, 255, 255, 0.9); /* Couleur blanche légèrement transparente */
+}
