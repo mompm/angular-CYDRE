@@ -88,21 +88,30 @@
         </div>
       </div>
     </div>
-    
+  
   <div>
     <div class="h3_div">
-      <h3 class="h3_text">Propriétés hydrogéologiques</h3>
+      <h3 class="h3_text">Typologies de bassins versants</h3>
+      <button mat-raised-button color="#413f3f" (click)="openDialogClassif($event)">
+        <mat-icon style="color: white">help_outline</mat-icon>
+      </button>
     </div>
-  </div>
-  <div class="seasonal_plot_div">
-      <!--<div id="mappy"></div>-->
-      <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;">
-        <div id="mapy" class="map_typologie"></div>
-        <div style="height: 350px; width: 30%;">
-          <strong>Légende</strong>
-          <div id="legend-items"></div>
+    <div class="seasonal_plot_div">
+        <!--<div id="mappy"></div>-->
+        <!-- <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;"> -->
+        <!-- <div style="display:flex;align-items: flex-start; margin-top: 5px;  margin-bottom: 5px;"> -->
+          <app-typology-map
+            [selectedWatershedID]="selectedWatershedID"
+            [DataGDFStation]="DataGDFStation"
+            [DataGDFWatershed]="DataGDFWatershed">
+          </app-typology-map>
+          <!-- <div id="mapy" class="map_typologie"></div> -->
+          <!-- <div style="height: 350px; width: 30%;">
+            <strong>Légende</strong>
+            <div id="legend-items"></div>
+          </div> -->
         </div>
-      </div>
+    </div> 
   </div>
 </div>
   

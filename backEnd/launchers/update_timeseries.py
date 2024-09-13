@@ -22,7 +22,7 @@ app_root = setup_cydre_path()
 import libraries.preprocessing.data.surfex as surfex
 import libraries.preprocessing.data.hydrometry as hydrometry
 import libraries.preprocessing.data.piezometry as piezometry
-sys.exit()
+
 
 #%% Path Definitions
 data_path = os.path.join(app_root, 'data')

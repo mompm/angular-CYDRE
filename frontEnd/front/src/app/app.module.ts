@@ -71,6 +71,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
 import { ParametersPanelComponent } from './parameters-panel/parameters-panel.component';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { TypologyMapComponent } from './ficheSite/typology-map/typology-map.component';
 
 
 
@@ -113,6 +114,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     SimulationResultsComponent,
     SimulationHistoryComponent,
     ParametersPanelComponent,
+    TypologyMapComponent,
   ],
   imports: [
     BrowserModule,
