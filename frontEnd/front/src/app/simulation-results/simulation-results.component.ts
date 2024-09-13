@@ -16,6 +16,17 @@ import * as Papa from 'papaparse';
 import { index, string } from 'mathjs';
 import * as e from 'express';
 
+// format des indicateurs
+interface Indicator {
+  id: string;
+  type: string;
+  value: number;
+  color: string;
+  fixed: boolean;
+  modified : boolean;
+}
+
+
 @Component({
   selector: 'app-simulation-results',
   templateUrl: './simulation-results.component.html',
@@ -99,6 +110,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   XaxisObservations : Date[] = [];
   XaxisPredictions : Date[] = [];
   indicators: Array<Indicator> = [];
+  IDIndicators : number = 0;
   colorScheme: Color = {
     name: 'default',
     selectable: true,
@@ -196,8 +208,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.matricecolumn = columns && columns.length > 15;
       
     }
-
-
     try{//création des matrices de similarités
       if(this.results.results.similarity){
         this.cdr.detectChanges();
@@ -249,6 +259,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     } 
   }
 
+  onToggleChange() {
+    this.updateComponentsWithResults(this.results);
+  }
 
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
@@ -262,9 +275,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
   fillIndicators() {//ajouter les indicateurs de la base de données au tableau du front
     this.indicators = [];  // Réinitialiser le tableau des indicateurs
+    this.IDIndicators = 0;
     this.tooltipTextsEstimationValue = [] 
     // Supposons que `this.simulationData` contient le tableau des indicateurs
-    this.results.indicators.forEach((indicator: { type: string; value : number; results: any; color :string})=> {
+    this.results.indicators.forEach((indicator: { id : string, type: string; value : number; results: any; color :string})=> {
                 // `data` est un objet avec `results`, `type`, et `value`
                 let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
                 if(fixedValue){
@@ -275,11 +289,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                   this.tooltipTextsEstimationValue.push(tooltipText);
                 }
                 this.indicators.push({
+                    id: indicator.id,
                     type: indicator.type,
                     value: indicator.value,
                     color: indicator.color,
                     fixed: fixedValue,
-                    modified:false
+                    modified:false,
                 });
                 console.log(indicator);
             });
@@ -288,13 +303,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
 
 }
-
-  onToggleChange() {
-    this.updateComponentsWithResults(this.results);
-  }
-
   addIndicator() {//ajout d'un indicateur vide lors du clique sur le bouton +
+    this.IDIndicators = this.IDIndicators + 1 ;
     this.indicators.push({
+      id:string(this.IDIndicators),
       type: "",
       value: 0,
       color: "#Ff0000",  // couleur par défaut si non spécifié
@@ -303,13 +315,22 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   })
   }
 
-  removeIndicator(index: number, type : string) {//suppression d'un indicateur
-    this.indicators.splice(index,1);
-    this.layout?.shapes!.splice(index,1);
-    this.results.indicators = this.jsonService.removeIndicator(this.simulation_id!, type)
-    this.updateIndicatorShapes();
-    return this.indicators
-  }
+  removeIndicator(index: number, type: string) {
+    // Suppression de l'indicateur
+    this.indicators.splice(index, 1);
+    this.layout?.shapes!.splice(index, 1);
+
+    // Utilisation remove indicateur dans le backend
+    this.jsonService.removeIndicator(this.simulation_id!, type).then(updatedIndicators => {
+        this.results.indicators = updatedIndicators; // La promesse est résolue ici
+        this.updateIndicatorShapes();
+    }).catch(error => {
+        console.error("Erreur lors de la suppression de l'indicateur:", error);
+    });
+
+    return this.indicators;
+}
+
   onIndicatorTextChange(text : string, index : number){
     //changer le type de l'indicateur concerné
       this.indicators[index].type = text ?text:"";
@@ -324,7 +345,6 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       this.updateIndicatorShapes();
       return this.indicators[index]
   }
-
 
   updateColorStyle(color : string ,index : number){
     //changer la couleur de l'indicateur concerné
@@ -371,15 +391,30 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-
   async updateResults() {
-    if(sessionStorage.getItem('lastSimulationId')){
-      //mettre à jour tous les indicateurs que l'on a modifié  
-      this.results.indicators = await this.jsonService.updateIndicatorsValue(sessionStorage.getItem('lastSimulationId')!,this.indicators.filter(indicator => indicator.modified==true))
-      this.fillIndicators
+    if (sessionStorage.getItem('lastSimulationId')) {
+        // Créer une liste de promesses pour chaque indicateur modifié ( pour gérer le fonctionnement asynchorn)
+        const updatePromises = this.indicators.map(async (modifIndi) => {
+            if (modifIndi.modified === true) {
+                // Attendre la mise à jour de l'indicateur modifié
+                const updatedIndicators = await this.jsonService.updateIndicatorsValue(
+                    sessionStorage.getItem('lastSimulationId')!,
+                    this.indicators.filter(indicator => indicator.id === modifIndi.id)
+                );
+                
+                // Mettre à jour dans this.results les indicateurs
+                this.results.indicators = updatedIndicators;
+                // remettre false pour l'incateur modifier
+                modifIndi.modified = false;
+            }
+        });
+
+        // Attendre que toutes les promesses soient résolues
+        await Promise.all(updatePromises);
+        // Afficher les indicateurs après mise à jour
+        console.log("Noms après (results):", this.results.indicators);
     }
-    
-  }
+}
 
 
 //PARTIE GRAPHIQUE MODELE HYDRO //  
@@ -396,107 +431,148 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   }
 
   
-  
+
+  /**
+   * Gestion des données et organisation des traces du graphique
+   */
   updateGraphData(): void {//crée les traces du graphe
+      // si les données de la simulation contient les données permettant la création du graphique
        if (this.showResults && this.results.results.data.graph) {
       //mettre à jour les données de axes x des observation et prediction 
       this.XaxisObservations = this.generateDateSeries(this.results.results.data.first_observation_date,this.results.results.data.last_observation_date);
-      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date);
-      this.traces= [];
-      var q10Data: { x: Date[], y: number[] } | null = null;
-      var q90Data: { x: Date[], y: number[] } | null = null;
-      var projectionData: { x: Date[], y: number[] } = { x: [], y: [] }; // Accumulateur pour les projections
-      let projectionDataReverse = true;
-      let incertitudeX;
-      let incertitudeY;
-      let q50X ;
-      let q50Y ;
-      let observationsX ;
-      let observationsY ;
-
+      this.XaxisPredictions = this.generateDateSeries(this.results.results.data.first_prediction_date,this.results.results.data.last_prediction_date); 
+      // mettre à jour la date de début simulation
       this.startDate = new Date(this.results.results.similarity.user_similarity_period[0]);
+      // variables pour les traces
+      this.traces= []; // contient les traces du graphique
+      var q10Data: { x: Date[], y: number[] } | null = null; // Accumulateur pour q10 -> Dates et valeurs
+      var q90Data: { x: Date[], y: number[] } | null = null; // Accululateur pour q90 -> Dates et valeurs
+      let incertitudeX; // Accumulateur pour q10 et q90 (incertitude) -> Dates
+      let incertitudeY; // Accumulateur pour q19 et q90 (incertitude) -> valeurs
+      let q50X ;// Accumulateur pour q50 -> Dates 
+      let q50Y ; // Accumulateir pour q80 -> valeurs
+      var projectionData: { x: Date[], y: number[] } = { x: [], y: [] }; // Accumulateur pour les projections -> Dates et valeurs
+      let projectionDataReverse = true; // variable pour alterner l'ordre de rentrer des projections
+      let observationsX ; // Accumulateur pour l'observation -> Dates
+      let observationsY ; // Accumulateur pour l'observation -> valeurs
+   
+      //GESTION DES DONNEES//
+      // parcours les données permettant la création du graphique
+      console.log(this.results.results.data.graph)
+      console.log("selected",this.results)
       this.results.results.data.graph.forEach((line: { y: any[]; name: string; mode: string; line: any;}) => {
           if ( line.y ) {
               var parsedDates = this.XaxisPredictions;
-              if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
-                  this.endDate = parsedDates[parsedDates.length - 1];
-              }
-              if (line.name != 'observations'){
-                for (let i = 0; i < parsedDates.length; i++) {
-                  if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
-                      this.maxPredictedValue.push(line.y[i]);
+                //met a jour la derniere date de prediction si elle n'existe pas , ou la dernière date de parseDates est supérieur à la dernier date stocké
+                if (!this.endDate || parsedDates[parsedDates.length - 1] > this.endDate) {
+                    this.endDate = parsedDates[parsedDates.length - 1];
+                }
+                // si la ligne est celle qui contient les données prédictions
+                if (line.name != 'observations'){
+                  //on parcours les dates dans les prédictions
+                  for (let i = 0; i < parsedDates.length; i++) {
+                    // Si la date actuelle est comprise entre la date de début de la simulation et la date de fin observée
+                    if (parsedDates[i] >= this.simulationStartDate! && parsedDates[i] <= this.endDate) {
+                        this.maxPredictedValue.push(line.y[i]);
+                    }
                   }
                 }
-              }
-            if(line.name == 'Q10'){
-              q10Data = { x: this.XaxisPredictions, y: line.y };
-              incertitudeX = parsedDates; 
-            }
-            else if ( line.name == 'Q90'){
-              if (parsedDates.length > 0) {
-                this.simulationStartDate = parsedDates[0];
-                this.simulationEndDate = parsedDates[parsedDates.length-1];
-              }
-              this.simulationStartDate = parsedDates[0];
-              q90Data = { x: parsedDates, y: line.y };
-            }
-            else if ( line.name == 'Q50'){
-              q50X = this.XaxisPredictions;
-              q50Y = line.y;
-            }
-            else if (line.name == 'observations'){
-              observationsX = this.XaxisObservations;
-              observationsY = line.y;
-              // Get the lengths of XaxisObservations and observationsY
-              let lengthX = observationsX.length;
-              let lengthY = observationsY.length;
-                              
-              // Convert dates to Date objects for comparison
-              let maxDateTimestamp = Math.max(...observationsX.map(date => new Date(date).getTime()));
+                //si la ligne est celle qui contient les données q10
+                if(line.name == 'Q10'){
+                  // récupère les données  q10
+                  q10Data = { x: this.XaxisPredictions, y: line.y };
+                  // définie les dates dans incertitude
+                  incertitudeX = parsedDates; 
+                }
 
-              if (this.simulationStartDate) {
-                let simulationStartDateTimestamp = new Date(this.simulationStartDate).getTime();
-            
-                // Check if the max date in XaxisObservations is less than simulationStartDate
-                if (maxDateTimestamp < simulationStartDateTimestamp) {
-                    // Replace values in observationsY with null if the date in observationsX is after simulationStartDate
-                    for (let i = 0; i < lengthX; i++) {
-                        if (new Date(observationsX[i]).getTime() >= simulationStartDateTimestamp) {
-                            observationsY[i] = null;
+                //si la ligne est celle qui contient les données q90
+                else if ( line.name == 'Q90'){
+                    // si parseDates est initialisé
+                    if (parsedDates.length > 0) {
+                      // Définit la première date analysée comme date de début de simulation
+                      this.simulationStartDate = parsedDates[0];
+                      // Définit la dernière date analysée comme date de fin de simulation
+                      this.simulationEndDate = parsedDates[parsedDates.length-1];
+                    }
+                  // Redéfinit la date de début de simulation   
+                  this.simulationStartDate = parsedDates[0];
+                  // récupère les données q90
+                  q90Data = { x: parsedDates, y: line.y };
+                }
+
+                //si la ligne est celle qui contient les données q50
+                else if ( line.name == 'Q50'){
+                  q50X = this.XaxisPredictions;
+                  q50Y = line.y;
+                }
+
+                //si la ligne est celle qui contient les données observations
+                else if (line.name == 'observations'){
+                  // récupère les données observation
+                  observationsX = this.XaxisObservations; // Dates
+                  observationsY = line.y; //Valeurs
+                  // Partie pour gérer si la deniere date observations et la première date de simulation sont éloigné (plusieurs année)
+                  // obtenir la taille des tableaux contenant les Dates et les valeurs  d'observation
+                  let lengthX = observationsX.length; // Dates
+                  let lengthY = observationsY.length; // Valeur
+                  // Conversion format Date objects  pour trouver la date max dans les dates observation
+                  let maxDateTimestamp = Math.max(...observationsX.map(date => new Date(date).getTime()));
+
+                  // si on a la 1er date de simulation
+                  if (this.simulationStartDate) {
+                    // conversion au format Date object
+                    let simulationStartDateTimestamp = new Date(this.simulationStartDate).getTime();
+                
+                    // vérifie si la date max dans observation est plus petite que la 1er date de simulation
+                    if (maxDateTimestamp < simulationStartDateTimestamp) {
+                        for (let i = 0; i < lengthX; i++) {
+                          // Si une date d'observation est postérieure ou égale à la date de début de simulation, on met la valeur correspondante à null
+                            if (new Date(observationsX[i]).getTime() >= simulationStartDateTimestamp) {
+                                observationsY[i] = null;
+                            }
                         }
                     }
+                  }
+                  // Si le nombre de valeurs d'observation est inférieur au nombre de dates d'observation
+                  if (lengthY < lengthX) {
+                    for (let i = lengthY; i < lengthX; i++) {
+                      // Ajouter des valeurs null au début du tableau des valeurs pour correspondre aux dates supplémentaires
+                        observationsY.unshift(null); 
+                    }
+                  }
                 }
-              }
-              if (lengthY < lengthX) {
-                for (let i = lengthY; i < lengthX; i++) {
-                    observationsY.unshift(null); // Add null to the beginning of observationsY
+
+                //si la lignes est celle qui contient les données projection
+                else if (line.name.includes('Projection')){
+                  // Regroupe les données de projection dans un tableau pour une suppression en un clic sans doublon dans la légende.
+                  // Les données sont alternées entre l'ordre normal et inversé pour éviter des lignes traversantes dans le graphique .
+                  if(projectionDataReverse){
+                    // met en normal les données
+                  projectionData.x = projectionData.x.concat(this.XaxisPredictions);
+                  projectionData.y = projectionData.y.concat(line.y);
+                  }else{
+                    //met en reverse les données
+                    projectionData.x = projectionData.x.concat([...this.XaxisPredictions].reverse());
+                    projectionData.y = projectionData.y.concat([...line.y].reverse());
+                  }
+                  
+                  projectionDataReverse = !projectionDataReverse;
+                  
                 }
-              }
-            }else if (line.name.includes('Projection')){
-              // Regroupe les données de projection dans un tableau pour une suppression en un clic sans doublon dans la légende.
-              // Les données sont alternées entre l'ordre normal et inversé pour éviter des lignes traversantes dans le graphique .
-              if(projectionDataReverse){
-                // met en normal les données
-              projectionData.x = projectionData.x.concat(this.XaxisPredictions);
-              projectionData.y = projectionData.y.concat(line.y);
-              }else{
-                //met en reverse les données
-                projectionData.x = projectionData.x.concat([...this.XaxisPredictions].reverse());
-                projectionData.y = projectionData.y.concat([...line.y].reverse());
-              }
-              
-              projectionDataReverse = !projectionDataReverse;
-              
-            }
-              if (q10Data && q90Data) {
+            // si les variables Accumulatrices de q10 et q90 ne sont pas vide     
+            if (q10Data && q90Data) {
+              // récupère les données incertitude en concatenant les données dans q90 et q10
                 incertitudeX = q10Data.x.concat(q90Data.x.slice().reverse());
                 incertitudeY = q10Data.y.concat(q90Data.y.slice().reverse());
                 this.endDate = (q90Data as any).x[(q90Data as any).x.length-1]
               }
-            }
+      }
       });
-      
+
+      //ORGANISATION DES TRACES// attention l'ordre de rentrer est important car plotly est en couche donc la dernière trace est au dessus de toutes les autres traces
+      // si les données projection sont bien initalisé
       if (projectionData.x.length > 0 && projectionData.y.length > 0) {
+        // mise en forme et rentrer dans this.traces
         var projectionTrace: Plotly.Data = {
           x: projectionData.x,
           y: projectionData.y,
@@ -509,8 +585,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         };
         this.traces.push(projectionTrace);
       }
-        
+      
+      // si les données q10 et q90 sont bien initalisé
       if (q10Data && q90Data){
+        // mise en forme et rentrer dans this.traces
         var incertitudeTrace: Plotly.Data = {
             x: incertitudeX,
             y: incertitudeY,
@@ -525,7 +603,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         };
         this.traces.push(incertitudeTrace);
       }
+
+       // si les données q50 sont bien initalisé
       if(q50X && q50Y){
+        // mise en forme et rentrer dans this.traces
         var q50Trace : Plotly.Data = {
           x : q50X,
           y : q50Y,
@@ -538,7 +619,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         };
         this.traces.push(q50Trace);
       }
+
+      // si les données observation sont bien initalisé
       if(observationsX && observationsY){
+         // mise en forme et rentrer dans this.traces
         var observationsTrace : Plotly.Data = {
           x : observationsX,
           y : observationsY,
@@ -1036,10 +1120,13 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           try{
             // Utiliser flat() pour aplatir la matrice en un tableau à une dimension
             const flattenedData = this.results.results.scenarios.data.flat();
+            console.log("flat",flattenedData)
             // Utiliser filter() pour garder uniquement les éléments différents de 0
             const nonZeroElements = flattenedData.filter((value: number) => value !== 0);
+            console.log("nozero",nonZeroElements)
             // La longueur du tableau résultant est le nombre d'éléments différents de 0
             this.similarScenarios = nonZeroElements.length;
+            
       
           }catch(e){
             console.error(e)
@@ -1215,13 +1302,5 @@ export class Dialogsimulationresults {
     this.dialogRef.close();
   }
 
-}
-
-interface Indicator {
-  type: string;
-  value: number;
-  color: string;
-  fixed: boolean;
-  modified : boolean;
 }
 

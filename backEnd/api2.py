@@ -683,11 +683,13 @@ def getForecastResults(simulation_id):
                                    'first_prediction_date':graph_results['first_prediction_date'],
                                    'last_prediction_date':graph_results['last_prediction_date']})
         
+        app.logger.info("data" + graph_json)
         # Mise à jour de chaque champ        
         update_simulation(simulation_id, 'Results', text("'$.data'"), graph_json)
 
         # Enregistrer les indicateurs opérationnels dans la colonne Indicators (ici le 1/10 du module)
-        indicators_m10 = {"type":"1/10 du module",
+        indicators_m10 = {"id" : "0",
+                          "type":"1/10 du module",
                           "value":graph_results['m10'],
                           "color" : "#Ff0000",
                           "results":{
@@ -740,9 +742,11 @@ def getForecastResults(simulation_id):
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+    
 
 
-# Route permettant de mettre à jour les projections liées à un indicateur d'une simulation, de le créer sinon
+
 @app.route('/api/simulateur/update_indicator/<simulation_id>', methods=['POST'])
 @cross_origin()
 def update_indicator(simulation_id):
@@ -751,6 +755,7 @@ def update_indicator(simulation_id):
         if not data or 'type' not in data or 'value' not in data:
             return jsonify({'Error': 'Missing data for indicator name or value'}), 400
 
+        # Recherche de la simulation
         simulation = Simulation.query.filter_by(SimulationID=simulation_id).first()
         if not simulation:
             return jsonify({'Error': 'Simulation not found'}), 404
@@ -762,40 +767,56 @@ def update_indicator(simulation_id):
         cydre_app = streamflow_forecast(cydre_app, simulation_id)
 
         # Récupérer les autres paramètres de la simulation nécessaires au calcul des prédictions liées à l'indicateur
-        watershed_name =  db.session.query(
+        watershed_name = db.session.query(
             func.json_extract(Simulation.Parameters, '$.watershed_name')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         
-        user_similarity_period =db.session.query(
+        user_similarity_period = db.session.query(
             func.json_extract(Simulation.Results, '$.similarity.user_similarity_period')
         ).filter(Simulation.SimulationID == simulation_id).scalar()
         user_similarity_period = json.loads(user_similarity_period)
         
+        # Calcul des nouvelles projections
         results = OUT.Outputs(cydre_app, watershed_name, gdf_stations, cydre_app.date, user_similarity_period,
                               log=True, module=True, options='viz_plotly')
         new_projections = results.new_projections(data.get('value'))
 
-        new_indicator = {"type": data['type'], "value": data['value'], "color" : data.get("color"),"results":new_projections}
-
+        # Si la liste des indicateurs n'existe pas encore, on l'initialise
         if not simulation.Indicators:
             simulation.Indicators = []
-        found =False
+
+        new_indicator = {
+            "id": data['id'],  # ID incrémenté
+            "type": data['type'], 
+            "value": data['value'], 
+            "color": data.get("color"), 
+            "results": new_projections
+        }
+
+        # Mise à jour ou ajout de l'indicateur
+        found = False
         for indicator in simulation.Indicators:
-            if indicator['type'] == data['type']:
+            #vérifier si id existe déjà
+            if indicator['id'] == data['id']: 
+                app.logger.info("trouver!")
                 indicator.update(new_indicator)
                 found = True
                 break
 
         if not found:
             print("ADDING INDICATOR TO DATABASE")
-            simulation.Indicators.append(new_indicator)   
+            simulation.Indicators.append(new_indicator)  # Ajouter un nouvel indicateur
+
+        # Marquer le champ Indicators comme modifié
         flag_modified(simulation, "Indicators")
         db.session.commit()
+
         return jsonify({"Success": "Indicator updated or added successfully"}), 200
 
     except Exception as e:
-        app.logger.error(f"Error adding/updating indicator: {str(e)}")  # Log the error
+        app.logger.error(f"Error adding/updating indicator: {str(e)}")  # Log de l'erreur
         return jsonify({"Error": str(e)}), 500
+
     
 
 # Route renvoyant les valeurs de prévisions liées aux indicateurs d'une simulations
