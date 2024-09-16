@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy , ViewChild, ElementRef} from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import {MatButtonModule} from '@angular/material/button';
 import {MatTooltipModule} from '@angular/material/tooltip';
 import { Options } from '@angular-slider/ngx-slider';
@@ -27,7 +28,7 @@ togglePanel() {
   this.showParametersPanel = !this.showParametersPanel;
 }
 
-  constructor(private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog,
+  constructor(private cdr: ChangeDetectorRef, private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog,
     private router : Router
   ) { }
   @ViewChild('fileInput')
@@ -44,12 +45,14 @@ togglePanel() {
   selectedStationName: string | null | undefined;
   selectedStationBSS: string | null | undefined;
   selectedStationDisabled: boolean | undefined;
+  previousSelectedStation: { index: string, station_name: string } | null = null;  // Sauvegarde la station précédente
   sliderValue: number = 60;
   simulationDate: string = new Date().toISOString().split('T')[0];
   isModalOpen: boolean = false;
   simulation_id = ""
   parameters = {}
   fetchingResults  : boolean =false;
+  
   
   list_of_disabled_options: string[] = [
     'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
@@ -82,6 +85,7 @@ togglePanel() {
 
 
   async ngOnInit() {
+    document.addEventListener('click', this.handleClickOutside.bind(this));
     if (!this.authService.isLoggedIn) {
       this.router.navigate(['/login']);
     }
@@ -157,6 +161,25 @@ togglePanel() {
       .map(station => ({ index: station.index, station_name: station.station_name }));
   }
 
+  // Méthode appelée lorsque l'utilisateur clique dans le champ (click)
+      clearSelection() {
+        this.previousSelectedStation = this.myControl.value;  // Garde la valeur précédente
+        console.log(this.previousSelectedStation)
+        this.myControl.setValue('');  // Vide le champ
+      }
+
+      // 
+      handleClickOutside(event: MouseEvent) {
+        // Vérifie si le clic a eu lieu en dehors du champ de formulaire
+        const target = event.target as HTMLElement;
+        if (!target.closest('mat-autocomplete') && !target.closest('mat-form-field')) {
+          // Restaure la sélection précédente si aucune option n'est sélectionnée
+          if (this.myControl.value === '') {
+            this.myControl.setValue(this.previousSelectedStation);
+            this.cdr.detectChanges(); // Forcer la détection des changements
+          }
+        }
+      }
   
   /**
    * Gère la sélection d'une option dans le dropdown.
@@ -164,29 +187,29 @@ togglePanel() {
    *
    * @param event - L'événement de sélection déclenché par l'utilisateur lors du choix d'une option dans le dropdown.
    */
-  onOptionSelected(event: any) {
-     // Récupère l'option sélectionnée à partir de l'événement
-    const selectedOption = event.option.value;
-    this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response)=>{
-      this.results = this.deepParseJson(response);
-      this.showResults = true;
-      //console.log("results:",this.results)
-      //console.log("Showresults:",this.showResults)
-    });
-    // mise à jour les données de sharedService
-    this.sharedService.setSelectedValue(selectedOption.index);
-    this.selectedStation = selectedOption.index;
-    const name = this.stations.find(station => station.index === selectedOption.index)?.name;
-    const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
-    if (select){
-      this.selectedStationBSS = select;
-      this.sharedService.setSelectedValueBSS(select);
+    onOptionSelected(event: any) {
+      if (event.option.value) {
+        const selectedOption = event.option.value;
+        this.previousSelectedStation = selectedOption;  // Met à jour la sélection précédente
+        this.jsonService.getBetaSimulation(selectedOption.index).subscribe((response) => {
+          this.results = this.deepParseJson(response);
+          this.showResults = true;
+          
+        });
+        this.sharedService.setSelectedValue(selectedOption.index);
+        this.selectedStation = selectedOption.index;
+        const name = this.stations.find(station => station.index === selectedOption.index)?.name;
+        const select = this.stations.find(station => station.index === selectedOption.index)?.BSS_ID;
+        if (select) {
+          this.selectedStationBSS = select;
+          this.sharedService.setSelectedValueBSS(select);
+        }
+        if (name) {
+          this.selectedStationName = name;
+          this.sharedService.setSelectedStationName(name);
+        }
+      } 
     }
-    if (name){
-      this.selectedStationName = name;
-      this.sharedService.setSelectedStationName(name);
-    }
-  }
 
       /**
      * Vérifie si une option du dropdown est désactivée.
@@ -211,6 +234,7 @@ togglePanel() {
       // Si une option est sélectionnée, retourne une chaîne formatée "index - station_name"
       return option ? `${option.index} - ${option.station_name}` : '';
     }
+
 
 
 
@@ -244,6 +268,10 @@ updateProgress(message: string, progress: number) {
   }
 
   async onStartSimulation() {
+    //permet de masquer l'ancien résulat si une simulation est déjà affiché
+    if(this.showResults){
+      this.results = false
+    }
     let params = {}
     let UserID = 0
     //affiche le poppup error si la station selection est dans list_of_disabled_options

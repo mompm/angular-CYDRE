@@ -1,4 +1,5 @@
 import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import * as L from 'leaflet';
 import { DataService } from 'src/app/service/data.service';
@@ -28,7 +29,6 @@ import * as Plotly from 'plotly.js-dist';
    */
   export class FicheSiteComponent {
     private mapy!: L.Map;
-    mapInit: boolean = true;
     correspondance: boolean = true;
     currentYear: number = new Date().getFullYear();
     years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i);
@@ -40,6 +40,7 @@ import * as Plotly from 'plotly.js-dist';
     selectedWatershedID: string  = '';
     selectedStationName: string = '';
     selectedWatershedBSS: string  ='';
+    previousSelectedStation: { index: string, station_name: string } | null = null;  // Sauvegarde la station précédente
 
   
   
@@ -55,12 +56,12 @@ import * as Plotly from 'plotly.js-dist';
      * @param sharedService 
      * @param dialog 
      */
-    constructor(private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
+    constructor(private cdr: ChangeDetectorRef, private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) { }
     /**
-     * fonction actionnée au démarrage de la fiche de site 
-     * récupère les données et met a jour ( si besoin ) les données dans sharedService
+     * 
      */
     ngOnInit() {
+      document.addEventListener('click', this.handleClickOutside.bind(this));
       this.initGDFStations();
       this.initGDFWatersheds();
       const ID =  this.sharedService.getSelectedValue();
@@ -76,96 +77,125 @@ import * as Plotly from 'plotly.js-dist';
         this.selectedWatershedBSS = BSS
       }
     }
-
     /**
      * 
+     * @param id 
      */
-        initGDFStations() {
-          this.jsonService.getGDFStations().then(data => {
-            this.DataGDFStation = data;
-            // Initialise `filteredOptions` après avoir chargé les données
-            this.filteredOptions = this.myControl.valueChanges.pipe(
-              startWith(''),
-              map(value => this._filter(value || '')),
-            );
-            // Définir la valeur initiale de l'input
-            const initialOption = this.DataGDFStation.find(station => station.index === this.sharedService.getSelectedValue());
-            //this.selectedWatershed = this.sharedService.getSelectedValue();
-            if (initialOption) {
-              this.myControl.setValue(initialOption);
-            }
-          });
-        }
-
-    /**
-     * 
-     */    
-    initGDFWatersheds() {
-      this.jsonService.getGDFWatersheds().then(data => {
-        this.DataGDFWatershed = data;
-      });
-    }
-    /**
-    * Gère le clic sur un marqueur dans la carte.
-    * Recherche la station correspondant à l'ID donné dans `DataGDFStation` 
-    * et met à jour la sélection du dropdown ainsi que les données dans sharedService.
-    * @param id récupèrer sur le marqueur
-    */
     handleMarkerClick(id: string): void {
       console.log(`ID du marker dans le composant parent : ${id}`);
-      // Récupère les données de la station sélectionner
       const selectedOption = this.DataGDFStation.find(station => station.index === id);
-      // si elle existe met à jour la sélection du dropdown ainsi que les données dans sharedService
       if (selectedOption) {
-        // mise à jour sélection du dropdown
         this.myControl.setValue(selectedOption);
-        // mise à jour les données dans sharedService
         this.selectedWatershedID = selectedOption.index;
         this.sharedService.setSelectedValue(selectedOption.index);
-        this.selectedWatershedBSS = selectedOption.BSS_ID;
-        this.sharedService.setSelectedValueBSS(selectedOption.BSS_ID);
-        // vérifie  si elle la liste est dans la liste des options non implémenté(le bouton ADE n'est pas affiché)
         if(this.list_of_disabled_options.includes(selectedOption.index)){
           this.correspondance = false;
         }
         else{
           this.correspondance = true;
         }
-      }
+        this.selectedWatershedBSS = selectedOption.BSS_ID;
+        this.sharedService.setSelectedValueBSS(selectedOption.BSS_ID);
+        }
+      
+    }
+    /**
+     * 
+     */
+    openDialog() {
+      this.dialog.open(PopupDialogFicheSite);
     }
 
+    openDialogLoc() {
+      this.dialog.open(PopupDialogLoc);
+    }
+
+    openDialogClassif(event: MouseEvent) {
+      const targetElement = event.target as HTMLElement;
+      const rect = targetElement.getBoundingClientRect(); // Récupère la position du bouton
+
+      console.log('Position du bouton :', rect);
+
+      this.dialog.open(popupDialogClassif, {
+        width: '400px',   // Largeur de la fenêtre
+        maxHeight: '80vh', // Limite la hauteur pour éviter qu'elle déborde
+        panelClass: 'custom-dialog-container', // Classe personnalisée pour ajuster les styles
+        hasBackdrop: true,
+        backdropClass: 'custom-backdrop', // Ajout de la classe backdrop personnalisée
+        autoFocus: true,
+        position: {
+          top: `${rect.bottom - 50}px`, // 10px en dessous du bouton
+          left: `${rect.right + 20}px`,   // 5px à droite du bouton
+          right: 'auto',                 // Laisser l'alignement horizontal au contenu
+          bottom: 'auto'  
+        }
+      });
+    }
+    
     /**
-     * Filtre les options de stations en fonction de la valeur saisie par l'utilisateur dans le dropdown.
-     * La fonction cherche les stations dont l'index ou le nom contient la chaîne de caractères fournie.
-     *
-     * @param value - La chaîne de caractères entrée par l'utilisateur dans le champ de recherche du dropdown.
-     * @returns Un tableau d'objets contenant l'index et le nom des stations correspondant au critère de recherche.
+     * 
+     */
+    initGDFStations() {
+      this.jsonService.getGDFStations().then(data => {
+        this.DataGDFStation = data;
+  
+        // Initialise `filteredOptions` après avoir chargé les données
+        this.filteredOptions = this.myControl.valueChanges.pipe(
+          startWith(''),
+          map(value => this._filter(value || '')),
+        );
+  
+        // Définir la valeur initiale de l'input
+        const initialOption = this.DataGDFStation.find(station => station.index === this.sharedService.getSelectedValue());
+        //this.selectedWatershed = this.sharedService.getSelectedValue();
+        if (initialOption) {
+          this.myControl.setValue(initialOption);
+        }
+      });
+    }
+    /**
+     * 
+     * @param value 
+     * @returns 
      */
     private _filter(value: string): { index: string, station_name: string }[] {
-      // Convertit la valeur entrée en chaîne de caractères pour éviter les erreurs
       value = value.toString()
-      // Transforme la valeur en minuscules pour éviter des erreurs
       const filterValue = value.toLowerCase();
-       // Filtre les stations dont l'index ou le nom de station contient la valeur filtrée
+  
       return this.DataGDFStation
         .filter(station =>
           station.index.toLowerCase().includes(filterValue) ||
           station.station_name.toLowerCase().includes(filterValue)
         )
-         // Retourne un tableau d'objets avec l'index et le nom de la station correspondante
         .map(station => ({ index: station.index, station_name: station.station_name }));
     }
 
+      // Méthode appelée lorsque l'utilisateur clique dans le champ (click)
+      clearSelection() {
+        this.previousSelectedStation = this.myControl.value;  // Garde la valeur précédente
+        console.log(this.previousSelectedStation)
+        this.myControl.setValue('');  // Vide le champ
+      }
+
+      // 
+      handleClickOutside(event: MouseEvent) {
+        // Vérifie si le clic a eu lieu en dehors du champ de formulaire
+        const target = event.target as HTMLElement;
+        if (!target.closest('mat-autocomplete') && !target.closest('mat-form-field')) {
+          // Restaure la sélection précédente si aucune option n'est sélectionnée
+          if (this.myControl.value === '') {
+            this.myControl.setValue(this.previousSelectedStation);
+            this.cdr.detectChanges(); // Forcer la détection des changements
+          }
+        }
+      }
+  
     /**
-     * Gère la sélection d'une option dans le dropdown.
-     * Met à jour les valeurs sélectionnées et les enregistre dans le service partagé.
-     *
-     * @param event - L'événement de sélection déclenché par l'utilisateur lors du choix d'une option dans le dropdown.
+     * 
+     * @param event 
      */
     onOptionSelected(event: any) {
-      // Récupère l'option sélectionnée à partir de l'événement
       const selectedOption = event.option.value;
-      // mise à jour les données de sharedService
       this.sharedService.setSelectedValue(selectedOption.index);
       this.selectedWatershedID = selectedOption.index;
       const select = this.DataGDFStation.find(station => station.index === selectedOption.index)?.BSS_ID;
@@ -178,36 +208,29 @@ import * as Plotly from 'plotly.js-dist';
         this.selectedStationName = name;
         this.sharedService.setSelectedStationName(name);
       }
-      // Vérifie si l'option sélectionnée est désactivée dans la liste des options
       if (this.list_of_disabled_options.includes(selectedOption.index)){
         this.correspondance = false;
       }
       else{
         this.correspondance = true;
       }
+      //console.log('Selected Value:', this.selectedWatershedID, this.selectedWatershedBSS);
     }
-
+  
     /**
-     * Vérifie si une option du dropdown est désactivée.
-     * Une option est désactivée si son index figure dans `list_of_disabled_options`.
-     *
-     * @param option - L'option à vérifier, contenant l'index et le nom de la station.
-     * @returns `true` si l'option est désactivée, sinon `false`.
+     * 
+     * @param option 
+     * @returns 
      */
     isOptionDisabled(option: { index: string, station_name: string }): boolean {
-      // Retourne true si l'index de l'option figure dans la liste des options désactivées
       return this.list_of_disabled_options.includes(option.index);
     }
-
     /**
-     * Définit la manière dont les options sont affichées dans le dropdown.
-     * Concatène l'index et le nom de la station pour afficher une chaîne de caractères lisible.
-     *
-     * @param option - L'option à afficher, contenant l'index et le nom de la station.
-     * @returns Une chaîne de caractères formatée pour être affichée dans le dropdown.
+     * 
+     * @param option 
+     * @returns 
      */
     displayFn(option: { index: string, station_name: string }): string {
-    // Si une option est sélectionnée, retourne une chaîne formatée "index - station_name"
       return option ? `${option.index} - ${option.station_name}` : '';
     }
 
@@ -240,8 +263,10 @@ import * as Plotly from 'plotly.js-dist';
 
   // }
   /**
-   * component des popup présent sur la fiche de Site 
+   * 
    */
+
+
   @Component({
     selector: 'popupDialogFicheSite',
     templateUrl: './popupDialogFicheSite.html',

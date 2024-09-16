@@ -45,6 +45,8 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
   constructor(private jsonService: JsonService, public dialog : MatDialog, private cdr: ChangeDetectorRef){
     //listener permettant de redimensionner la map et le graphe en fonction de la taille de fenêtre
     this.resizeListener = () => {
+      const previsionGraphWidth = window.innerWidth * 0.80;
+      Plotly.relayout('previsions', { width: previsionGraphWidth});
       if(this.matricecolumn){
         const matricewidth = 0.50 * window.innerWidth;
         Plotly.relayout('matriceRecharge',{width :matricewidth});
@@ -57,8 +59,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         Plotly.relayout('matriceScenarios',{width :this.calculateMatrixWidth('matriceScenarios',this.createMatrixStationLabel(this.results.results.scenarios.columns),this.scenariosMatrixFontSize)});
 
       }
-      const previsionGraphWidth = window.innerWidth * 0.80;
-      Plotly.relayout('previsions', { width: previsionGraphWidth});
+
     };
   }
 
@@ -209,7 +210,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       
     }
     try{//création des matrices de similarités
-      if(this.results.results.similarity){
+      if(this.results.results.similarity && this.showAdditionialMatrix){
         this.cdr.detectChanges();
         this.matriceRecharge();
         this.matriceSpecificDischarge();
@@ -222,6 +223,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
     try {//Création du tableau de scenarios
       if(this.results.results.scenarios){
+        this.cdr.detectChanges();
         this.createScenariosHeatmap()
         console.log("Scenarios OK")
       }else{
@@ -283,6 +285,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
                 if(fixedValue){
                   let Q50Value = indicator.results.proj_values.Q50;
+                  console.log("proj_values", indicator)
                   Q50Value = parseFloat(Q50Value.toFixed(2));
                   const lastDate = this.results.results.data.last_date || ''; 
                   const tooltipText = `Valeur du débit au ${lastDate} m³/s. . Cela représente une évolution de  ${Q50Value} %`; 
@@ -945,7 +948,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
 //PARTIE MATRICES //      
 
-        matriceRecharge(): void {
+    matriceRecharge(): void {
           if (this.stations.length > 0){
           const columns = this.results.results.similarity.corr_matrix.recharge.columns;  
           const columnNames = columns.map((columnId: any) => {
@@ -1032,7 +1035,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         }
       }
 
-      matriceSpecificDischarge(): void {
+    matriceSpecificDischarge(): void {
         if (this.stations.length > 0){
           const columns = this.results.results.similarity.corr_matrix.specific_discharge.columns; 
           const columnNames = columns.map((columnId: any) => {
@@ -1116,14 +1119,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           }
           }
         }
-        createScenariosHeatmap() {
+
+
+    createScenariosHeatmap() {
           try{
             // Utiliser flat() pour aplatir la matrice en un tableau à une dimension
             const flattenedData = this.results.results.scenarios.data.flat();
-            console.log("flat",flattenedData)
             // Utiliser filter() pour garder uniquement les éléments différents de 0
             const nonZeroElements = flattenedData.filter((value: number) => value !== 0);
-            console.log("nozero",nonZeroElements)
             // La longueur du tableau résultant est le nombre d'éléments différents de 0
             this.similarScenarios = nonZeroElements.length;
             
@@ -1260,9 +1263,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         this.updateLayout();
         this.showPlot();
         this.updateIndicatorShapes();
-        this.matriceRecharge();
-        this.matriceSpecificDischarge();
         this.createScenariosHeatmap();
+        if (this.showAdditionialMatrix){
+          this.matriceRecharge();
+          this.matriceSpecificDischarge();
+        }
+
     }
 
     openDialog() {
