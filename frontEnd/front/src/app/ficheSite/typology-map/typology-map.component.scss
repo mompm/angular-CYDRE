@@ -18,20 +18,45 @@
     /* Optionnel : Ajouter des bordures pour tester la visibilité */
     // border: 1px solid #000;
   }
+  
 
 .info-panel {
   height: 370px;
   width: 100%; /* Ajuster en fonction de l'espace disponible */
   padding: 10px;
-  background-color: #f9f9f9;
+  background-color: #ffffff;
   border: 1px solid #ddd;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
 }
 
+/* Effet d'ombre au survol */
+.info-panel:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Ombre plus prononcée au survol */
+}
+
+/* Style pour la station sélectionnée */
+.info-panel ul li.selected-station,
+.info-panel ul li.selected-station::selection {
+  background-color: #ffdddd !important;
+  color: #ff0000 !important;
+  font-weight: bold !important;
+}
+
 .info-panel h4 {
   margin-top: 0;
+  margin: 0;
+  font-size: 1rem; /* Taille du texte plus grande */
+  color: #ffffff; /* Couleur du texte */
+  font-weight: 700; /* Poids du texte plus prononcé */
+  background: linear-gradient(135deg, #333333, #666666); /* Dégradé de fond */
+  padding: 10px 15px; /* Espacement intérieur */
+  border-radius: 8px; /* Coins arrondis */
+  border: 1px solid #1a1a1a; /* Bordure plus foncée pour plus de contraste */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce pour l'effet d'élévation */
+  text-align: center; /* Centrage du texte */
+  margin-bottom: 15px; /* Espacement sous le titre */
 }
 
 .info-panel ul {

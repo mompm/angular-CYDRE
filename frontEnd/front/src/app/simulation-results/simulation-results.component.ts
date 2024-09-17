@@ -19,7 +19,7 @@ import * as e from 'express';
 @Component({
   selector: 'app-simulation-results',
   templateUrl: './simulation-results.component.html',
-  styleUrls: ['./simulation-results.component.scss']
+  styleUrls: ['./simulation-results.component.scss'],
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
   tooltipTextsEstimationValue: string[] = [];
@@ -284,7 +284,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       });
 
       // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
-      const caseHeight = 10; // Hauteur de chaque case en pixels
+      const caseHeight = 20; // Hauteur de chaque case en pixels
       const caseWidth = document.getElementById("matriceScenarios")!.clientWidth/transposedData[0].length;  // Largeur de chaque case en pixels
       console.log(caseWidth)
       const height = caseHeight * labeledStations.length; // Hauteur totale de la figure
@@ -315,11 +315,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           },
           margin: {
               t: 50,  // marge supérieure
-              b: 100,  // marge inférieure pour éviter la coupe des labels
+              b: 10,  // marge inférieure pour éviter la coupe des labels
               l:longestLabel * labelFontSize *0.8,  // marge gauche
               // r: 50   // marge droite
           },
-          height: height + 200,
+          height: height + 20,
+          // Ajout des couleurs de fond transparentes
+          paper_bgcolor: 'rgba(0, 0, 0, 0)', // Fond global transparent
+          plot_bgcolor: 'rgba(0, 0, 0, 0)',  // Fond de la zone de traçage transparent
     
       };
         Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
@@ -355,8 +358,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 if(fixedValue){
                   let Q50Value = indicator.results.proj_values.Q50;
                   Q50Value = parseFloat(Q50Value.toFixed(2));
+                  const firstDate = this.results.results.data.first_date;
                   const lastDate = this.results.results.data.last_date || ''; 
-                  const tooltipText = `Valeur du débit au ${lastDate} m³/s. . Cela représente une évolution de  ${Q50Value} %`; 
+                  const tooltipText = `Débit projeté médian en m³/s au ${lastDate}.\n 
+                  Cela correspond à une variation de ${Q50Value}% par rapport au débit observé le ${firstDate}`; 
                   this.tooltipTextsEstimationValue.push(tooltipText);
                 }
                 this.indicators.push({
@@ -584,11 +589,11 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           x: projectionData.x,
           y: projectionData.y,
           showlegend: true,
-          hoverinfo: 'none',
+          hoverinfo: 'skip',
           mode: 'lines',
           type: 'scatter',
           name: 'événements individuels', 
-          line: { color: '#e3dcda', width: 1, dash: 'dash' },
+          line: { color: '#b783b2', width: 1, dash: 'dot' },
         };
         this.traces.push(projectionTrace);
       }
@@ -603,8 +608,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             showlegend : true,
             hoverinfo : 'none',
             fill: 'toself', 
-            fillcolor: 'rgba(64, 127, 189, 0.3)', 
-            line: { color: '#407fbd', width: 1 }, 
+            fillcolor : 'rgba(31, 120, 180, 0.2)',
+            // fillcolor: 'rgba(64, 127, 189, 0.2)', 
+            line: { color: '#1f78b4', width: 1 }, 
         };
         this.traces.push(incertitudeTrace);
       }
@@ -617,7 +623,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           name: 'projection médiane',
           hovertemplate: 'projection médiane: %{y:.3f} m³/s<extra></extra>',
           showlegend : true,
-          line: { color: 'blue', width: 1 , dash: 'dot' }, 
+          line: { color: '#1f78b4', width: 2 , dash: 'dot' }, 
         };
         this.traces.push(q50Trace);
       }
@@ -711,32 +717,43 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         hovermode: "x unified",
         title: {
             text: this.watershedID + " | " + this.stationName,
-            font: { size: 17 },
+            font: { size: 20,  family: 'Segoe UI Semibold',  },
         },
         legend: {
             orientation: 'h',
-            font: { size: 12 },
+            font: { size: 16, color: '#333',     family: 'Segoe UI, sans-serif'},  // Police lisible et élégante
             x: 0.5,
             xanchor: 'center',
-            y: 1.2,
+            y: 1.1,
             yanchor: 'top',
         },
         xaxis: {
             title: '',
-            showgrid: false,
+            showgrid: true,
+            gridcolor: 'rgba(200, 200, 200, 0.3)',  // Grille discrète
             zeroline: false,
             tickformat: '%d-%m-%Y',
             tickmode: 'auto' as 'auto',
-            tickangle: 45,
+            tickangle: 0,
             ticks: 'inside',
-            titlefont: { size: 12 },
+            tickfont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
             nticks: 10,
             range: [this.startDate, this.endDate],
             hoverformat: '%d %b %Y',
         },
         yaxis: {
-            title: 'Débit (m3/s)',
-            titlefont: { size: 12 },
+            title: 'Débit [m³/s]',
+            titlefont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
+            tickfont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
             showline: false,
             ticks: 'inside',
             type: this.type as AxisType,
@@ -755,6 +772,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 dash: 'dot'
             }
         }] : [],
+        // Ajout des couleurs de fond transparentes
+        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Fond global transparent
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',  // Fond de la zone de traçage transparent
+        margin: {
+            l: 50,  // Espace à gauche pour les labels Y
+            r: 30,  // Espace à droite pour ne pas couper les courbes
+        },
+        autosize: true,  // Le graphique s'adapte automatiquement à la taille du conteneur
     };
     
 }
@@ -777,14 +802,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
 
   if(document.getElementById('previsions')){
-      Plotly.newPlot('previsions', this.traces, this.layout);
+      Plotly.newPlot('previsions', this.traces, this.layout, { responsive: true });
       const annotation: Partial<Plotly.Annotations> = {
         text: "Date de la simulation",
         xref: 'x', yref: 'paper',
         x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
         y: 1,
         showarrow: false,
-        font: { size: 14 }
+        font: { size: 14, family: 'Segoe UI Semibold', }
       };
       Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
     }
@@ -1113,6 +1138,18 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     this.dialog.open(Dialogsimulationresults);
   }
 
+  openDialogViz(event: MouseEvent) {
+    this.dialog.open(PopupDialogViz, {
+      width: '800px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
   keys(obj: any) {//fonction pour retourner les clés d'un json
     return Object.keys(obj);
   }
@@ -1244,6 +1281,12 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
       }
 
   }
+
+@Component({
+  selector: 'popupDialogViz',
+  templateUrl: './popupDialogViz.html',
+})
+export class PopupDialogViz {}
 
 
 @Component({

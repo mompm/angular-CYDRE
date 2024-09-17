@@ -72,6 +72,8 @@ import { SimulationHistoryComponent } from './simulation-history/simulation-hist
 import { ParametersPanelComponent } from './parameters-panel/parameters-panel.component';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { TypologyMapComponent } from './ficheSite/typology-map/typology-map.component';
+import { TooltipModule } from 'primeng/tooltip';
+
 
 
 
@@ -164,6 +166,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     MatInputModule,
     MatFormFieldModule,
     MatTabsModule,
+    TooltipModule,
   ],
   providers: [],
   bootstrap: [AppComponent]

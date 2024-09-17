@@ -6,24 +6,10 @@
       <div class="card-header">
         <div class="align-tooltip">    
           Visualisation de la prévision saisonnière
-          <!-- Bulle info pour l'échéance de la prévision' -->
-          <button mat-icon-button class="button_info" aria-label="Visualisation prevision" [matMenuTriggerFor]="dateInfoPopupGraph">
-            <mat-icon class="info-icon">info</mat-icon>
+          <button mat-raised-button color="#413f3f" (click)="openDialogViz($event)">
+            <mat-icon style="color: white">help_outline</mat-icon>
           </button>
-          <mat-menu #dateInfoPopupGraph="matMenu" xPosition="after">
-            <ng-template matMenuContent>
-              <div class="info-graph-tooltip">
-              <p><strong>Info : </strong>Le graphique a pour objectif de visualiser les tendances saisonnières de débits produites par
-              l'outil CYDRE. Les données mesurées en station sont représentées par la courbe noire. Différentes informations sont ajoutées
-            sur la période de simulation. La courbe bleu en pointillée représente la tendance médiane des prévisions. La bande bleue représente
-          l'intervalle entre les quantiles 10 et 90 des prévisions. Chaque courbe individuelle grise en arrière plan correspond aux séries
-        utilisées pour établir les prévisions. Enfin, le 1/10 est module est représenté par une ligne rouge horizontale. Le 1/10 du module
-        est calculé sur l'ensemble de la chronique. Des indicateurs sont calculés dans la section suivante par rapport au
-         franchissement ou non du 1/10 du module. Il est également possible d'ajouter des seuils personnalisés. La section suivante
-        détaille le mode opératoire.</p>
-              </div>
-            </ng-template>
-          </mat-menu>
+          
           <!-- Bulle warning pour l'échéance de la prévision' -->
           <button mat-icon-button class="button_info" aria-label="Visualisation prevision" [matMenuTriggerFor]="dateInfoPopup">
             <mat-icon class="warning-icon">warning</mat-icon>
@@ -69,7 +55,7 @@
     <div class="card my-4">
       <div class="card-header">
         <div class="align-tooltip">
-          Définition des seuils sécheresse
+          Définition de seuils pour le calcul des indicateurs
           <!-- Bulle info pour la définition des seuils sécheresse -->
           <button mat-icon-button class="button_info" aria-label="Definition seuils secheresse" [matMenuTriggerFor]="dateInfoPopupGraph3">
             <mat-icon class="info-icon">info</mat-icon>
@@ -92,8 +78,11 @@
           class="color-selector" (ngModelChange)="updateColorStyle($event,i)" >
           <input type="text" class="form-control" [(ngModel)]="indicator.type" [readonly]="indicator.fixed" 
           [placeholder]="indicator.type" (ngModelChange)="onIndicatorTextChange($event, i)">
-          <input type="number" step = "0.001" [(ngModel)]="indicator.value" class="form-control" [readonly]="indicator.fixed"
-            placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)" >
+          <input type="number" step = "0.001" [(ngModel)]="indicator.value.toFixed" class="form-control" [readonly]="indicator.fixed"
+            placeholder="Entrez la valeur" (ngModelChange)="onIndicatorValueChange($event, i)"
+            [ngStyle]="{'width.px': 50}"
+            [ngModel]="indicator.value.toFixed(3)" >
+          <span class="input-group-text">[m³/s]</span>
           <button *ngIf="i !== 0" (click)="removeIndicator(i,indicator.type)" class="btn btn-danger">-</button>
         </div>
         <button (click)="addIndicator()" class="btn btn-primary mt-2">+</button>
@@ -108,67 +97,99 @@
     <!-- Calcul et affichage des indicateurs opérationnels -->
     <div *ngFor="let indicator of results.indicators; let i = index">
       <div class="card my-4 ">
+        
+        <!-- Header -->
         <div class="card-header">
           <div class="align-tooltip">
-          Seuil : {{indicator.type}}
+          Indicateurs pour le seuil : {{indicator.type}}
           </div>
         </div>
+
+        <!-- Body -->
         <div class="card-body">
-          <div class="containerIndicatiors">
-            <div class="containerIndicatior" *ngIf="indicator.type == '1/10 du module'">
-              <p class="moyenneIndicators" *ngIf="indicator.type =='1/10 du module'">{{indicator.results.proj_values.Q50 | number: '1.2-2' }} m³/s</p>
+          <div class="containerIndicators">
+
+            <!-- Estimation du débit -->
+            <div class="containerIndicator" *ngIf="indicator.type == '1/10 du module'">
+              <p class="moyenneIndicators" *ngIf="indicator.type =='1/10 du module'">{{indicator.results.proj_values.Q50 | number: '1.3-3' }} m³/s</p>
               <p class="resultIndicators" *ngIf="indicator.results.proj_values ">
-                [{{ min(indicator.results.proj_values.Q10,indicator.results.proj_values.Q10) | number: '1.2-2' }} - {{
-                max(indicator.results.proj_values.Q10,indicator.results.proj_values.Q90) | number: '1.2-2' }}]
+                [{{ min(indicator.results.proj_values.Q10,indicator.results.proj_values.Q10) | number: '1.3-3' }} - {{
+                max(indicator.results.proj_values.Q10,indicator.results.proj_values.Q90) | number: '1.3-3' }}]
               </p>
               <p class="descriptionIndicators" *ngIf="results.results.data.last_date ">
-                estimation du débit au {{ results.results.data.last_date }}
+                Estimation du débit
               </p>
-              <button mat-button class="boutonindicator" [matTooltip]="tooltipTextsEstimationValue[i]">
-                <mat-icon>help</mat-icon>
-              </button>
+
+              <p-button 
+                  pTooltip="{{ tooltipTextsEstimationValue[i] }}" 
+                  tooltipPosition="bottom" 
+                  class="boutonindicator" 
+                  icon="pi pi-question-circle">
+              </p-button>
             </div>
-            <div class="containerIndicatior">
-              <p class="moyenneIndicators" *ngIf="indicator.results.ndays_before_alert">{{
-                indicator.results.ndays_before_alert['Q50'] }} jours</p>
+
+            <!-- Nombre de jours avant le franchissement du seuil -->
+            <div class="containerIndicator">
+              <p class="moyenneIndicators" *ngIf="indicator.results.ndays_before_alert">
+                {{ indicator.results.ndays_before_alert['Q50'] === 0 ? 'Non atteint' : indicator.results.ndays_before_alert['Q50'] + ' jours' }}</p>
               <p class="resultIndicators" *ngIf="indicator.results.ndays_before_alert">
                 [{{ min(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }} - 
                 {{ max(indicator.results.ndays_before_alert.Q10, indicator.results.ndays_before_alert.Q90)  }}]
               </p>
-              <p class="descriptionIndicators">Franchissement du seuil</p>
-              <button mat-button class="boutonindicator" matTooltip="Nombre de jours avant que le seuil soit atteint">
-                <mat-icon>help</mat-icon>
-              </button>
+              <p class="descriptionIndicators">Jours jusqu'au seuil</p>
+
+              <p-button 
+                  pTooltip="Nombre de jours avant que le débit médian projeté atteigne ou dépasse le seuil défini, représenté par la ligne horizontale." 
+                  tooltipPosition="bottom" 
+                  class="boutonindicator" 
+                  icon="pi pi-question-circle">
+              </p-button>
             </div>
-            <div class="containerIndicatior">
+
+            <!-- Nombre de jours cumulés sous le seuil -->
+            <div class="containerIndicator">
               <p class="moyenneIndicators" *ngIf="indicator.results.ndays_below_alert">{{
                 indicator.results.ndays_below_alert.Q50 }} jours</p>
               <p class="resultIndicators" *ngIf="indicator.results.ndays_below_alert">
                 [{{ min(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90) }} - 
                 {{ max(indicator.results.ndays_below_alert.Q10, indicator.results.ndays_below_alert.Q90)  }}]
               </p>
-              <p class="descriptionIndicators">Durée du seuil</p>
-              <button mat-button class="boutonindicator" matTooltip="Nombre de jours cumulés sous le seuil">
-                <mat-icon>help</mat-icon>
-              </button>
+              <p class="descriptionIndicators">Cumul des jours sous le seuil</p>
+              <p-button 
+                  pTooltip="Nombre de jours cumulés où le débit médian projeté atteint ou dépasse le seuil défini, représenté par la ligne horizontale." 
+                  tooltipPosition="bottom" 
+                  class="boutonindicator" 
+                  icon="pi pi-question-circle">
+              </p-button>
             </div>
-            <div class="containerIndicatior">
+
+            <!-- Proportion d'événements qui franchissent le seuil -->
+            <div class="containerIndicator">
               <p class="moyenneIndicators">{{ (indicator.results.prop_alert_all_series || 0) * 100 | number: '1.1-1' }} %</p>
               <p class="resultIndicators"> - </p>
-              <p class="descriptionIndicators">Probabilité</p>
-              <button mat-button class="boutonindicator" matTooltip="Lorem ipsum dolor sit amet, consectetur adipiscing elit.">
-                <mat-icon>help</mat-icon>
-              </button>
+              <p class="descriptionIndicators">% d'événements sous le seuil</p>
+              <p-button 
+                  pTooltip="Proportion d'événements utilisés dans le calcul de la médiane, et des quantiles, qui atteignent ou dépassent le seuil défini." 
+                  tooltipPosition="bottom" 
+                  class="boutonindicator" 
+                  icon="pi pi-question-circle">
+              </p-button>
             </div>
-            <div class="containerIndicatior">
+
+            <!-- Calcul du volume -->
+            <div class="containerIndicator">
               <p class="moyenneIndicators">{{ getVolumeAsInt(indicator.results.volume50) }} m³</p>
               <p class="resultIndicators" >[{{ getVolumeAsInt(min(indicator.results.volume10,indicator.results.volume90)) }} - {{
                 getVolumeAsInt(max(indicator.results.volume10,indicator.results.volume90))}}]</p>
-              <p class="descriptionIndicators">Volume manquant</p>
-              <button mat-button class="boutonindicator" matTooltip="Volume manquant pour compenser le dépassement du seuil">
-                <mat-icon>help</mat-icon>
-              </button>
+              <p class="descriptionIndicators">Volume nécessaire</p>
+              <p-button 
+                  pTooltip="Volume nécessaire pour éviter d'atteindre ou de franchir le seuil." 
+                  tooltipPosition="bottom" 
+                  class="boutonindicator" 
+                  icon="pi pi-question-circle">
+              </p-button>
             </div>
+
           </div>
         </div>
       </div>
@@ -182,6 +203,7 @@
           <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
         </div>
       </div>
+      
       <div class="card-body">
         <div class="scenariosInfos">Quand, et où, a-t-on retrouvé des conditions similaires à la date du {{results.results.data.first_date}} mesurées à la station hydrologique {{stationName}} ?</div>
         <div class="evenementsNumber">{{similarScenarios}}</div>
