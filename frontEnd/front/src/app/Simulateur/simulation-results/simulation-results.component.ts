@@ -10,7 +10,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import * as Plotly from 'plotly.js-dist';
 import { Layout, PlotData } from 'plotly.js';
-import { JsonService } from '../service/json.service';
+import { JsonService } from 'src/app/service/json.service';
 import { AxisType } from 'plotly.js-dist';
 import * as Papa from 'papaparse';
 import { index, string } from 'mathjs';

@@ -1,28 +1,17 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { HomeComponent } from './home/home.component';
-import { SettingsComponent } from './settings/settings.component';
 import { LoginComponent } from './login/login.component';
-import { ModelingComponent } from "./modeling/modeling.component";
 import {LocalisationComponent} from "./modeling/localisation/localisation.component";
 import {ModelisationComponent} from "./modeling/modelisation/modelisation.component";
 import { FicheSiteComponent } from './ficheSite/ficheSite.component';
 import { CreateAccountComponent } from './create-account/create-account.component';
 import { AuthGuard } from './service/auth.guard';
-import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
+import { SimulateurCydreComponent } from './Simulateur/simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component';
 import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
   { path: 'ficheSite', component: FicheSiteComponent },
-  { path: 'modeling',
-    component: ModelingComponent,
-    children: [
-      {path: 'localisation', component: LocalisationComponent},
-      {path: 'modelisation', component: ModelisationComponent},
-    ]
-  },
-  { path: 'settings', component: SettingsComponent },
   { path: 'login', component: LoginComponent},
   { path: 'create-account', component: CreateAccountComponent, canActivate: [AuthGuard], data: {checkType : 'dev'} },
   { path: 'simulator', component: SimulateurCydreComponent},

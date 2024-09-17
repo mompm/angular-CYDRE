@@ -9,12 +9,9 @@ import { TableModule } from 'primeng/table';
 import { TreeTableModule } from 'primeng/treetable';
 import { ButtonModule } from 'primeng/button';
 import { InteractoModule } from 'interacto-angular';
-import { HomeComponent } from './home/home.component';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { HeaderComponent } from './header/header.component';
-import { ModelingComponent } from './modeling/modeling.component';
-import { SettingsComponent } from './settings/settings.component';
 import { LoginComponent } from './login/login.component';
 import { InputTextModule } from 'primeng/inputtext';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
@@ -57,10 +54,10 @@ import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 import { CreateAccountComponent } from './create-account/create-account.component';
-import { SimulateurCydreComponent } from './simulateur-cydre/simulateur-cydre.component';
+import { SimulateurCydreComponent } from './Simulateur/simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component'; 
 import { NgxSliderModule } from '@angular-slider/ngx-slider';
-import { SimulationResultsComponent } from './simulation-results/simulation-results.component';
+import { SimulationResultsComponent } from './Simulateur/simulation-results/simulation-results.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
 import { PlotlyModule } from 'angular-plotly.js';
 import * as PlotlyJS from 'plotly.js-dist';
@@ -89,8 +86,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     AppComponent,
     NavbarComponent,
     HeaderComponent,
-    HomeComponent,
-    ModelingComponent,
     SelecteurLangueComponent,
     FicheSiteComponent,
     RegionalMapComponent,
@@ -100,7 +95,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     temperatureSeasonal,
     WaterTableDepthSeasonal,
     precipitationSeasonal,
-    SettingsComponent,
     LoginComponent,
     LocalisationComponent,
     ModelisationComponent,

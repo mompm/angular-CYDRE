@@ -12,11 +12,11 @@ import { HttpClient } from '@angular/common/http';
 //observables
 import { Observable, generate, map, startWith } from 'rxjs';
 //services gestion donnée et authentification
-import { SharedWatershedService } from '../service/shared-watershed.service';
-import { JsonService } from '../service/json.service';
-import { DataService } from '../service/data.service';
-import { AuthService } from '../service/auth.service';
-import { ParametersPanelComponent } from '../parameters-panel/parameters-panel.component';
+import { SharedWatershedService } from 'src/app/service/shared-watershed.service';
+import { JsonService } from 'src/app/service/json.service';
+import { DataService } from 'src/app/service/data.service';
+import { AuthService } from 'src/app/service/auth.service';
+import { ParametersPanelComponent } from 'src/app/parameters-panel/parameters-panel.component';
 
 
 
