@@ -209,7 +209,8 @@ class Forecast():
             self.q10 = np.nanpercentile(Q_to_forecast, 10, axis=0)
             self.q50 = np.nanpercentile(Q_to_forecast, 50, axis=0)
             self.q90 = np.nanpercentile(Q_to_forecast, 90, axis=0)
-            self.qmean = np.nanmean(Q_to_forecast, axis=0)
+        
+        self.qmean = np.nanmean(Q_to_forecast, axis=0)
         
         # Format results: dataframe in columns (line:time, column: q10, q50, q90, qmean)
         df_forecast = pd.DataFrame({'Q10':self.q10,
@@ -273,6 +274,8 @@ class Forecast():
             filtered_df = df.loc[:comp_ti]
             latest_true_date = filtered_df[filtered_df['conditions'] == True].index.max()
             forecast_date = pd.to_datetime(latest_true_date)
+        else:
+            forecast_date = comp_ti 
         
         return forecast_date
     

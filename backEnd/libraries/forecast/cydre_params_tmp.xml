@@ -4,7 +4,7 @@
 		<type>string</type>
 		<possible_values/>
 		<value/>
-		<default_value>J0626610</default_value>
+		<default_value>J1103010</default_value>
 	</Parameter>
 	<Parameter name="user_horizon">
 		<description>Forecast horizon in days.</description>
@@ -37,7 +37,7 @@
 		<type>string</type>
 		<possible_values></possible_values>
 		<value/>
-		<default_value>2019-07-22</default_value>
+		<default_value>2024-04-01</default_value>
 	</Parameter>
 </ParametersGroup>
 <ParametersGroup name="Similarity">
