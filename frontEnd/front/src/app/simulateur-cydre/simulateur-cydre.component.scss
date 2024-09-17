@@ -1,417 +1,283 @@
+/*styles general */
+
 .container {
-    max-width: 90%;
-    margin: auto;
-    position: relative;
-  }
+  max-width: 90%;
+  margin: auto;
+  position: relative;
+ }
+
+.header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px;
+}
+  
 
 .body{
-    margin-left: 10%;
-    margin-right: 10%;
+  margin-left: 10%;
+  margin-right: 10%;
+}
+ 
+.d-flex {
+  display: flex !important;
 }
 
-.h4_center{          /* Texte de sélection de la station hydrologique */
-    font-size: 18px;
-    margin-left: 10px;
-    text-align: center;
+.justify-content-between {
+  justify-content: space-between !important;
 }
 
+.mt-2 {
+  margin-top: 0.5rem !important;
+}
+
+::ng-deep .cdk-global-scrollblock {
+  overflow: visible !important;
+}
+
+h5 {
+  font-size: 18px;
+  text-align: center;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); /* Opacité ajustée */
+  z-index: 1040; /* Juste en dessous du modal */
+}
+
+.modal.show.d-block {
+  display: block !important;
+}
+
+/* Sélection de la station hydrologique */
+
+/*informer l'utilisateur comment utiliser la selection de la station */
+//division information sur la selection de la station pour l'utilisateur
+.button_info_div {
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+  width:100%;
+}
+
+//texte pour informer l'utilisateur 
+.h4_center{          
+  font-size: 18px;
+  margin-left: 10px;
+  text-align: center;
+}
+
+//bouton pour donner plus d'information sur la selection pour l'utilisateur
+.button_info {
+  background-color: white;
+  color: black;              
+  border-radius: 5px;        
+  cursor: pointer;          
+  font-size: 12px; 
+  margin-left:5px;
+}
+
+//icon du bouton info
+.info-icon{
+  //color: #07861c;
+}
+
+// boite de dialog du bouton info
+.info-tooltip {
+  // box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  // background-color: #ccf2cb;
+  // border: 1px solid #ccc;
+  color: #000000;
+  font-size: 14px;
+  max-width: 500px;
+  text-align: justify;
+}
+
+/* divsion menu déroulant pour selectionner la station et bouton hyperlien info station */
 .choix_station_div{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
+//menu déroulant 
+.dropdown-form {
+  flex: 1; // Pour occuper l'espace disponible
+  max-width: 500px;
+  margin-right: 20px; // Espace à droite pour séparer du bouton
+}
+
+
+mat-form-field.station-dropdown{
+  width: 500px;
+  font-size: 14px;
+  text-align: center;
+}
+
+mat-select.station-dropdown {
+  font-size: 12px;
+}
+
+.mat-menu-panel {
+  transition: opacity 0.3s ease;
+}
+
+// station désactiver dans le menu deroulant
+.disabled-option {
+  color: red; // Couleur pour les options désactivées
+}
+
+// zone des boutons hyperlien
+.button-links {
+  display: flex;
+  align-items: center;
+}
+
+// boutons hyperlien
 .button_link_hydroportail,
 .button_link_ades {
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 12px;
-    margin-left: 10px;
-    background-color: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 12px;
+  margin-left: 10px;
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.button-links {
-    display: flex;
-    align-items: center;
-}
-
+// image des boutons hyperlien
 .button_link_hydroportail img,
 .button_link_ades img {
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*zone des parametres*/
+
+//zone des parametres
+.card {
+  margin-bottom: 1.5rem !important;
+}
+
+.my-4 {
+  margin-top: 1.5rem !important;
+  margin-bottom: 1.5rem !important;
 }
 
 .card-header {
-    font-size: 18px;
-    color: white;
-    // background-color:#413f3f;
-    background: linear-gradient(135deg, #3d3d3d, #1a1a1a); /* Dégradé de gris foncé à noir */
-    text-align: center;
-    // padding: 10px 15px; /* Un peu de padding pour un look plus aéré */
-    // font-weight: bold;
-    border-bottom: 2px solid #ddd;
-    }
+  font-size: 18px;
+  color: white;
+  // background-color:#413f3f;
+  background: linear-gradient(135deg, #3d3d3d, #1a1a1a); /* Dégradé de gris foncé à noir */
+  text-align: center;
+  // padding: 10px 15px; /* Un peu de padding pour un look plus aéré */
+  // font-weight: bold;
+  border-bottom: 2px solid #ddd;
+}
 
-  .my-4 {
-    margin-top: 1.5rem !important;
-    margin-bottom: 1.5rem !important;
-  }
-  
-  .card {
-    margin-bottom: 1.5rem !important;
-  }
+.card-body {
+  background: linear-gradient(180deg, white, #f7f7f7);
+  // background-color: white; /* Fond blanc pour un contenu propre */
+  padding: 20px; /* Un padding généreux pour aérer le contenu */
+  border: 1px solid #e0e0e0; /* Beaux contours doux et subtils */
+  border-radius: 0 0 8px 8px; /* Arrondit le bas pour correspondre au header */
+  box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); /* Ombre plus sombre en bas et à droite */
+}
 
-  .card-body {
-    background: linear-gradient(180deg, white, #f7f7f7);
-    // background-color: white; /* Fond blanc pour un contenu propre */
-    padding: 20px; /* Un padding généreux pour aérer le contenu */
-    border: 1px solid #e0e0e0; /* Beaux contours doux et subtils */
-    border-radius: 0 0 8px 8px; /* Arrondit le bas pour correspondre au header */
-    box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); /* Ombre plus sombre en bas et à droite */
-  }
+.card-body .row .col-md-2 {
+  display: flex;
+  justify-content: center;
+}
 
-  .card-body .row .col-md-2 {
-    display: flex;
-    justify-content: center;
-  }
-
-  ::ng-deep .cdk-global-scrollblock {
-    overflow: visible !important;
-  }
-
-  h5 {
-    font-size: 18px;
-    text-align: center;
-  }
-
-  .forecast_horizon{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+//texte du slider de la duree de la simulation
+.forecast_horizon{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
 }
   
-  .text-center {
-    text-align: center !important;
-    margin-bottom: 30px;
-  }
-  
-  .d-flex {
-    display: flex !important;
-  }
-  
-  .justify-content-between {
-    justify-content: space-between !important;
-  }
-  
-  .mt-2 {
-    margin-top: 0.5rem !important;
-  }
-  
-.modal-backdrop-custom {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5); /* Opacité ajustée */
-    z-index: 1040; /* Juste en dessous du modal */
-  }
-  
-  .modal.show.d-block {
-    display: block !important;
-  }
-  
-  .progress-container {
-    margin-bottom: 25px; /* Ajoute un espace de 15 pixels sous la barre de progression */
-  }
-  
-
-//entete style
-
-.button_info {
-    background-color: white;
-    color: black;              
-    border-radius: 5px;        
-    cursor: pointer;          
-    font-size: 12px; 
-    margin-left:5px;
-    }
-
-
-.button_info_div {
-        display: flex; 
-        justify-content: center;
-        align-items: center;
-        width:100%;
-    }
-
-
-
-.center_ligne {
-    display: inline-block; 
-    vertical-align: middle; 
-}
-
-
-.dropdown-form {
-    flex: 1; // Pour occuper l'espace disponible
-    max-width: 500px;
-    margin-right: 20px; // Espace à droite pour séparer du bouton
-}
-
-
-mat-form-field.first-dropdown{
-    width: 500px;
-    font-size: 14px;
-    text-align: center;
-}
-
-mat-select.first-dropdown {
-    font-size: 12px;
-}
-
-
-.disabled-option {
-    color: red; // Couleur pour les options désactivées
-}
-
-.info-tooltip {
-    // box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    // background-color: #ccf2cb;
-    // border: 1px solid #ccc;
-    color: #000000;
-    font-size: 14px;
-    max-width: 500px;
-    text-align: justify;
-}
-
-.warning-tooltip {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    padding: 10px;
-    background-color: #f2cbcb;
-    border: 1px solid #ccf2cb;
-    // border-radius: 5px;
-    color: #000000;
-    font-size: 14px;
-    max-width: 300px;
-    text-align: justify;
-}
-
-
-.mat-menu-panel {
-    transition: opacity 0.3s ease;
-}
-
-
-//map style 
-
-.h3_div {
-    background-color: #3C4F58;
-    color: white;
-    border-top-left-radius: 10px; 
-    border-top-right-radius: 10px;
-    padding: 1px;
-}
-
-.h3_text {
-    font-size: 18px;
-    text-align: center;
-    align-items: center;
-    margin-top:10px;
-    margin-bottom:10px;
-}
-
-.regional_map {
-    width: 60%;
-    display: inline-block; 
-    height:350;
-    margin: 0px;
-    padding: 0px;
-}
-
-.watershed_map {
-    width:35%;
-    display: inline-block;
-    height:350;
-    margin: 0px;
-    padding: 0px;
-}
-
-.maps_div {
-    display:flex;
-    justify-content:space-between;
-    margin-top:20px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
-    margin-bottom: 20px;
-    margin-top: 20px;
-}
-
-
-.parapgraphe_without_padding {
-    padding-top:5px;
-    font-size:14px;
-    font-style: italic;
-    text-align:justify;
-    margin-left:10px;
-    margin-right:10px,;
-    margin-bottom:10px;
-}
-
-.parapgraphe_with_padding_visible {
-    padding-top:5px;
-    font-size:14px;
-    font-style: italic;
-    text-align:justify;
-    margin-left:10px;
-    margin-right:10px;
-    margin-bottom:10px;
-    padding-bottom:20px,;
-    display : block;
-}
-
-.parapgraphe_with_padding_invisible {
-    padding-top:5px;
-    font-size:14px;
-    font-style: italic;
-    text-align:justify;
-    margin-left:10px;
-    margin-right:10px;
-    margin-bottom:10px;
-    padding-bottom:20px; 
-    display : none;
-}
-
-
-
-mat-form-field.second-dropdown mat-select.second-dropdown {
-    font-size: 12px;
-    text-align: center;
-    display : block;
-}
-
-mat-form-field.second-dropdown{
-    width: 40%;
-    max-width: 50%;
-    border-radius: 10px;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0);
-    margin-bottom: 1px;
-    margin: 0 auto;
-
-}
-
-.seasonal_plot_div {
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-left-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.5);
-    margin-bottom: 20px;
-    margin-top: 20px;
-    }
-
-.container_seasonal {
-    text-align: center; 
-}
-
-.seasonal_plot {
-    width: 100%;
-    display: flex; 
-    justify-content: space-around;
-    
-}
-
+//slider de la duree de la simulation
 ::ng-deep{
-    .slider{
-        margin-bottom: 30px;
-        width: 80%;
-    }
-    
-    .slider .ngx-slider .ngx-slider-bar {
-        background: #0b254f;
-        height: 2px;
-      }
-    
-    // .slider .ngx-slider .ngx-slider-selection {
-    //     background: orange;
-    //   }
+  .slider{
+    margin-bottom: 30px;
+    width: 80%;
+  }
+      
+  .slider .ngx-slider .ngx-slider-bar {
+    background: #0b254f;
+    height: 2px;
+  }
+      
+  .slider .ngx-slider .ngx-slider-pointer {
+    width: 8px;
+    height: 16px;
+    top: auto; /* to remove the default positioning */
+    bottom: 0;
+    background-color: #333;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+  }
 
-    .slider .ngx-slider .ngx-slider-pointer {
-        width: 8px;
-        height: 16px;
-        top: auto; /* to remove the default positioning */
-        bottom: 0;
-        background-color: #333;
-        border-top-left-radius: 3px;
-        border-top-right-radius: 3px;
-      }
+  .slider .ngx-slider .ngx-slider-pointer:after {
+    display: none;
+  }
 
-    .slider .ngx-slider .ngx-slider-pointer:after {
-        display: none;
-      }
-
-    // .slider .ngx-slider .ngx-slider-tick.ngx-slider-selected {
-    //     background: orange;
-    //   }
-
-    .slider .ngx-slider .ngx-slider-bubble.ngx-slider-limit {
-        font-weight: bold;
-        color: #333;
-      }
-    
-    .slider .ngx-slider .ngx-slider-tick {
-        width: 2px;
-        height: 10px;
-        margin-left: 4px;
-        border-radius: 0;
-        background: #333;
-        top: -1px;
-      }
+  .slider .ngx-slider .ngx-slider-bubble.ngx-slider-limit {
+    font-weight: bold;
+    color: #333;
+  }
+      
+  .slider .ngx-slider .ngx-slider-tick {
+    width: 2px;
+    height: 10px;
+    margin-left: 4px;
+    border-radius: 0;
+    background: #333;
+    top: -1px;
+  }
 }
 
-.form-control{
+  //date de debut de la sumulation
+  .form-control{
     font-size: 18px;
     text-align: center;
     // width: 100%;
-}
-
-.run-application {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-}
-
-.info-icon{
-    //color: #07861c;
-}
-
-.warning-icon{
-    color: #d51717;
-}
-
-.header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px;
   }
-  
-//   .toggle-switch {
-//     // margin-bottom: 10px; /* Ajout d'un espace en dessous du switch */
-//   }
-  
+
+/* demarrer la simulation et visualiser l'avancemen */
+.text-center {
+  text-align: center !important;
+  margin-bottom: 30px;
+}
+
+//bouton run application
+.run-application {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+// barre de chargement
+.progress-container {
+  margin-bottom: 25px; /* Ajoute un espace de 15 pixels sous la barre de progression */
+}
+
+
+
+
+
   
   
   

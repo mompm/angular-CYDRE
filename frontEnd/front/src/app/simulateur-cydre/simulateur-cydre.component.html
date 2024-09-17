@@ -7,8 +7,7 @@
   </div>
 
   <!-- Sélection de la station hydrologique -->
-  <div *ngIf="!showParametersPanel">
-    
+  <div *ngIf="!showParametersPanel"> 
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
       <!-- Bulle d'info pour la sélection des stations hydrologiques -->
@@ -23,28 +22,22 @@
         </ng-template>
       </mat-menu>
     </div>
-    
+    <!-- menu déroulant pour sélectionner la station hydrolique-->
     <div class="choix_station_div">
       <form class="dropdown-form">
-        <mat-form-field appearance="outline" class="first-dropdown">
+        <mat-form-field appearance="outline" class="station-dropdown">
+          <!-- message afficher si rien n'est dans le formulaire-->
           <mat-label>Choix d'une station</mat-label>
-          <input type="text"
-                 placeholder="Sélectionner une station"
-                 aria-label="Number"
-                 matInput
-                 [formControl]="myControl"
-                 [matAutocomplete]="auto"
-                 (click)="clearSelection()">
+          <!-- option pour gerer le formulaire-->
+          <input type="text" placeholder="Sélectionner une station"aria-label="Number" matInput [formControl]="myControl" [matAutocomplete]="auto" (click)="clearSelection()">
+          <!-- option pour gerer autocompletion lorque l'utilisateur rentre des informations dans le formulaire-->
           <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event)" [displayWith]="displayFn">
-            <mat-option *ngFor="let option of filteredOptions | async" 
-                        [value]="option" 
-                        [disabled]="isOptionDisabled(option)" 
-                        [ngClass]="{'disabled-option': isOptionDisabled(option)}">
-              {{ option.index }} - {{ option.station_name }}
-            </mat-option>
+            <!-- liste du menu déroulant-->
+            <mat-option *ngFor="let option of filteredOptions | async" [value]="option" [disabled]="isOptionDisabled(option)" [ngClass]="{'disabled-option': isOptionDisabled(option)}"> {{ option.index }} - {{ option.station_name }}</mat-option>
           </mat-autocomplete>
         </mat-form-field>
       </form>
+      <!-- bouton hyperlien de la station selectionner-->
       <div class="button-links">
         <a mat-button [href]="'https://www.hydro.eaufrance.fr/sitehydro/'+ selectedStation + '/fiche'" target="_blank" class="button_link_hydroportail">
           <img src="https://hydro.eaufrance.fr/build/images/hydroportail.png" alt="HydroPortail">
@@ -63,23 +56,25 @@
           <mat-icon style="color: white">help_outline</mat-icon>
         </button>
       </div>
+      <!-- paramètres visiteur et utilisateur de l'eau-->
       <div class="card-body">
         <div class="row">
+          <!-- slider pour la duree de la simulation-->
           <div class="col">
             <div class="forecast_horizon">
               <h5>Echéance de la prévision (jours)</h5>
-              <button mat-button class="boutonindicator" [matTooltip]="'L\'échéance n\'intervient pas sur le calcul des prévisions. Elle intervient sur le calcul des indicateurs opérationnels (valeur du débit, franchissement d\'un seuil sécheresse, nombre de jours sous un seuil sécheresse, etc...).'">
+              <button mat-button [matTooltip]="'L\'échéance n\'intervient pas sur le calcul des prévisions. Elle intervient sur le calcul des indicateurs opérationnels (valeur du débit, franchissement d\'un seuil sécheresse, nombre de jours sous un seuil sécheresse, etc...).'">
                 <mat-icon>help</mat-icon>
               </button>
-              <button mat-button class="boutonindicator" [matTooltip]="'Lorsque l\'échéance est importante, l\'incertitude sur les projections augmente.'">
+              <button mat-button  [matTooltip]="'Lorsque l\'échéance est importante, l\'incertitude sur les projections augmente.'">
                 <mat-icon>warning</mat-icon>
               </button>
             </div>
-
             <div class="slider">
               <ngx-slider [(value)]="sliderValue" [options]="sliderOptions"></ngx-slider>
             </div>
           </div>
+          <!-- date du debut de la simulation -->
           <div class="col">
             <h5>Date de la simulation</h5>
             <input type="date" class="form-control" id="simulationDate" [(ngModel)]="simulationDate">
@@ -90,10 +85,10 @@
     </div>
   </div>
 
-  <!-- Parameters Panel -->
-  <div *ngIf="showParametersPanel">
-    <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
-  </div>
+    <!-- Parametres scientifique -->
+    <div *ngIf="showParametersPanel">
+      <app-parameters-panel (parametersChanged)="handleParametersChanged($event)"></app-parameters-panel>
+    </div>
 
   <!-- Run application - lancement d'une prévision -->
   <div class="text-center">
@@ -121,6 +116,7 @@
       </div>
     </div>
   </div>
+
   <!-- Affichage des résultats de la simulation -->
   <app-simulation-results *ngIf="results && showResults" 
                           [simulation_id]="simulation_id" 
