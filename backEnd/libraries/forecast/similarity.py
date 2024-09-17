@@ -93,7 +93,7 @@ class Similarity:
         self.Indicator = IN.Indicator(self.params) # algorithmic parameters
         #NICOLAS : ajouter le contenu de variables dans les paramètres xml à charger 
         #          et faire un test pour savoir si les variables sélectionnées sont bien dans la liste suivante
-        self.variables = ['specific_discharge', 'recharge']#, 'water_table_depth']
+        self.variables = ['specific_discharge', 'recharge']
         self.variables_definition = {'specific_discharge': 'hydrometry',
                                      'recharge': 'climatic/surfex',
                                      'runoff': 'climatic/surfex',
@@ -101,7 +101,7 @@ class Similarity:
         self.correlation_matrix = {}
         
         
-    def spatial_similarity(self, hydraulic_path):
+    def spatial_similarity(self, hydraulic_path, method):
         """
         Clustering (kmeans) of the watersheds according to their hydraulic conductivities
 
@@ -116,13 +116,15 @@ class Similarity:
 
         """
         
-        #NICOLAS: Remonter le contenu de parameters comme inputs du fichier xml 
-        self.hydraulic_properties = self.__get_hydraulic_properties(hydraulic_path, parameters=['K1', 'D', 'K2/K1'])
-        self.clusters = self.__watershed_clustering(self.hydraulic_properties)
-        self.watershed_similarity = self.__watershed_similarity(self.hydraulic_properties)
+        if method == 'median_properties':
+            #NICOLAS: Remonter le contenu de parameters comme inputs du fichier xml 
+            self.hydraulic_properties = self.__get_hydraulic_properties(hydraulic_path, parameters=['K1', 'D', 'K2/K1'])
+            self.clusters = self.__watershed_clustering(self.hydraulic_properties)
+            self.watershed_similarity = self.__watershed_similarity(self.hydraulic_properties)
+        if method == 'nselog_maps':
+            self.clusters = self.__nselog_clustering(hydraulic_path)
         
-    
-    
+        
     def __get_hydraulic_properties(self, hydraulic_path, parameters):
         """
         Loads hydraulic parameters of the watershed database
@@ -183,7 +185,39 @@ class Similarity:
         df['typology'] = kmeans.labels_
                 
         return df
+    
+    
+    def __nselog_clustering(self, hydraulic_path):
         
+        nse_folder = os.path.join(hydraulic_path, 'nselog')
+        nse_files = os.listdir(nse_folder)
+
+        df_general = pd.DataFrame()
+        stations = [file.replace('.csv', '') for file in nse_files]
+
+        for station in stations:
+            df = pd.read_csv(os.path.join(nse_folder,f'{station}.csv'))  # Vous remplacez cela par votre méthode d'obtention du df    
+            df_general[station] = df['NSElog']
+            
+        df_general = df_general.applymap(lambda x: max(x, 0))
+        df_transposed = df_general.T
+
+        # Normalisation des données
+        scaler = StandardScaler()
+        df_normalized = scaler.fit_transform(df_transposed)
+
+        # Application de K-means
+        kmeans = KMeans(n_clusters=self.n_clusters, random_state=0)
+        clusters = kmeans.fit_predict(df_normalized)
+
+        # Ajout des résultats au DataFrame transposé
+        df_transposed['Cluster'] = clusters
+        df_clusters = df_transposed['Cluster']
+        df_clusters = df_clusters.to_frame(name='typology')
+        df_clusters.index.name = 'ID'
+
+        return df_clusters
+    
     
     def __watershed_similarity(self, df):
         """

@@ -55,7 +55,7 @@ togglePanel() {
   
   
   list_of_disabled_options: string[] = [
-    'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
+    'J0121510', 'J0621610', 'J2233010', 'J3403010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
     'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310', 
   ];
 
@@ -359,6 +359,26 @@ updateProgress(message: string, progress: number) {
     this.dialog.open(PopupDialogSimulateur);
   }
 
+  openDialogConditions(event: MouseEvent) {
+    const targetElement = event.target as HTMLElement;
+    const rect = targetElement.getBoundingClientRect(); // Récupère la position du bouton
+
+    this.dialog.open(PopupDialogConditions, {
+      width: '500px',   // Largeur de la fenêtre
+      maxHeight: '80vh', // Limite la hauteur pour éviter qu'elle déborde
+      panelClass: 'custom-dialog-container', // Classe personnalisée pour ajuster les styles
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop', // Ajout de la classe backdrop personnalisée
+      autoFocus: false,
+      position: {
+        top: `${rect.bottom - 200}px`, // 10px en dessous du bouton
+        left: `${rect.right + 20}px`,   // 5px à droite du bouton
+        right: 'auto',                 // Laisser l'alignement horizontal au contenu
+        bottom: 'auto'  
+      }
+    });
+  }
+
 
 }
   /**
@@ -370,6 +390,11 @@ updateProgress(message: string, progress: number) {
   })
   export class PopupDialogSimulateur {}
 
+  @Component({
+    selector: 'popupDialogConditions',
+    templateUrl: './popupDialogConditions.html',
+  })
+  export class PopupDialogConditions {}
 
     /**
    * 

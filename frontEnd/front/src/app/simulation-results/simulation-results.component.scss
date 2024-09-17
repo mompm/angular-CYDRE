@@ -7,20 +7,51 @@
 
 .card {
   margin-bottom: 1.5rem !important;
+  border-radius: 8px; /* Ajoute un léger arrondi aux coins */
+  overflow: hidden; /* Assure que les éléments internes ne dépassent pas */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombre douce autour de la carte */
 }
 
 .card-header {
   font-size: 18px;
   color: white;
-  background-color:#413f3f;
+  // background-color:#413f3f;
+  background: linear-gradient(135deg, #3d3d3d, #1a1a1a); /* Dégradé de gris foncé à noir */
   text-align: center;
+  // padding: 10px 15px; /* Un peu de padding pour un look plus aéré */
+  // font-weight: bold;
+  border-bottom: 2px solid #ddd;
   }
 
 .card-body .row .col-md-2 {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
+
+.card-body {
+  background: linear-gradient(180deg, white, #f7f7f7);
+  // background-color: white; /* Fond blanc pour un contenu propre */
+  padding: 20px; /* Un padding généreux pour aérer le contenu */
+  border: 1px solid #e0e0e0; /* Beaux contours doux et subtils */
+  border-radius: 0 0 8px 8px; /* Arrondit le bas pour correspondre au header */
+  box-shadow: 4px 6px 12px rgba(0, 0, 0, 0.1); /* Ombre plus sombre en bas et à droite */
+}
+
+.input-group {
+  display: flex;
+  align-items: center; /* Aligne verticalement les éléments au centre */
+}
+
+.form-control {
+  width: 100px;
+  // flex: 1; /* Prend tout l'espace disponible dans le conteneur flex */
+  margin-right: 5px; /* Espacement entre le champ et l'unité */
+}
+
+.input-group-text {
+  margin-left: 5px; /* Espacement entre le champ de saisie et l'unité */
+}
+
 .input{
   margin-left: 5px;
 }
@@ -35,6 +66,14 @@
 .visu-align{
   display: flex; 
   align-items: center;
+}
+
+#previsions {
+  margin-top: 20px;
+  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);  // Légère ombre autour du graphique
+  border-radius: 8px;  // Coins arrondis pour un aspect moderne
+  max-height: 500px;
+  max-width : 1400px;
 }
 
 //matrices
@@ -86,15 +125,16 @@
 }
 
 //indicateurs
-.containerIndicatiors {
+.containerIndicators {
   display: flex;
   flex-wrap: wrap; /* Permet aux indicateurs de passer à la ligne suivante si nécessaire */
   justify-content: space-around; /* Espacement uniforme */
-  margin: 10px;
+  // margin: 10px;
 }
 
-.containerIndicatior {
-  border: 1px solid #ccc;
+.containerIndicator {
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Ombre douce */
+  border: 1px solid #ddd;
   padding: 10px;
   flex: 1; /* Cela permet à la boîte de grandir pour remplir l'espace disponible */
   box-sizing: border-box;
@@ -102,6 +142,7 @@
   margin: 5px; /* Ajoutez une marge pour éviter que les boîtes ne touchent */
   min-width: 180px; /* Assurez une largeur minimale pour chaque boîte */
   overflow: hidden;
+  background-color: #fafafa; /* Couleur de fond légère */
 }
 
 
@@ -118,8 +159,8 @@
   text-align: center;
   font-family: "Segoe UI Semibold";
   font-weight: bold;
-  font-size: 24px; /* Adjusted font size to match the image */
-  color: #487c8d;
+  font-size: 26px; /* Adjusted font size to match the image */
+  color: #047b7b;
   margin: 0;
 }
 
@@ -128,25 +169,58 @@
   font-family: "Segoe UI Semibold";
   font-size: 14px; /* Adjusted font size to match the image */
   margin-bottom: 10px;
-  color: #487c8d;
+  color: #047b7b
 }
 
 .descriptionIndicators {
   text-align: center;
   font-size: 14px; /* Adjusted font size to match the image */
+  font-weight: bold;
   margin: 0;
 }
 
-.boutonindicator {
+// .boutonindicator {
+//   display: block;
+//   margin: 0 auto; /* Center the button */
+//   font-family: "Segoe UI Semibold";
+//   font-size: 12px; /* Reduced font size */
+//   color: #487c8d; /* Set the text color */
+//   background-color: transparent !important;
+//   padding: 5px 10px; /* Adjust padding for smaller size */
+//   border: none; /* Supprimer la bordure du bouton */
+//   outline: none; /* Supprimer le contour de focus */
+// }
+
+::ng-deep .p-button {
   display: block;
   margin: 0 auto; /* Center the button */
-  font-family: "Segoe UI Semibold";
-  font-size: 12px; /* Reduced font size */
-  color: #487c8d; /* Set the text color */
+  // font-family: "Segoe UI Semibold";
+  color: #047b7b !important; /* Change la couleur de fond */
+  background-color: transparent !important; /* Change la couleur du texte */
   padding: 5px 10px; /* Adjust padding for smaller size */
+  font-size: 12px; /* Change la taille de la police */  
+  border: none; /* Supprimer la bordure du bouton */
+  outline: none; /* Supprimer le contour de focus */
 }
 
+/* Style général du conteneur du tooltip */
+::ng-deep .p-tooltip {
+  color: #047b7b !important; /* Change la couleur de fond */
+  border-radius: 4px !important; /* Arrondir les coins */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important; /* Ajoute une ombre légère */
+  max-width: 300px;
+}
 
+::ng-deep .p-tooltip .p-tooltip-text {
+  color: white !important; /* Change la couleur du texte */
+  font-size: 12px !important; /* Change la taille du texte */
+  font-family: "Segoe UI Semibold";
+  text-align: justify;
+}
+
+::ng-deep .p-tooltip .p-tooltip-arrow {
+  border-top-color: #047b7b !important;
+}
 
 .form-group {
   display: flex;

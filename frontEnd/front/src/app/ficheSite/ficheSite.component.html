@@ -51,7 +51,10 @@
     <div>
       <div class="h3_div">
         <h3 class="h3_text">Localisation du bassin versant</h3>
-        <button mat-button (click)="openDialogLoc()"><mat-icon style="color: white">help</mat-icon></button>
+        <button mat-raised-button color="#413f3f" (click)="openDialogLoc($event)">
+          <mat-icon style="color: white">help_outline</mat-icon>
+        </button>
+        <!-- <button mat-button (click)="openDialogLoc()"><mat-icon style="color: white">help</mat-icon></button> -->
       </div> 
       <div class="maps_div">
         <app-RegionalMap [stationSelectionChange] = "selectedWatershedID" (markerClick)="handleMarkerClick($event)" class="regional_map"></app-RegionalMap>

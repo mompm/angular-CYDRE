@@ -155,7 +155,7 @@ class Outputs():
             self.user_storage_forecast = cydre_app.UserConfiguration.user_storage[cydre_app.UserConfiguration.user_storage.index.isin(self.projection_period)]
     
     
-    def store_results(self, output_path, correlation_matrix, watershed_similarity, similar_watersheds, log=True, fig_format="tiff"):
+    def store_results(self, output_path, correlation_matrix, log=True, fig_format="tiff"):
         """
         Method used to create output directories, store similarity results, and define the path for saving graphs.
         """
@@ -163,7 +163,7 @@ class Outputs():
         self.output_path = output_path
         self.__manage_outputs_path(log, fig_format)
         self.__save_correlation_matrix(correlation_matrix)
-        self.__save_watershed_similarity(watershed_similarity, similar_watersheds)
+        #self.__save_watershed_similarity(watershed_similarity, similar_watersheds)
 
         
     def __manage_outputs_path(self, log, fig_format):
@@ -1067,42 +1067,65 @@ class Outputs():
         colors = ['#1f77b4', '#2ca02c', '#ff7f0e', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
         fig = go.Figure()
         
+        amplitudes = []
+        
         for i, watershed_id in enumerate(watershed_ids):
             
-            watershed_name = self.stations[self.stations['ID'] == watershed_id].name.values[0]
-            watershed_area = self.stations[self.stations['ID'] == watershed_id]['area'].values[0]
-            print(watershed_name)
-            
-            # Lecture des données
-            df = pd.read_csv(os.path.join(hydro_path, f'{watershed_id}.csv'), delimiter=',')
-            df['t'] = pd.to_datetime(df['t'])
-            df = df.set_index('t')
-            df['year'] = df.index.year
-            df['daily'] = df.index.strftime('%m-%d')
-            
-            # Calcul des statistiques saisonnières
-            q10 = (df.groupby('daily')['Q'].quantile(0.1)) * 86400 / (watershed_area*1e6)
-            q50 = (df.groupby('daily')['Q'].median()) * 86400 / (watershed_area*1e6)
-            q90 = (df.groupby('daily')['Q'].quantile(0.9)) * 86400 / (watershed_area*1e6)
-            
-            # Ajout de la trace pour la médiane
-            fig.add_trace(go.Scatter(
-                x=q50.index,
-                y=q50,
-                name=f"{watershed_name} [{df['year'].min()} - {df['year'].max()}]",
-                line=dict(color=colors[i % len(colors)], width=2.5)
-            ))
-            
-            # Ajout de la trace pour la variabilité
-            fig.add_trace(go.Scatter(
-                x=q10.index.tolist() + q10.index[::-1].tolist(),
-                y=q10.tolist() + q90[::-1].tolist(),
-                fill='toself',
-                fillcolor=hex_to_rgba(colors[i % len(colors)], 0.05),  # Opacité élevée (0.1)
-                line=dict(color='rgba(0, 0, 0, 0)'),
-                hoverinfo='none',
-                showlegend=False
-            ))
+            try:
+                watershed_name = self.stations[self.stations['ID'] == watershed_id].name.values[0]
+                watershed_area = self.stations[self.stations['ID'] == watershed_id]['area'].values[0]
+                print(watershed_name)
+                
+                # Lecture des données
+                df = pd.read_csv(os.path.join(hydro_path, f'{watershed_id}.csv'), delimiter=',')
+                df['t'] = pd.to_datetime(df['t'])
+                df = df.set_index('t')
+                df['year'] = df.index.year
+                df['daily'] = df.index.strftime('%m-%d')
+                
+                # Calcul des statistiques saisonnières
+                q10 = (df.groupby('daily')['Q'].quantile(0.1)) * 86400 / (watershed_area*1e6)
+                q50 = (df.groupby('daily')['Q'].median()) * 86400 / (watershed_area*1e6)
+                q90 = (df.groupby('daily')['Q'].quantile(0.9)) * 86400 / (watershed_area*1e6)
+                
+                # Calcul de l'amplitude pour q50
+                q50_max = q50.max()
+                q50_min = q50.min()
+                amplitude = q50_max / q50_min
+                
+                # Stocker le nom du bassin et l'amplitude dans une liste
+                amplitudes.append((watershed_name, amplitude))
+                
+                # Ajout de la trace pour la médiane
+                fig.add_trace(go.Scatter(
+                    x=q50.index,
+                    y=q50,
+                    name=f"{watershed_name} [{df['year'].min()} - {df['year'].max()}]",
+                    line=dict(color=colors[i % len(colors)], width=2.5),
+                    visible='legendonly'  # Désactive la courbe par défaut
+                ))
+                
+                # Ajout de la trace pour la variabilité
+                fig.add_trace(go.Scatter(
+                    x=q10.index.tolist() + q10.index[::-1].tolist(),
+                    y=q10.tolist() + q90[::-1].tolist(),
+                    fill='toself',
+                    fillcolor=hex_to_rgba(colors[i % len(colors)], 0.01),  # Opacité élevée (0.1)
+                    line=dict(color='rgba(0, 0, 0, 0)'),
+                    hoverinfo='none',
+                    showlegend=False,
+                    visible=False
+                ))
+            except:
+                print(f"Error with {watershed_id}")
+        
+        # Tri des amplitudes par ordre décroissant
+        amplitudes.sort(key=lambda x: x[1], reverse=True)
+        
+        # Affichage du classement
+        print("\nClassement des bassins par amplitude décroissante :")
+        for rank, (watershed_name, amplitude) in enumerate(amplitudes, start=1):
+            print(f"{rank}. {watershed_name}: {amplitude:.4f} m³/s")
     
         # Configuration des axes
         months = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"]
@@ -1123,7 +1146,8 @@ class Outputs():
             showticklabels=True,
             tickfont=dict(size=14, family='Segoe UI Semibold', color='black'),
             gridwidth=0.01,
-            gridcolor='rgba(0,0,0,0.1)'
+            gridcolor='rgba(0,0,0,0.1)',
+            range=[-5, -2]
         )
     
         # Mise à jour de la mise en page pour un fond blanc

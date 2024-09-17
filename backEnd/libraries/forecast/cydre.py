@@ -86,10 +86,9 @@ class Cydre():
         self.Similarity = SIM.Similarity(similarity_params, self.date)
         
     
-    def run_spatial_similarity(self, hydraulic_path, gdf_stations, spatial=True):
-        if spatial:
-            self.Similarity.spatial_similarity(hydraulic_path)
-            self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id, gdf_stations)
+    def run_spatial_similarity(self, hydraulic_path, gdf_stations, method="median_properties"):
+        self.Similarity.spatial_similarity(hydraulic_path, method)
+        self.Similarity.get_similar_watersheds(self.UserConfiguration.user_watershed_id, gdf_stations)
     
             
     def run_timeseries_similarity(self, data_path, similar_watersheds):
@@ -161,7 +160,7 @@ class Cydre():
         
         # Projections using scenarios from spatio-temporal similarities
         try:
-            self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_streamflow_forecast_normalized, weight=False)
+            self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_streamflow_forecast_normalized, weight=True)
             self.df_storage_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_storage_forecast_normalized, weight=False)
         except:
             raise ValueError("There are no past events with a correlation coefficient above the defined threshold.")

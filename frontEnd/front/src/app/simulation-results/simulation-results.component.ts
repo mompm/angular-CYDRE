@@ -30,7 +30,7 @@ interface Indicator {
 @Component({
   selector: 'app-simulation-results',
   templateUrl: './simulation-results.component.html',
-  styleUrls: ['./simulation-results.component.scss']
+  styleUrls: ['./simulation-results.component.scss'],
 })
 export class SimulationResultsComponent implements OnInit, OnDestroy {
   tooltipTextsEstimationValue: string[] = [];
@@ -251,29 +251,113 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     return Math.floor(volume || 0);
   }
 
-  ngAfterViewInit() {
-    this.updateComponentsWithResults(this.results);
-  }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['results'] && changes['results'].currentValue) {
-      this.updateComponentsWithResults(changes['results'].currentValue);
-    } 
-  }
+  createScenariosHeatmap() {
+    try{
+      // Utiliser flat() pour aplatir la matrice en un tableau à une dimension
+      const flattenedData = this.results.results.scenarios.data.flat();
+      // Utiliser filter() pour garder uniquement les éléments différents de 0
+      const nonZeroElements = flattenedData.filter((value: number) => value !== 0);
+      // La longueur du tableau résultant est le nombre d'éléments différents de 0
+      this.similarScenarios = nonZeroElements.length;
 
-  onToggleChange() {
-    this.updateComponentsWithResults(this.results);
-  }
+    }catch(e){
+      console.error(e)
+    }
 
-  applyFilter(event: Event) {
-    const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource!.filter = filterValue.trim().toLowerCase();
-    if (this.dataSource!.paginator) {
-      this.dataSource!.paginator.firstPage();
+    if (this.stations.length >0){
+      console.log("showing scenarios matrix")
+      const stations = this.results.results.scenarios.columns;
+      const labeledStations = this.createMatrixStationLabel(stations)
+
+
+      const data = this.results.results.scenarios.data;
+      // Transpose the data matrix because we want years in x and stations in y
+      const transposedData = data[0].map((_: any, colIndex: string | number) => data.map((row: { [x: string]: any; }) => row[colIndex]));
+
+      const index = this.results.results.scenarios.index;
+      
+
+      const DataMatrice: any[] = [];
+      DataMatrice.push({
+        z: transposedData,
+        x: index,
+        y: labeledStations,
+        type: 'heatmap',
+        colorscale: [
+          [0, 'rgba(0, 0, 0, 0.2)'], 
+          [1, 'rgb(34, 94, 168)']  
+        ],
+        reversescale: false,
+        showscale: false,
+        xgap: 1,
+        ygap: 1
+      });
+
+      // Calcul de la taille de la figure en fonction de la taille souhaitée des cases
+      const caseHeight = 20; // Hauteur de chaque case en pixels
+      const caseWidth = document.getElementById("matriceScenarios")!.clientWidth/transposedData[0].length;  // Largeur de chaque case en pixels
+      console.log(caseWidth)
+      const height = caseHeight * labeledStations.length; // Hauteur totale de la figure
+      const width = caseWidth * index.length; // Largeur totale de la figure
+      console.log(index.length)
+      console.log(width)
+      console.log(document.getElementById("matriceScenarios")!.clientWidth)
+
+
+      // Calculate the width of the longest label
+      const longestLabel = Math.max(...labeledStations.map((label: string | any[]) => label.length));
+      const labelFontSize = this.scenariosMatrixFontSize; // Font size in pixels
+      const figLayout: Partial<Layout> = {
+          xaxis: {
+              tickangle: -90,
+              side: 'top',
+              automargin: true,
+              tickfont: {  
+                size: labelFontSize  
+            } 
+          },
+          yaxis: {
+              tickfont : {
+                size: labelFontSize,
+              },
+              tickmode: 'array',
+              autorange: 'reversed'
+          },
+          margin: {
+              t: 50,  // marge supérieure
+              b: 10,  // marge inférieure pour éviter la coupe des labels
+              l:longestLabel * labelFontSize *0.8,  // marge gauche
+              // r: 50   // marge droite
+          },
+          height: height + 20,
+          // Ajout des couleurs de fond transparentes
+          paper_bgcolor: 'rgba(0, 0, 0, 0)', // Fond global transparent
+          plot_bgcolor: 'rgba(0, 0, 0, 0)',  // Fond de la zone de traçage transparent
+    
+      };
+        Plotly.newPlot('matriceScenarios', DataMatrice, figLayout);
+        Plotly.relayout('matriceScenarios',{width :this.calculateMatrixWidth('matriceScenarios',stations,this.scenariosMatrixFontSize)});
+
     }
   }
 
-//PARTIE INDICATEURS// 
+  createMatrixStationLabel(stations: any[]){
+    const labeledStations = stations.map((columnId: any) => {
+      const station = this.stations.find(station => station.index.toLowerCase() === columnId.toLowerCase());
+      const name = station ? station.name : "Unknown";
+      return `${columnId} - ${name}`
+  })
+  return labeledStations
+
+}
+
+  calculateMatrixWidth(id:string, labels :any [], fontsize :number){
+    // return (document.getElementById(id)!.clientWidth + Math.max(...labels.map((label: string | any[]) => label.length)) * fontsize)*0.95;
+    return (document.getElementById(id)!.clientWidth);
+
+  }
+  
 
   fillIndicators() {//ajouter les indicateurs de la base de données au tableau du front
     this.indicators = [];  // Réinitialiser le tableau des indicateurs
@@ -287,8 +371,10 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                   let Q50Value = indicator.results.proj_values.Q50;
                   console.log("proj_values", indicator)
                   Q50Value = parseFloat(Q50Value.toFixed(2));
+                  const firstDate = this.results.results.data.first_date;
                   const lastDate = this.results.results.data.last_date || ''; 
-                  const tooltipText = `Valeur du débit au ${lastDate} m³/s. . Cela représente une évolution de  ${Q50Value} %`; 
+                  const tooltipText = `Débit projeté médian en m³/s au ${lastDate}.\n 
+                  Cela correspond à une variation de ${Q50Value}% par rapport au débit observé le ${firstDate}`; 
                   this.tooltipTextsEstimationValue.push(tooltipText);
                 }
                 this.indicators.push({
@@ -580,11 +666,11 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           x: projectionData.x,
           y: projectionData.y,
           showlegend: true,
-          hoverinfo: 'none',
+          hoverinfo: 'skip',
           mode: 'lines',
           type: 'scatter',
           name: 'événements individuels', 
-          line: { color: '#e3dcda', width: 1, dash: 'dash' },
+          line: { color: '#b783b2', width: 1, dash: 'dot' },
         };
         this.traces.push(projectionTrace);
       }
@@ -601,8 +687,9 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
             showlegend : true,
             hoverinfo : 'none',
             fill: 'toself', 
-            fillcolor: 'rgba(64, 127, 189, 0.3)', 
-            line: { color: '#407fbd', width: 1 }, 
+            fillcolor : 'rgba(31, 120, 180, 0.2)',
+            // fillcolor: 'rgba(64, 127, 189, 0.2)', 
+            line: { color: '#1f78b4', width: 1 }, 
         };
         this.traces.push(incertitudeTrace);
       }
@@ -618,7 +705,7 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           name: 'projection médiane',
           hovertemplate: 'projection médiane: %{y:.3f} m³/s<extra></extra>',
           showlegend : true,
-          line: { color: 'blue', width: 1 , dash: 'dot' }, 
+          line: { color: '#1f78b4', width: 2 , dash: 'dot' }, 
         };
         this.traces.push(q50Trace);
       }
@@ -741,35 +828,46 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         hovermode: "x unified",
         title: {
             text: this.watershedID + " | " + this.stationName,
-            font: { size: 17 },
+            font: { size: 20,  family: 'Segoe UI Semibold',  },
         },
         //paramètre de la lègende 
         legend: {
             orientation: 'h',
-            font: { size: 12 },
+            font: { size: 16, color: '#333',     family: 'Segoe UI, sans-serif'},  // Police lisible et élégante
             x: 0.5,
             xanchor: 'center',
-            y: 1.2,
+            y: 1.1,
             yanchor: 'top',
         },
         //paramètre de axe X
         xaxis: {
             title: '',
-            showgrid: false,
+            showgrid: true,
+            gridcolor: 'rgba(200, 200, 200, 0.3)',  // Grille discrète
             zeroline: false,
             tickformat: '%d-%m-%Y',
             tickmode: 'auto' as 'auto',
-            tickangle: 45,
+            tickangle: 0,
             ticks: 'inside',
-            titlefont: { size: 12 },
+            tickfont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
             nticks: 10,
             range: [this.startDate, this.endDate],
             hoverformat: '%d %b %Y',
         },
         //paramètre de axe Y
         yaxis: {
-            title: 'Débit (m3/s)',
-            titlefont: { size: 12 },
+            title: 'Débit [m³/s]',
+            titlefont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
+            tickfont: { 
+                size: 16, 
+                family: 'Segoe UI Semibold',  // Ajoute Segoe UI
+            },
             showline: false,
             ticks: 'inside',
             type: this.type as AxisType,
@@ -789,6 +887,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 dash: 'dot'
             }
         }] : [],
+        // Ajout des couleurs de fond transparentes
+        paper_bgcolor: 'rgba(0, 0, 0, 0)', // Fond global transparent
+        plot_bgcolor: 'rgba(0, 0, 0, 0)',  // Fond de la zone de traçage transparent
+        margin: {
+            l: 50,  // Espace à gauche pour les labels Y
+            r: 30,  // Espace à droite pour ne pas couper les courbes
+        },
+        autosize: true,  // Le graphique s'adapte automatiquement à la taille du conteneur
     };
     
 }
@@ -813,14 +919,14 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
     }
 
   if(document.getElementById('previsions')){
-      Plotly.newPlot('previsions', this.traces, this.layout);
+      Plotly.newPlot('previsions', this.traces, this.layout, { responsive: true });
       const annotation: Partial<Plotly.Annotations> = {
         text: "Date de la simulation",
         xref: 'x', yref: 'paper',
         x:   this.simulationStartDate ? this.simulationStartDate.toISOString() : undefined, 
         y: 1,
         showarrow: false,
-        font: { size: 14 }
+        font: { size: 14, family: 'Segoe UI Semibold', }
       };
       Plotly.relayout('previsions', { annotations: [annotation] ,width : document.getElementById('previsions')!.clientWidth });
     }
@@ -1275,6 +1381,18 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
         this.dialog.open(Dialogsimulationresults);
     }
 
+  openDialogViz(event: MouseEvent) {
+    this.dialog.open(PopupDialogViz, {
+      width: '800px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
 //FONCTIONS POUR SIMPLIFIER LE CODE//        
 
         keys(obj: any) {//fonction pour retourner les clés d'un json
@@ -1291,7 +1409,129 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
           return Math.min(v1, v2);
         }
 
+  downloadFile(): void {
+          // Vérifiez si les dates de début et de fin sont définies
+          if (!this.startDate || !this.endDate) {
+              console.error("Start date and end date must be defined.");
+              return;
+          }
+
+          const startDate = new Date(this.startDate);
+          const endDate = new Date(this.endDate);
+
+          // Filtrer les données pour exclure les lignes ayant "Projection" dans le nom
+          const filteredData = this.results.results.data.graph.filter((line: { name: string }) => {
+              return !line.name.includes('Projection');
+          });
+
+          // Extraction des dates uniques dans l'intervalle [startDate, endDate]
+          const dates = new Set<string>();
+
+          // Traitement des observations avec this.XaxisObservations
+          this.XaxisObservations.forEach((date: Date) => {
+              if (date >= startDate && date <= endDate) {
+                  dates.add(date.toISOString().split('T')[0]); // Convertir en chaîne de caractères formatée
+              }
+          });
+
+          // Traitement des prédictions avec XaxisPredictions
+          this.XaxisPredictions.forEach((date: Date) => {
+              if (date >= startDate && date <= endDate) {
+                  dates.add(date.toISOString().split('T')[0]); // Convertir en chaîne de caractères formatée
+              }
+          });
+
+          // Conversion du Set en tableau de dates uniques
+          let uniqueDates = Array.from(dates);
+    
+          // Récupération des indices correspondant aux dates uniques pour les observations
+          const observationDateIndices = this.XaxisObservations
+              .map((date, index) => (uniqueDates.includes(date.toISOString().split('T')[0]) ? index : -1))
+              .filter(index => index !== -1);
+
+          // Récupération des indices correspondant aux dates uniques pour les prédictions
+          const predictionDateIndices = this.XaxisPredictions
+              .map((date, index) => (uniqueDates.includes(date.toISOString().split('T')[0]) ? index : -1))
+              .filter(index => index !== -1);
+
+          // Initialisation de columnData
+          const columnData: { [date: string]: { [columnName: string]: any } } = {};
+          uniqueDates.forEach(date => {
+              columnData[date] = {
+                  Q90: '',
+                  Q50: '',
+                  Q10: '',
+                  observations: ''
+              };
+          });
+          
+          // Remplissage de columnData avec les valeurs de y
+          filteredData.forEach((line: { name: string; y: any[]; }) => {
+              let dateIndices;
+              let columnName: string; // Déclaration explicite du type string
+          
+              if (line.name === 'observations') {
+                  dateIndices = observationDateIndices;
+                  columnName = 'observations';
+              } else {
+                  dateIndices = predictionDateIndices;
+                  columnName = line.name; // Suppose que les noms sont 'Q90', 'Q50', 'Q10'
+              }
+          
+              dateIndices.forEach(index => {
+                const date = line.name === 'observations' ? this.XaxisObservations[index].toISOString().split('T')[0] : this.XaxisPredictions[index].toISOString().split('T')[0];
+                if (columnData[date]) {
+                    if (line.y[index] !== undefined) { // Vérifier si la valeur de y existe pour cet index
+                        columnData[date][columnName] = line.y[index];
+                    }
+                }
+            });
+        });          
+          // Construire le CSV avec en-têtes
+          let csv = 'Date,Q90,Q50,Q10,observations\n';
+          uniqueDates.forEach(date => {
+              // Reformater la date au format souhaité (ISO 8601 : YYYY-MM-DD)
+              const formattedDate = new Date(date).toISOString().split('T')[0];
+              csv += `${formattedDate},${columnData[date]['Q90']},${columnData[date]['Q50']},${columnData[date]['Q10']},${columnData[date]['observations']}\n`;
+          });
+        
+
+          // Créer le Blob à partir du CSV
+          const blob = new Blob([csv], { type: 'text/csv' });
+
+          // Créer l'URL du Blob
+          const url = window.URL.createObjectURL(blob);
+
+          const formattedStartDate = startDate.toISOString().split('T')[0];
+          const formattedEndDate = endDate.toISOString().split('T')[0];
+          const fileName = `prévision_${this.watershedName}_[${formattedStartDate}-${formattedEndDate}].csv`;
+
+          // Créer un élément <a> pour le téléchargement du fichier
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = fileName;
+
+          // Ajouter l'élément <a> au corps du document
+          document.body.appendChild(a);
+
+          // Simuler un clic sur le lien pour déclencher le téléchargement
+          a.click();
+
+          // Supprimer l'élément <a> du corps du document
+          document.body.removeChild(a);
+
+          // Révoquer l'URL du Blob pour libérer la mémoire
+          window.URL.revokeObjectURL(url);
+          
+      }
+
   }
+
+@Component({
+  selector: 'popupDialogViz',
+  templateUrl: './popupDialogViz.html',
+})
+export class PopupDialogViz {}
 
 
 @Component({

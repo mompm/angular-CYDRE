@@ -87,7 +87,19 @@ export class TypologyMapComponent implements OnInit, OnChanges {
 
     const stationsList = document.getElementById('stations-list');
     if (stationsList) {
-      stationsList.innerHTML = selectedStations.map(station => `<li>${station.station_name}</li>`).join('');
+      stationsList.innerHTML = ''; // Réinitialiser la liste
+
+      selectedStations.forEach(station => {
+        const listItem = document.createElement('li');
+        listItem.textContent = station.station_name; // Nom de la station
+
+        // Ajouter la classe selected-station si c'est la station sélectionnée
+        if (station.index === this.selectedWatershedID) {
+          listItem.classList.add('selected-station');
+        }
+
+        stationsList.appendChild(listItem);
+      });
     }
     console.log('Liste des stations:', stationsList)
 
