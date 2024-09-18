@@ -408,6 +408,18 @@ togglePanel() {
     });
   }
 
+  openDialogSelection(event: MouseEvent) {
+    this.dialog.open(PopupDialogSelection, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      }
+    )
+    }
+
   //METHODES POUR SIMPLIFIER LE CODE//   
   userIsScientificOrDev(){
     return this.authService.isScientificOrDev
@@ -438,6 +450,12 @@ togglePanel() {
     templateUrl: './popupDialogSimulateur.html',
   })
   export class PopupDialogSimulateur {}
+
+  @Component({
+    selector: 'popupDialogSelection',
+    templateUrl: './popupDialogSelection.html',
+  })
+  export class PopupDialogSelection {}
 
   @Component({
     selector: 'popupDialogConditions',

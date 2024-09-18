@@ -10,17 +10,9 @@
   <div *ngIf="!showParametersPanel"> 
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <!-- Bulle d'info pour la sélection des stations hydrologiques -->
-      <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
-        <mat-icon class="info-icon">info</mat-icon>
+      <button mat-icon-button (click)="openDialogSelection($event)">
+        <mat-icon style="color:#3d3d3d">info</mat-icon>
       </button>
-      <mat-menu #dateInfoPopup="matMenu" xPosition="after">
-        <ng-template matMenuContent>
-          <div class="info-tooltip">
-            <p>La sélection de la station modifie <strong>la visualisation des données</strong> et définit le bassin versant à utiliser pour <strong>la prévision des débits</strong> dans la partie "Simulateur". Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
-          </div>
-        </ng-template>
-      </mat-menu>
     </div>
     <!-- menu déroulant pour sélectionner la station hydrolique-->
     <div class="choix_station_div">

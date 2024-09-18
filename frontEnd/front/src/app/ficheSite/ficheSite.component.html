@@ -2,16 +2,9 @@
   <div>
     <div class="button_info_div">
       <div class="h4_center">Sélection de la station hydrologique de référence</div>
-      <button mat-icon-button class="button_info" aria-label="Selection de la station" [matMenuTriggerFor]="dateInfoPopup">
-        <mat-icon>info</mat-icon>
+      <button mat-icon-button (click)="openDialogSelection($event)">
+        <mat-icon style="color:#3d3d3d">info</mat-icon>
       </button>
-      <mat-menu #dateInfoPopup="matMenu" xPosition="after" class="custom-menu">
-        <ng-template matMenuContent>
-          <div class="info-tooltip">
-          <p>La sélection de la station modifie <strong>la visualisation des données</strong> et définit le bassin versant à utiliser pour <strong>la prévision des débits</strong> dans la partie "Simulateur". Pour plus d'informations concernant les stations veuillez vous référer à la documentation générale de l'outil située dans la barre de navigation.</p>
-          </div>
-        </ng-template>
-      </mat-menu>
     </div>
 
     <div>
@@ -51,8 +44,8 @@
     <div>
       <div class="h3_div">
         <h3 class="h3_text">Localisation du bassin versant</h3>
-        <button mat-raised-button color="#413f3f" (click)="openDialogLoc($event)">
-          <mat-icon style="color: white">help_outline</mat-icon>
+        <button mat-icon-button (click)="openDialogLoc($event)">
+          <mat-icon style="color: white; font-size: 18px;">help_outline</mat-icon>
         </button>
         <!-- <button mat-button (click)="openDialogLoc()"><mat-icon style="color: white">help</mat-icon></button> -->
       </div> 
@@ -65,6 +58,9 @@
     <div>
       <div class="h3_div">
         <h3 class="h3_text">Suivi de la ressource en eau</h3>
+        <button mat-icon-button (click)="openDialogSuivi($event)">
+          <mat-icon style="color: white; font-size: 18px;">help_outline</mat-icon>
+        </button>
       </div>
     </div>
     <div class="seasonal_plot_div">
@@ -96,8 +92,8 @@
   <div>
     <div class="h3_div">
       <h3 class="h3_text">Typologies de bassins versants</h3>
-      <button mat-raised-button color="#413f3f" (click)="openDialogClassif($event)">
-        <mat-icon style="color: white">help_outline</mat-icon>
+      <button mat-icon-button (click)="openDialogClassif($event)">
+        <mat-icon style="color: white; font-size: 18px;">help_outline</mat-icon>
       </button>
     </div>
     <div class="seasonal_plot_div">
