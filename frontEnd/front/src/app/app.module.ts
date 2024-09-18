@@ -28,13 +28,7 @@ import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipi
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
-import { LocalisationComponent } from './modeling/localisation/localisation.component';
-import { ModelisationComponent } from './modeling/modelisation/modelisation.component';
 import { TabViewModule } from 'primeng/tabview';
-import { HistoriqueComponent } from './modeling/historique/historique.component';
-import { PrevisionComponent } from './modeling/prevision/prevision.component';
-import { RessourceComponent } from './modeling/ressource/ressource.component';
-import { MapComponent } from './modeling/localisation/map/map.component';
 import { SelectButtonModule } from 'primeng/selectbutton';
 import { FooterComponent } from './footer/footer.component';
 import { Documentation } from './documentation/documentation'; 
@@ -96,12 +90,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     WaterTableDepthSeasonal,
     precipitationSeasonal,
     LoginComponent,
-    LocalisationComponent,
-    ModelisationComponent,
-    HistoriqueComponent,
-    PrevisionComponent,
-    RessourceComponent,
-    MapComponent,
     FooterComponent,
     Documentation,
     CreateAccountComponent,

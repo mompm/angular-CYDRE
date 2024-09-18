@@ -25,6 +25,7 @@ export class LoginComponent implements OnInit{
   constructor(public authService : AuthService, private router : Router, private usersService: UsersService){}
   ngOnInit() {
     // this.authService.isLogging = true;
+    console.log('t')
   }
 
   onSubmit() {

@@ -1,8 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
-import {LocalisationComponent} from "./modeling/localisation/localisation.component";
-import {ModelisationComponent} from "./modeling/modelisation/modelisation.component";
 import { FicheSiteComponent } from './ficheSite/ficheSite.component';
 import { CreateAccountComponent } from './create-account/create-account.component';
 import { AuthGuard } from './service/auth.guard';
