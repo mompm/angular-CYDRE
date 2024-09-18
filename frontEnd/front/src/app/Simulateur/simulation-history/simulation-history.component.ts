@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { JsonService } from '../service/json.service';
+import { JsonService } from 'src/app/service/json.service';
 import { HttpClient } from '@angular/common/http';
 import { forEach } from 'mathjs';
 

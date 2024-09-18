@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnInit, Input, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormControl, FormGroup } from '@angular/forms';
-import { ParametersService } from '../service/parameters.service';
+import { ParametersService } from 'src/app/service/parameters.service';
 
 @Component({
   selector: 'app-parameters-panel',

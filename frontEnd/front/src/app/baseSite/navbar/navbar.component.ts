@@ -1,13 +1,12 @@
 import { Component,EventEmitter, OnInit, ViewEncapsulation, Output, Input } from '@angular/core';
-//import { NavigationEnd, Router } from '@angular/router';
-//import { filter } from 'rxjs';
-import { AuthService } from '../service/auth.service';
+import { AuthService } from 'src/app/service/auth.service';
 import {MatTabsModule} from '@angular/material/tabs';
 import { MatButtonModule } from '@angular/material/button';
 import {MatDialog, MatDialogRef} from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { Documentation } from '../documentation/documentation';
+import { Documentation } from 'src/app/baseSite/documentation/documentation';
+
 
 @Component({
   selector: 'app-navbar',

@@ -5,12 +5,12 @@
 
 
 import { Component, OnInit} from '@angular/core';
-import {slideInAnimation} from "./animations/animations";
+import {slideInAnimation} from "./baseSite/animations/animations";
 import {MatDialog, MatDialogModule, MatDialogRef} from '@angular/material/dialog';
 import {MatButtonModule} from '@angular/material/button';
 import { CommonModule } from '@angular/common';
 import {MatTabsModule} from '@angular/material/tabs';
-import { Documentation } from './documentation/documentation';
+import { Documentation } from './baseSite/documentation/documentation';
 
 @Component({
   selector: 'app-root',

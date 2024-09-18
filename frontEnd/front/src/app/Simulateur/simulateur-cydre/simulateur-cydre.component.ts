@@ -16,7 +16,7 @@ import { SharedWatershedService } from 'src/app/service/shared-watershed.service
 import { JsonService } from 'src/app/service/json.service';
 import { DataService } from 'src/app/service/data.service';
 import { AuthService } from 'src/app/service/auth.service';
-import { ParametersPanelComponent } from 'src/app/parameters-panel/parameters-panel.component';
+import { ParametersPanelComponent } from '../parameters-panel/parameters-panel.component';
 
 
 

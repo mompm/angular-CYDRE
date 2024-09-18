@@ -6,7 +6,7 @@ import { CreateAccountComponent } from './create-account/create-account.componen
 import { AuthGuard } from './service/auth.guard';
 import { SimulateurCydreComponent } from './Simulateur/simulateur-cydre/simulateur-cydre.component';
 import { AnalyseDeSensibiliteComponent } from './analyse-de-sensibilite/analyse-de-sensibilite.component';
-import { SimulationHistoryComponent } from './simulation-history/simulation-history.component';
+import { SimulationHistoryComponent } from './Simulateur/simulation-history/simulation-history.component';
 
 const routes: Routes = [ //indicate which component to load depending on the path
   { path: 'ficheSite', component: FicheSiteComponent },
