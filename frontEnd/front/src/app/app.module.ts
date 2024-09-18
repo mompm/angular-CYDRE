@@ -16,7 +16,6 @@ import { LoginComponent } from './login/login.component';
 import { InputTextModule } from 'primeng/inputtext';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NavbarComponent } from './navbar/navbar.component';
-import { SelecteurLangueComponent } from './selecteurLangue/selecteurLangue.component';
 import { FicheSiteComponent } from './ficheSite/ficheSite.component';
 import { RegionalMapComponent } from './ficheSite/RegionalMap/RegionalMap.component';
 import { WatershedMapComponent } from './ficheSite/WatershedMap/WatershedMap.component';
@@ -80,7 +79,6 @@ PlotlyModule.plotlyjs = PlotlyJS;
     AppComponent,
     NavbarComponent,
     HeaderComponent,
-    SelecteurLangueComponent,
     FicheSiteComponent,
     RegionalMapComponent,
     WatershedMapComponent,

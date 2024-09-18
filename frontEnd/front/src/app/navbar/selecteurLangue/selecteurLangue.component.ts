@@ -37,25 +37,6 @@ export class SelecteurLangueComponent{
       this.getTransLanguage();
     }
 
-
-
-    openDialog() {
-      this.dialog.open(DocumentationPopup, {});
-    }
-  
   }
 
-    @Component({
-      selector: 'documentationPopup',
-      templateUrl: './documentationPopup.html',
-      styleUrls: ['./documentationPopup.scss'],
-      standalone: true,
-      imports: [MatTabsModule, CommonModule, MatButtonModule],
-    })
-    export class DocumentationPopup {
-      constructor(public dialogRef: MatDialogRef<DocumentationPopup>) {}
 
-      onClose(): void {
-        this.dialogRef.close();
-      }
-}
