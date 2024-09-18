@@ -60,7 +60,7 @@ shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 param_names = ['user_watershed_id', 'date']
 #param_ranges = [['J0626610', 'J0014010', 'J2404010', 'J3834010', 'J7513010', 'J1524010'],
 #                pd.date_range('2015-01-01', '2019-12-31', periods=25).tolist()]
-param_ranges = [list(gdf_stations['ID'])[49:], 
+param_ranges = [list(gdf_stations['ID']), 
                 pd.date_range('1980-05-01', '2024-05-01', freq='AS-MAY').tolist()]
 num_values = [1, 1]
 
@@ -101,8 +101,7 @@ for params in param_combinations:
         results = OU.Outputs(cydre_app, watershed_name, gdf_stations, str(params['date']).split(' ')[0],
                              cydre_app.Similarity.user_similarity_period, log=True, module=True, options='viz_plotly')
         
-        results.store_results(output_path, cydre_app.scenarios, cydre_app.Similarity.watershed_similarity,
-                              cydre_app.Similarity.similar_watersheds, log=True, fig_format='tiff')
+        results.store_results(output_path, cydre_app.scenarios, log=True, fig_format='tiff')
         results.plot_streamflow_projections(log=True, module=True, stats_stations=True, options='viz_matplotlib')
         results.streamflow_volume()
         

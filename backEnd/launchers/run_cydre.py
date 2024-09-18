@@ -22,7 +22,7 @@ from libraries.load_data import define_paths, load_data
 
 start = time.time()
 
-SPATIAL = False
+SPATIAL = True
 
 
 #%% PREPARATION
