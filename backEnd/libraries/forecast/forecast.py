@@ -118,7 +118,8 @@ class Forecast():
                     comp_ti = pd.to_datetime(str(year)+'-'+simulation_date.strftime('%m-%d'))
                     
                     # Recalculate time origin
-                    forecast_date = self.__recalculate_time_origin(comp_ti, df_watershed)
+                    #forecast_date = self.__recalculate_time_origin(comp_ti, df_watershed)
+                    forecast_date = comp_ti
                     
                     # Time series smoothing for noise reduction
                     #df_watershed = self.__timeseries_smoothing(df_watershed)

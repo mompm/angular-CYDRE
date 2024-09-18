@@ -88,7 +88,7 @@ class UserConfiguration():
         
         # Extract the user time series data
         self.user_streamflow = self.get_user_streamflow(data_path)
-        self.user_recharge, self.user_runoff = self.get_user_inputs(data_path)        
+        self.user_recharge, self.user_runoff, self.user_precip, self.user_etp = self.get_user_inputs(data_path)        
         self.user_storage = self.user_recharge + self.user_runoff - self.user_streamflow       
         
         # Merge data in a dataframe
@@ -124,5 +124,15 @@ class UserConfiguration():
         with open(runoff_path) as file:
             runoff = pd.read_csv(file, index_col="t")
             runoff.index = pd.to_datetime(runoff.index)
+            
+        precip_path = os.path.join(data_path, "climatic", "surfex", "precipitation", "{}.csv".format(self.user_watershed_id)) 
+        with open(precip_path) as file:
+            precip = pd.read_csv(file, index_col="t")
+            precip.index = pd.to_datetime(precip.index)
         
-        return recharge, runoff 
+        etp_path = os.path.join(data_path, "climatic", "surfex", "etp", "{}.csv".format(self.user_watershed_id)) 
+        with open(etp_path) as file:
+            etp = pd.read_csv(file, index_col="t")
+            etp.index = pd.to_datetime(etp.index)
+        
+        return recharge, runoff, precip, etp 
