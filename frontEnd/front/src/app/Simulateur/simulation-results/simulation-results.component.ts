@@ -286,12 +286,13 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
                 let fixedValue = indicator.type === "1/10 du module";  // Déterminer si 'fixed' doit être true ou false
                 if(fixedValue){
                   let Q50Value = indicator.results.proj_values.Q50;
+                  let Q50evolution = indicator.results.proj_ev; 
                   console.log("proj_values", indicator)
                   Q50Value = parseFloat(Q50Value.toFixed(2));
                   const firstDate = this.results.results.data.first_date;
                   const lastDate = this.results.results.data.last_date || ''; 
                   const tooltipText = `Débit projeté médian en m³/s au ${lastDate}.\n 
-                  Cela correspond à une variation de ${Q50Value}% par rapport au débit observé le ${firstDate}`; 
+                  Cela correspond à une variation de ${Q50evolution}% par rapport au débit observé le ${firstDate}`; 
                   this.tooltipTextsEstimationValue.push(tooltipText);
                 }
                 this.indicators.push({
@@ -1298,18 +1299,38 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 
     }
 
-    openDialog() {
-        this.dialog.open(Dialogsimulationresults);
-    }
-
   openDialogViz(event: MouseEvent) {
     this.dialog.open(PopupDialogViz, {
-      width: '800px',
+      width: '1000px',
       maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
       panelClass: 'custom-dialog-container',
       hasBackdrop: true,
       backdropClass: 'custom-backdrop',
-      autoFocus: false
+      autoFocus: false,
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
+  openDialogThreshold(event: MouseEvent) {
+    this.dialog.open(PopupDialogThreshold, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
+  openDialogEvents(event: MouseEvent) {
+    this.dialog.open(PopupDialogEvents, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
       // Pas de paramètres de position pour permettre un centrage automatique
     });
   }
@@ -1339,20 +1360,17 @@ export class SimulationResultsComponent implements OnInit, OnDestroy {
 })
 export class PopupDialogViz {}
 
+@Component({
+  selector: 'popupDialogThreshold',
+  templateUrl: './popupDialogThreshold.html',
+})
+export class PopupDialogThreshold {}
 
 @Component({
-  selector: 'dialog-simulation-results',
-  templateUrl: './dialog-simulation-results.html',
-  styleUrls: ['./dialog-simulation-results.scss'],
-  standalone: true,
-  imports: [CommonModule, MatButtonModule],
+  selector: 'popupDialogEvents',
+  templateUrl: './popupDialogEvents.html',
 })
-export class Dialogsimulationresults {
-  constructor(public dialogRef: MatDialogRef<Dialogsimulationresults>) {}
+export class PopupDialogEvents {}
 
-  onClose(): void {
-    this.dialogRef.close();
-  }
 
-}
 

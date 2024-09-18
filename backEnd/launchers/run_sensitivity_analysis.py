@@ -60,7 +60,7 @@ shutil.copy(xml_path, os.path.join(output_path, 'cydre_params.xml'))
 param_names = ['user_watershed_id', 'date']
 #param_ranges = [['J0626610', 'J0014010', 'J2404010', 'J3834010', 'J7513010', 'J1524010'],
 #                pd.date_range('2015-01-01', '2019-12-31', periods=25).tolist()]
-param_ranges = [list(gdf_stations['ID']), 
+param_ranges = [list(gdf_stations['ID'])[3:], 
                 pd.date_range('1980-05-01', '2024-05-01', freq='AS-MAY').tolist()]
 num_values = [1, 1]
 

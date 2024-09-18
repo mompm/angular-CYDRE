@@ -93,7 +93,8 @@
   <!-- Run application - lancement d'une prévision -->
   <div class="text-center">
     <div class="run-application">
-      <button type="button" class="btn btn-primary" [disabled]="fetchingResults" (click)="onStartSimulation()">Lancer l'application</button>
+      <button mat-raised-button color="primary" class="custom-button" [disabled]="fetchingResults" (click)="onStartSimulation()">
+        <mat-icon>play_arrow</mat-icon> Lancer la simulation</button>
       <button mat-button class="boutonindicator" [matTooltip]="'Lorsque vous lancez une prévision, l\'affichage n\'est pas immédiat. Il faut attendre entre 15s et 1min avant que les calculs soient terminés. Une barre de progression informe de l\'évolution des calculs.'">
         <mat-icon>warning</mat-icon>
       </button>
@@ -102,7 +103,7 @@
 
   <!-- Barre de progression -->
   <div *ngIf="progressMessages.length">
-    <h5>Calcul des prévisions</h5>
+    <!-- <h5>Calcul des prévisions</h5> -->
     <p>{{ currentProgressMessage }}</p>
     <div class="progress-container">
       <div class="progress">

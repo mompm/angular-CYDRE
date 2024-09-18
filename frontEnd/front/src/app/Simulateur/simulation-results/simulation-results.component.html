@@ -7,22 +7,13 @@
         <div class="align-tooltip">    
           Visualisation de la prévision saisonnière
           <button mat-raised-button color="#413f3f" (click)="openDialogViz($event)">
-            <mat-icon style="color: white">help_outline</mat-icon>
+            <mat-icon style="color: white">info</mat-icon>
           </button>
-          
-          <!-- Bulle warning pour l'échéance de la prévision' -->
-          <button mat-icon-button class="button_info" aria-label="Visualisation prevision" [matMenuTriggerFor]="dateInfoPopup">
-            <mat-icon class="warning-icon">warning</mat-icon>
+          <button mat-button  [matTooltip]="'La date de simulation a été réajustée au ' + results.results.data.first_date + ' pour améliorer la qualité des projections. Le réajustement s\'effectue lorsque la date de simulation est réalisée pendant des événements de précipitations.'"
+          matTooltipClass="warning-tooltip">
+            <mat-icon style="color: white">report_problem</mat-icon>
           </button>
-          <mat-menu #dateInfoPopup="matMenu" xPosition="after">
-            <ng-template matMenuContent>
-              <div class="warning-tooltip">
-              <p><strong>Attention : </strong>La date de simulation a été réajustée au {{ results.results.data.first_date }} pour améliorer la qualité
-                des projections. Le réajustement s'effectue lorsque la date de simulation est réalisée pendant des événements
-                de précipitations.</p>
-              </div>
-            </ng-template>
-          </mat-menu>
+          <!-- report_problem -->
           <button mat-button (click)="downloadFile()"><mat-icon class="download-icon">file_download</mat-icon></button>
         </div>
 
@@ -30,19 +21,7 @@
       <div class="card-body">
         <div class="align-tooltip">
           <p>échelle logarithmique | échelle linéaire</p>
-          <button mat-icon-button class="button_info" aria-label="Echelle log" [matMenuTriggerFor]="dateInfoPopup2">
-            <mat-icon class="info-icon">info</mat-icon>
-          </button>
-          <mat-menu #dateInfoPopup2="matMenu" xPosition="after">
-            <ng-template matMenuContent>
-              <div class="info-tooltip">
-              <p><strong>Info : </strong>L'échelle linéaire est adaptée pour la représentation de la dynamique générale des débits et pour identifier les pics de crues. 
-                L'échelle logarithmique est particulièrement adaptée pour l'identification des années sèches.</p>
-              </div>
-            </ng-template>
-          </mat-menu>
-          <!-- <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle> -->
-        </div>
+                 </div>
         <div style="text-align: center;">
           <mat-slide-toggle color="primary" [(ngModel)]="on" (change)="onToggleChange()"></mat-slide-toggle>
         </div>
@@ -54,21 +33,10 @@
     <div class="card my-4">
       <div class="card-header">
         <div class="align-tooltip">
-          Définition de seuils pour le calcul des indicateurs
-          <!-- Bulle info pour la définition des seuils sécheresse -->
-          <button mat-icon-button class="button_info" aria-label="Definition seuils secheresse" [matMenuTriggerFor]="dateInfoPopupGraph3">
-            <mat-icon class="info-icon">info</mat-icon>
+          Définition des seuils
+          <button mat-raised-button color="#413f3f" (click)="openDialogThreshold($event)">
+            <mat-icon style="color: white">info</mat-icon>
           </button>
-          <mat-menu #dateInfoPopupGraph3="matMenu" xPosition="after">
-            <ng-template matMenuContent>
-              <div class="info-tooltip">
-              <p><strong>Info : </strong>Cette section a pour objectif de personnaliser le calcul des indicateurs opérationnels en
-              ajoutant de nouveaux seuils sécheresse. En cliquant sur le "+" vous pouvez définir le nom du seuil, choisir sa couleur
-            (pour l'affichage sur le graphique de la section précédente) et définir la valeur du seuil en m3/s. Le graphique s'actualisera
-          directement. Pour le calcul des indicateurs il faudra cliquer sur "Mettre à jour avec les nouveaux seuils".</p>
-              </div>
-            </ng-template>
-          </mat-menu>
       </div>
       </div>
       <div class="card-body">
@@ -89,7 +57,8 @@
     </div>
     <div class="d-flex">
       <div class="ml-auto">
-        <button type="button" class="btn btn-primary" (click)="updateResults()">Mettre à jour avec les nouveaux seuils</button>
+        <button mat-raised-button color="primary" class="custom-button" (click)="updateResults()">
+          <mat-icon>refresh</mat-icon> Actualiser les indicateurs</button>
       </div>
     </div>
 
@@ -100,7 +69,10 @@
         <!-- Header -->
         <div class="card-header">
           <div class="align-tooltip">
-          Indicateurs pour le seuil : {{indicator.type}}
+          Indicateurs opérationnels [{{indicator.type}}]
+          <button mat-raised-button color="#413f3f" (click)="openDialogThreshold($event)">
+            <mat-icon style="color: white">info</mat-icon>
+          </button>
           </div>
         </div>
 
@@ -180,9 +152,9 @@
               <p class="moyenneIndicators">{{ getVolumeAsInt(indicator.results.volume50) }} m³</p>
               <p class="resultIndicators" >[{{ getVolumeAsInt(min(indicator.results.volume10,indicator.results.volume90)) }} - {{
                 getVolumeAsInt(max(indicator.results.volume10,indicator.results.volume90))}}]</p>
-              <p class="descriptionIndicators">Volume nécessaire</p>
+              <p class="descriptionIndicators">Volume sous le seuil</p>
               <p-button 
-                  pTooltip="Volume nécessaire pour éviter d'atteindre ou de franchir le seuil." 
+                  pTooltip="Volume cumulé sous le seuil. Il s'agit du volume compensatoire pour éviter de franchir la valeur du seuil" 
                   tooltipPosition="bottom" 
                   class="boutonindicator" 
                   icon="pi pi-question-circle">
@@ -198,8 +170,10 @@
     <div class="card my-4">
       <div class="card-header">
         <div class="align-tooltip">
-          Interprétation des prévisions par l'analyse de similarité
-          <button mat-button (click)="openDialog()"><mat-icon>help</mat-icon></button>
+          Origine des tendances saisonnières
+          <button mat-raised-button color="#413f3f" (click)="openDialogEvents($event)">
+            <mat-icon style="color: white">info</mat-icon>
+          </button>
         </div>
       </div>
       

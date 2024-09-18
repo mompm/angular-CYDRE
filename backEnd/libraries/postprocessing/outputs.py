@@ -325,7 +325,8 @@ class Outputs():
         """
         # Projected streamflow (last day value and evolution)
         self.proj_values = projection_df.iloc[-1]
-        self.proj_values_ev = (self.proj_values - reference_df['Q'][-1])/reference_df['Q'][-1] * 100
+        Qobs_ti = reference_df.loc[self.simulation_date].Q
+        self.proj_values_ev = round((self.proj_values['Q50'] - Qobs_ti)/Qobs_ti * 100, 2)
         
         # Number of days before projected streamflow intersect the module
         mod10_intersect = projection_df[['Q10', 'Q50', 'Q90']] <= self.mod10
@@ -624,6 +625,7 @@ class Outputs():
             'Q10': float(self.proj_values.Q10),
             'Q90': float(self.proj_values.Q90)
         },
+        'proj_values_ev': float(self.proj_values_ev),
         'ndays_before_alert':{
             'Q50': float(self.ndays_before_alert_Q50),
             'Q90': float(self.ndays_before_alert_Q90),

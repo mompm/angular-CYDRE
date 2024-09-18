@@ -66,23 +66,23 @@ private baseUrl = '';
 		  
 		  const CreateSimulationResponse = await this.CreateSimulation(params);
 		  simulation_id = CreateSimulationResponse.SimulationID;
-		  progressCallback('Récupération des conditions de la prévision', 10);
+		  progressCallback('Identification des bassins similaires...', 10);
 		  console.log('Simulation ID:', simulation_id);
 	
 		  await this.runSpatialSimilarity(simulation_id);
-		  progressCallback('Typologie de bassins versants : OK', 20);
+		  progressCallback('Identification des années similaires...', 20);
 		  console.log('Similarités spatiales exécutées');
 	
 		  await this.runTimeseriesSimilarity(simulation_id);
-		  progressCallback('Identification des années similaires : OK', 50);
+		  progressCallback('Combinaison des variables hydrologiques et climatiques...', 50);
 		  console.log('Similarités temporelles exécutées');
 	
 		  await this.runScenarios(simulation_id);
-		  progressCallback('Sélection des événements similaires : OK', 60);
+		  progressCallback('Extraction des chroniques de débits pour le calcul des tendances...', 60);
 		  console.log('Scenarios exécutés');
 	
 		  await this.getForecastResults(simulation_id);
-		  progressCallback('Préparation des résultats', 75);
+		  progressCallback('Préparation des résultats...', 75);
 		  console.log('Graphe généré');
 	
 		//   await this.getCorrMatrix(simulation_id);

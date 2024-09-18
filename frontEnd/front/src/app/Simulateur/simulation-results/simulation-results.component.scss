@@ -76,6 +76,12 @@
   max-width : 1400px;
 }
 
+.custom-button {
+  border-radius: 8px; /* Coins arrondis */
+  font-size: 16px; /* Taille de la police */
+  padding: 10px 20px; /* Espacement interne */
+}
+
 //matrices
 
 .heatmapcontainer {
@@ -269,25 +275,10 @@
 }
 
 .warning-tooltip {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 10px;
-  background-color: #f2cbcb;
-  border: 1px solid #ccf2cb;
-  // border-radius: 5px;
-  color: #000000;
-  font-size: 14px;
-  max-width: 300px;
+  max-width: 500px;
   text-align: justify;
 }
 
-.info-icon{
-  //color: #07861c;
-}
-
-
-.warning-icon{
-  //color: #d51717;
-}
 
 .download-icon{
   color: white;

@@ -29,7 +29,6 @@ SPATIAL = True
 (data_path, hydrometry_path, surfex_path, piezo_path, hydraulic_path, output_path) = define_paths(app_root)
 gdf_stations, gdf_piezometry, gdf_watersheds = load_data(app_root)
 
-sys.exit()
 
 #%% CYDRE APPLICATION
 # Initialize the Cydre application
@@ -54,6 +53,7 @@ initial_date = init.params.getgroup("General").getparam("date").getvalue()
 results = OU.Outputs(cydre_app, watershed_name, gdf_stations, initial_date, cydre_app.Similarity.user_similarity_period,
                      log=True, module=True, options='viz_plotly')
 results.store_results(output_path, cydre_app.scenarios, log=True, fig_format='tiff')
+results.get_projections_data(module=True)
 results.plot_streamflow_projections(log=True, module=True, stats_stations=True, options='viz_matplotlib')
 results.plot_watersheds(gdf_watersheds, cydre_app.Similarity.similar_watersheds)
 results.plot_typology_map(gdf_stations, gdf_watersheds, cydre_app.UserConfiguration.user_watershed_id, cydre_app.Similarity.clusters)
