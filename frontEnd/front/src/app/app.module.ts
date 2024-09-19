@@ -24,6 +24,7 @@ import { hydrographSeasonal } from './ficheSite/hydrographSeasonal/hydrographSea
 import { temperatureSeasonal } from './ficheSite/temperatureSeasonal/temperatureSeasonal.component';
 import { WaterTableDepthSeasonal } from './ficheSite/WaterTableDepthSeasonal/WaterTableDepthSeasonal.component';
 import { precipitationSeasonal } from './ficheSite/precipitationSeasonal/precipitationSeasonal.component';
+import { graphiqueSeasonal } from './ficheSite/graphiqueSeasonal/graphiqueSeasonal.component';
 // Start of Hoang module
 import { DropdownModule } from 'primeng/dropdown';
 import { InputSwitchModule } from 'primeng/inputswitch';
@@ -87,6 +88,7 @@ PlotlyModule.plotlyjs = PlotlyJS;
     temperatureSeasonal,
     WaterTableDepthSeasonal,
     precipitationSeasonal,
+    graphiqueSeasonal ,
     LoginComponent,
     FooterComponent,
     Documentation,

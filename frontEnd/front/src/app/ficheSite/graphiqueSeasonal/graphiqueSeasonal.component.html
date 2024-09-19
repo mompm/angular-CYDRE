@@ -1,0 +1,40 @@
+<div>
+    <div *ngIf="GraphType === 'hydrograph'" class="graph-container">
+        <div id="hydrographSeasonal"></div>
+        <div class="btn-container">
+            <button type="button" class="btn" (click)="downloadCSV()">
+                <mat-icon>file_download</mat-icon>
+            </button>
+        </div>
+    </div>
+
+
+    <div *ngIf="GraphType === 'precipitation'" class="graph-container">
+        <div id="precipitationSeasonal"></div>
+        <div class="btn-container">
+            <button type="button" class="btn" (click)="downloadCSV()">
+                <mat-icon>file_download</mat-icon>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div>
+    <div *ngIf="GraphType === 'temperature'" class="graph-container">
+        <div id="temperatureSeasonal"></div>
+        <div class="btn-container">
+            <button type="button" class="btn" (click)="downloadCSV()">
+                <mat-icon>file_download</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="GraphType === 'depth'" class="graph-container">
+        <div id="depthSeasonal"></div>
+        <div class="btn-container">
+            <button type="button" class="btn" (click)="downloadCSV()">
+                <mat-icon>file_download</mat-icon>
+            </button>
+        </div>
+    </div>
+</div>

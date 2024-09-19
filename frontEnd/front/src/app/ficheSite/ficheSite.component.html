@@ -91,6 +91,14 @@
           <div *ngIf="correspondance"><app-WaterTableDepthSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-WaterTableDepthSeasonal></div>
         </div>
       </div>
+      
+      <div  class="grid-container" >   
+        <app-graphiqueSeasonal GraphType = "temperature" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
+        <app-graphiqueSeasonal GraphType = "precipitation" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
+        <app-graphiqueSeasonal GraphType = "hydrograph" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
+        <app-graphiqueSeasonal GraphType = "depth" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
+      </div>
+      
     </div>
   
   <div>

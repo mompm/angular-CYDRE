@@ -251,4 +251,12 @@ body {
     .custom-backdrop {
       background-color: rgba(0, 0, 0, 0.5); /* Opacité réduite pour voir l'arrière-plan */
     }
+
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* 2 colonnes */
+      grid-gap: 20px; /* Espace entre les graphiques */
+  }
+  
     

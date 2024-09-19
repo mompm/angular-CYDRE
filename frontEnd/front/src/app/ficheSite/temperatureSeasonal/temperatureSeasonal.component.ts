@@ -47,7 +47,7 @@ import { ColorService } from 'src/app/color-service.service';
     this.resizeListener = () => {
       const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
       const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
-      Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
+      Plotlydist.relayout('temperatureSeasonal2', { width: hydrographWidth });
     }
   }
   
@@ -331,8 +331,8 @@ import { ColorService } from 'src/app/color-service.service';
         //const hydrographWidth = 0.40 * window.innerWidth;
         const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
         const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
-        Plotlydist.newPlot('temperatureSeasonal', this.fig.data, this.fig.layout, { responsive: true });
-        Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
+        Plotlydist.newPlot('temperatureSeasonal2', this.fig.data, this.fig.layout, { responsive: true });
+        Plotlydist.relayout('temperatureSeasonal2', { width: hydrographWidth });
         
       
       }

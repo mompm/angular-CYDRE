@@ -1,0 +1,30 @@
+/* Conteneur des graphiques */
+.graph-container {
+    display: flex;
+    flex-direction: column; /* Dispose les éléments verticalement */
+    justify-content: space-between; /* Le bouton reste en bas */
+    height: 650px; /* Ajuster la hauteur selon vos besoins */
+}
+
+/* Hauteurs et largeurs des graphiques */
+#depthSeasonal,
+#temperatureSeasonal,
+#precipitationSeasonal,
+#hydrographSeasonal {
+    height: 90%; /* Ajuster pour que le graphique prenne l'essentiel de l'espace */
+    width: 80%; /* Largeur complète */
+}
+
+/* Conteneur du bouton */
+.btn-container {
+    display: flex;
+    justify-content: flex-end; /* Aligne le bouton à droite */
+    margin-top: 10px; /* Espace entre le graphique et le bouton */
+    margin-right: 50px; /* Ajustez cette valeur pour décaler légèrement le bouton vers la gauche */
+}
+
+/* Style des boutons */
+.btn {
+    font-size: 12px;
+    padding: 5px 10px;
+}

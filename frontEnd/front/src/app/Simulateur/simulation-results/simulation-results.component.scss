@@ -73,7 +73,7 @@
   box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);  // Légère ombre autour du graphique
   border-radius: 8px;  // Coins arrondis pour un aspect moderne
   max-height: 500px;
-  max-width : 1400px;
+  //max-width : 1500px;
 }
 
 //matrices
@@ -179,17 +179,6 @@
   margin: 0;
 }
 
-// .boutonindicator {
-//   display: block;
-//   margin: 0 auto; /* Center the button */
-//   font-family: "Segoe UI Semibold";
-//   font-size: 12px; /* Reduced font size */
-//   color: #487c8d; /* Set the text color */
-//   background-color: transparent !important;
-//   padding: 5px 10px; /* Adjust padding for smaller size */
-//   border: none; /* Supprimer la bordure du bouton */
-//   outline: none; /* Supprimer le contour de focus */
-// }
 
 ::ng-deep .p-button {
   display: block;

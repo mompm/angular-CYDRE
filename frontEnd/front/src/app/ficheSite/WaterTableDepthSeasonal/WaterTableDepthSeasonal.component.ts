@@ -33,7 +33,7 @@ import { ColorService } from 'src/app/color-service.service';
     months: string[] = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
     tickvals: string[] = this.months.map((month, index) => `${index + 1 < 10 ? '0' : ''}${index + 1}-01`);
     ticktext: string[] = this.months.map(month => month);
-    TabDepthByDaily: any[] = []; //tableau contenant toutes les données Depth triés
+    TabDepthByDaily : any[] = []; //tableau contenant toutes les données Depth triés
     YearTabDepthByDaily: any[] = []; //tableau contenant les données Depth triés des années selectionné
     lastUpdate: any | null;// dernière update des données des données Depth
     resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = []; // tableau contenant les quantiles 
@@ -97,7 +97,7 @@ import { ColorService } from 'src/app/color-service.service';
         });
       }
 
-      /**
+  /**
    * Traite les données de décharge pour les rendre utilisables par l'hydrographe.
    * @returns Un objet contenant les données de décharge quotidiennes et par année, ainsi que la dernière mise à jour.
    */
@@ -356,8 +356,8 @@ import { ColorService } from 'src/app/color-service.service';
       
       }
   
+  
       downloadCSV(){
-        console.log(this.YearTabDepthByDaily)
         // Initialiser un objet pour stocker les données fusionnées
         const mergedData: { [key: string]: { [year: string]: number | null, q10: number | null ,q50: number | null, q90: number | null} } = {};
         // Initialiser les années présentes dans yearTabDepth
@@ -440,7 +440,8 @@ import { ColorService } from 'src/app/color-service.service';
               window.URL.revokeObjectURL(url);
               
           }
-  
+
+
 
 
   }

@@ -47,7 +47,7 @@ import { ColorService } from 'src/app/color-service.service';
     this.resizeListener = () => {
       const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
       const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
-      Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+      Plotlydist.relayout('precipitationSeasonal2', { width: hydrographWidth });
     }
   }
   
@@ -232,7 +232,7 @@ import { ColorService } from 'src/app/color-service.service';
     Precipitation_Seasonal() {
         const targetYears: number[] = this.yearSelectionChange;
         const {PrecipitationByDaily, YearPrecipitationByDaily, Update }= this.processedPrecipitation();
-        this.TabPrecipitationByDaily = PrecipitationByDaily;
+        this.TabPrecipitationByDaily = PrecipitationByDaily
         this.YearTabPrecipitationByDaily = YearPrecipitationByDaily;
         this.lastUpdate = Update
         const { resultArray, q10, q50, q90 } = this.calculateQuantiles(this.TabPrecipitationByDaily);
@@ -356,45 +356,12 @@ import { ColorService } from 'src/app/color-service.service';
         //const hydrographWidth = 0.40 * window.innerWidth;
         const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
         const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
-        Plotlydist.newPlot('precipitationSeasonal', this.fig.data, this.fig.layout, { responsive: true });
-        Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+        Plotlydist.newPlot('precipitationSeasonal2', this.fig.data, this.fig.layout, { responsive: true });
+        Plotlydist.relayout('precipitationSeasonal2', { width: hydrographWidth });
         
       }
 
-      /**
-       * Fonction pour générer les annotations avec condition
-       */
-      generateAnnotations() {
-        const annotations = [
-            {   
-                text: 'Mis à jour le : DATE', 
-                showarrow: false, 
-                xref: 'paper', 
-                yref: 'paper', 
-                x: 0.5, 
-                y: 1.15, 
-                font: {family: "Segoe UI Semilight Italic", size: 18, color: "#999"} 
-            },
-            {   
-                text: 'Source : Météo France', 
-                showarrow: false, 
-                xref: 'paper', 
-                yref: 'paper', 
-                x: 0.5, 
-                y: -0.20, 
-                font: {family:'Segoe UI Semilight', size:14, color:"gray"} 
-            }
-        ];
-        
-        // Ajouter le lien hypertexte à l'annotation concernée
-        for (const annotation of annotations) {
-            if (annotation.text.includes('Source : Météo France')) {
-                annotation.text = '<a href="https://meteo.data.gouv.fr/datasets/6569b27598256cc583c917a7" style="color:gray">Source : Météo France</a>';
-            }
-        }
-        
-        return annotations;
-      }
+     
 
       downloadCSV(){
         console.log(this.YearTabPrecipitationByDaily)
@@ -480,7 +447,7 @@ import { ColorService } from 'src/app/color-service.service';
               window.URL.revokeObjectURL(url);
               
           }
-  
 
+        
 
   }
