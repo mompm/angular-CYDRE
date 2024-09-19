@@ -1,6 +1,7 @@
 import { Component, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import * as L from 'leaflet';
 
+
 @Component({
   selector: 'app-typology-map',
   templateUrl: './typology-map.component.html',
@@ -28,8 +29,8 @@ export class TypologyMapComponent implements OnInit, OnChanges {
     this.map = L.map('mapy', {
       center: [48.2141667, -2.9424167],
       zoom: 7.5,
-      layers: [L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      layers: [L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution: '&copy; <a href="https://www.esri.com/">Esri</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
       })]
     });
 
@@ -102,13 +103,15 @@ export class TypologyMapComponent implements OnInit, OnChanges {
       });
     }
     console.log('Liste des stations:', stationsList)
-
-
+    
     // Création des polygones pour les bassins versants
     gdf_watersheds_filter.forEach(data => {
       const typology = Number(data.typology) as keyof typeof colors;
       const fillColor = colors[typology] || '#CCCCCC'; // Couleur par défaut si typology non définie
-      const opacity = selectedTypology !== null && selectedTypology !== typology ? 0.05 : 0.8;
+      const opacity = selectedTypology !== null && selectedTypology !== typology ? 0.2 : 0.9;
+      const Color = selectedTypology !== null && selectedTypology !== typology ? 'gray' : 'black';
+      const Weight = selectedTypology !== null && selectedTypology !== typology ? 0.25 : 1;
+      const isSelected = selectedTypology !== null && selectedTypology === typology;
 
       console.log('Adding polygon with fillColor:', fillColor, 'and opacity:', opacity);
 
@@ -117,19 +120,25 @@ export class TypologyMapComponent implements OnInit, OnChanges {
       
 
       // Ajoute le polygone à la carte avec la couleur appropriée
-      L.polygon(polygonCoords, {
-        color: 'black',
-        weight: 0.5,
+      const polygon = L.polygon(polygonCoords, {
+        color: Color, //'white',
+        weight: Weight,
         fillColor: fillColor,
         fillOpacity: opacity,
       })
-      .bindTooltip(data.name, {
-        permanent: false,
-        direction: 'top',
-        opacity: 1
-      })
+      // .bindTooltip(data.name, {
+      //   permanent: false,
+      //   direction: 'top',
+      //   opacity: 1
+      // })
       .addTo(this.map);
+
+       // Mettre le polygone sélectionné au premier plan
+      if (isSelected) {
+        polygon.bringToFront();
+      }
     });
+
 
   // Création des exutoires
   gdf_stations_filter.forEach(outlet => {
@@ -138,13 +147,19 @@ export class TypologyMapComponent implements OnInit, OnChanges {
 
     // Création d'un marqueur circulaire pour chaque exutoire
     const marker = L.circleMarker([outlet.y_outlet, outlet.x_outlet], {
-      radius: 2,           // Taille du cercle
+      radius: 3,           // Taille du cercle
       fillColor: fillColor, // Couleur de remplissage (noir)
       color: fillColor,     // Couleur de bordure (noir)
       weight: 0,            // Épaisseur de la bordure
       opacity: 0,           // Opacité de la bordure
       fillOpacity: 0.8      // Opacité du remplissage
-    }).addTo(this.map);      // Ajouter le marqueur à la carte
+    })
+    .bindTooltip(outlet.station_name, {
+      permanent: false,
+      direction: 'top',
+      opacity: 1
+    })
+    .addTo(this.map);      // Ajouter le marqueur à la carte
   });
 
   }
