@@ -6,13 +6,13 @@
     height: 650px; /* Ajuster la hauteur selon vos besoins */
 }
 
-/* Hauteurs et largeurs des graphiques */
+/* style des graphiques */
 #depthSeasonal,
 #temperatureSeasonal,
 #precipitationSeasonal,
 #hydrographSeasonal {
-    height: 90%; /* Ajuster pour que le graphique prenne l'essentiel de l'espace */
-    width: 80%; /* Largeur complète */
+    height: 90%; 
+    width: 80%; 
 }
 
 /* Conteneur du bouton */
