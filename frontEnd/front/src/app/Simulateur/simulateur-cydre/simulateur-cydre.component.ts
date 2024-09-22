@@ -26,67 +26,70 @@ import { ParametersPanelComponent } from '../parameters-panel/parameters-panel.c
   templateUrl: './simulateur-cydre.component.html',
   styleUrls: ['./simulateur-cydre.component.scss']
 })
-export class SimulateurCydreComponent implements OnInit, OnDestroy {
-  @ViewChild(ParametersPanelComponent) parametersPanel!: ParametersPanelComponent;
 
-togglePanel() {
-  this.showParametersPanel = !this.showParametersPanel;
-}
+export class SimulateurCydreComponent implements OnInit, OnDestroy {
+  //variable parametre scientifique
+  @ViewChild(ParametersPanelComponent) parametersPanel!: ParametersPanelComponent;
+  togglePanel() {
+    this.showParametersPanel = !this.showParametersPanel;
+  }
+
+    //Variables generale
+    @ViewChild('fileInput')
+    fileInput!: ElementRef<HTMLInputElement>;
+    selectedFile: File | null = null;
+    isModalOpen: boolean = false;
+  
+    //Variable selection de la station
+    myControl = new FormControl(); // Contrôle du formulaire pour l'autocomplétion
+    filteredOptions!: Observable<{ index: string, station_name: string }[]>; // Options filtrées pour l'autocomplétion
+    stations: any[] = [];
+    selectedStation: string | null | undefined; // ID du bassin versant sélectionné
+    selectedStationName: string | null | undefined; // Nom de la station sélectionnée
+    selectedStationBSS: string | null | undefined; //ID du BSS associé à la station sélectionnée
+    previousSelectedStation: { index: string, station_name: string } | null = null;  // Sauvegarde la station précédente
+  
+    // Liste des options désactivées
+    list_of_disabled_options: string[] = [
+      'J0121510', 'J0621610', 'J2233010', 'J3403010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
+      'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310', 
+    ];
+    selectedStationDisabled: boolean | undefined; // verifie si la station est implementer
+  
+    //Variables paramètres simulation
+    showParametersPanel :boolean = false;
+    parameters = {}
+    sliderValue: number = 60;
+    sliderOptions: Options = {
+      floor: 0,
+      ceil: 120,
+      step: 1, // Permet de sélectionner chaque valeur
+      showTicks: true, // Affiche les traits pour chaque valeur principale
+      showTicksValues: true, // Affiche les valeurs des points principaux
+      ticksArray: [0, 20, 40, 60, 80, 100, 120], // Spécifie les emplacements des gros points
+      translate: (value: number): string => {
+        return value.toString();
+      }
+    };
+    simulationDate: string = new Date().toISOString().split('T')[0];
+    
+    
+    //Variables barre de chargement
+    progressMessages: string[] = [];
+    progressValue = 0;
+    currentProgressMessage = '';
+    
+    //Variables simulations et resultat
+    simulation_id = ""
+    taskId: string | undefined;
+    fetchingResults  : boolean =false;
+    simulationResults: any = null;
+    results: any = {}; 
+    showResults :boolean = false;
 
   constructor(private cdr: ChangeDetectorRef, private jsonService: JsonService, private http: HttpClient, private sharedService : SharedWatershedService, private dataService: DataService, private authService : AuthService, public dialog : MatDialog,
     private router : Router
   ) {}
-
-  //Variables generale
-  @ViewChild('fileInput')
-  fileInput!: ElementRef<HTMLInputElement>;
-  selectedFile: File | null = null;
-  isModalOpen: boolean = false;
-
-  //Variable selection de la station
-  myControl = new FormControl();
-  filteredOptions!: Observable<{ index: string, station_name: string }[]>;
-  stations: any[] = [];
-  selectedStation: string | null | undefined;
-  selectedStationName: string | null | undefined;
-  selectedStationBSS: string | null | undefined;
-  selectedStationDisabled: boolean | undefined;
-  previousSelectedStation: { index: string, station_name: string } | null = null;  
-  list_of_disabled_options: string[] = [
-    'J0121510', 'J0621610', 'J2233010', 'J3403010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
-    'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310', 
-  ];
-
-  //Variables paramètres simulation
-  showParametersPanel :boolean = false;
-  parameters = {}
-  sliderValue: number = 60;
-  sliderOptions: Options = {
-    floor: 0,
-    ceil: 120,
-    step: 1, // Permet de sélectionner chaque valeur
-    showTicks: true, // Affiche les traits pour chaque valeur principale
-    showTicksValues: true, // Affiche les valeurs des points principaux
-    ticksArray: [0, 20, 40, 60, 80, 100, 120], // Spécifie les emplacements des gros points
-    translate: (value: number): string => {
-      return value.toString();
-    }
-  };
-  simulationDate: string = new Date().toISOString().split('T')[0];
-  
-  
-  //Variables barre de chargement
-  progressMessages: string[] = [];
-  progressValue = 0;
-  currentProgressMessage = '';
-  
-  //Variables simulations et resultat
-  simulation_id = ""
-  taskId: string | undefined;
-  fetchingResults  : boolean =false;
-  simulationResults: any = null;
-  results: any = {}; 
-  showResults :boolean = false;
 
 
   //METHODE CYCLE ET GENERAL DU COMPOSANT 
@@ -181,8 +184,9 @@ togglePanel() {
   }
 
   /**
-  * Méthode appelée lorsque l'utilisateur clique dans le champ (click)
-  */
+   * Méthode appelée lorsque l'utilisateur clique dans le champ (click)
+   * Vide la sélection actuelle
+   */   
   clearSelection() {
     this.previousSelectedStation = this.myControl.value;  // Garde la valeur précédente
     this.myControl.setValue('');  // Vide le champ
@@ -384,10 +388,17 @@ togglePanel() {
 
   //METHODE BOITE DE DIALOGUE    
     
+  /**
+  * Méthode pour ouvrir une boîte de dialogue avec le composant `PopupDialogSimulateur)`
+  */
   openDialog() {
     this.dialog.open(PopupDialogSimulateur);
   }
 
+  /**
+  * Ouvre une boîte de dialogue PopupDialogLoc PopupDialogConditions
+  * @param event : MouseEvent
+  */
   openDialogConditions(event: MouseEvent) {
     const targetElement = event.target as HTMLElement;
     const rect = targetElement.getBoundingClientRect(); // Récupère la position du bouton
@@ -409,13 +420,28 @@ togglePanel() {
   }
 
   //METHODES POUR SIMPLIFIER LE CODE//   
+
+  /**
+   * verifie si utilisateur a la statut scientifique ou developpeur
+   * @returns true si utilisateur est scientifique ou developpeur
+   */
   userIsScientificOrDev(){
     return this.authService.isScientificOrDev
   }
+    /**
+   * verifie si utilisateur a la statut developpeur
+   * @returns true si utilisateur est developpeur
+   */
   userIsDev(){
     return this.authService.isDev
   }
 
+  /**
+   * Transforme un objet en JSON
+   * 
+   * @param obj object à transformer
+   * @returns object en JSON
+   */
   deepParseJson(obj: any): any {
     if (typeof obj === 'object' && obj !== null) {
         for (const key in obj) {
@@ -432,22 +458,33 @@ togglePanel() {
   }
 
 }
-  
-  @Component({
-    selector: 'popupDialogSimulateur',
-    templateUrl: './popupDialogSimulateur.html',
-  })
-  export class PopupDialogSimulateur {}
 
-  @Component({
-    selector: 'popupDialogConditions',
-    templateUrl: './popupDialogConditions.html',
-  })
-  export class PopupDialogConditions {}
+//COMPONENT BOITE DE DIALOG
+ 
+/**
+* Composant pour la boîte de dialogue simulateur
+*/
+@Component({
+  selector: 'popupDialogSimulateur',
+  templateUrl: './popupDialogSimulateur.html',
+})
+export class PopupDialogSimulateur {}
 
-  @Component({
-    selector: 'errorDialog',
-    templateUrl: './errorDialog.html',
-  })
-  export class ErrorDialog {}
+/**
+* Composant pour la boîte de dialogue condition pour le simulateur
+*/
+@Component({
+  selector: 'popupDialogConditions',
+  templateUrl: './popupDialogConditions.html',
+})
+export class PopupDialogConditions {}
+
+/**
+* Composant pour la boîte de dialogue erreur station non implementer
+*/
+@Component({
+  selector: 'errorDialog',
+  templateUrl: './errorDialog.html',
+})
+export class ErrorDialog {}
   

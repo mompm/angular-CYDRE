@@ -8,27 +8,28 @@ import dataGDFWatersheds from 'src/app/model/dataGDFWatersheds';
 import dataGDFStation from 'src/app/model/dataGDFStation';
 
 /**
- * 
- */
+* Composant Angular pour afficher la carte watershed.
+*/
 @Component({
-    selector: 'app-WatershedMap',
-    templateUrl: './WatershedMap.component.html',
-    styleUrls: ['./WatershedMap.component.scss']
-  })
+  selector: 'app-WatershedMap',
+  templateUrl: './WatershedMap.component.html',
+  styleUrls: ['./WatershedMap.component.scss']
+})
+  
+export class WatershedMapComponent {
+  private resizeListener: () => void;// Gestionnaire pour l'événement de redimensionnement
+  @Input() stationSelectionChange!: string; // station selctionner (dans le parent)
+  private WatershedMapLeaflet!: L.Map;  // Instance de la carte Leaflet
+  MapExecutee = false; // Indicateur si la carte a été initialisée
+  DataGDFWatersheds: dataGDFWatersheds[]  = []; // Données des bassins versants
+  DataGDFPiezometry: dataGDFPiezometry [] = []; // Données des piézomètres
+  DataGDFStation: dataGDFStation[]  =[]; // Données des stations
+
   /**
-   * 
+   * Différents types de fonds de carte disponibles dans Leaflet
+   * Plusieurs types de fonds de carte (ex: satellite, noir et blanc, relief)
    */
-  export class WatershedMapComponent {
-    private resizeListener: () => void;
-
-    @Input() stationSelectionChange!: string;
-    private WatershedMapLeaflet!: L.Map;
-    MapExecutee = false; 
-    DataGDFWatersheds: dataGDFWatersheds[]  = [];
-    DataGDFPiezometry: dataGDFPiezometry [] = [];
-    DataGDFStation: dataGDFStation[]  =[];
-
-WaterShedsMapLayers = {
+  WaterShedsMapLayers = {
     "BaseMap" : L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }),
@@ -45,187 +46,198 @@ WaterShedsMapLayers = {
       attribution: '&copy; <a href="https://www.ign.fr/">BD Ortho IGN</a> '
     })
   };
+
   /**
-   * 
-   * @param dataService 
-   * @param jsonService 
-   */
+  * Constructeur du composant.
+  * Injecte les services nécessaires pour la gestion des données et JSON
+  * @param dataService Service utilisé pour la récupération des données
+  * @param jsonService Service pour la gestion des données JSON
+  */
   constructor(private dataService: DataService,private jsonService: JsonService) {
+    // Définition de l'écouteur pour ajuster la taille de la carte en fonction de la taille de l'écran.
     this.resizeListener = () => {
       this.WatershedMapLeaflet.invalidateSize();
     }; 
   }
 
-    /**
-     * 
-     */
-    ngOnInit() {
-      this.initGDFWatersheds();
-      this.initGDFPiezometry();
-      this.initGDFStations();
-    }
-
-    ngOnDestroy(){
-      window.removeEventListener('resize',this.resizeListener);
-    }
-
-    /**
-     * 
-     * @param changes 
-     */
-    ngOnChanges(changes: SimpleChanges) {
-      // Cette méthode est appelée chaque fois que les valeurs des propriétés @Input changent
-      // Vous pouvez y réagir en conséquence
-      if (changes['stationSelectionChange']) {
-        //console.log('La valeur de stationMap a changé :', changes['stationSelectionChange'].currentValue);
-        this.MapExecutee = false;
-        
-      }
-    }
-       /**
-        * 
-        */ 
-       ngDoCheck() {      
-        // il s'agit des conditions pour affichage de la carte à init du component, pour éviter d'avoir des erreurs car les données n'ont pas été récupérer en backend 
-        if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
-            //this.WaterShedMap_Plotly(this.stationSelectionChange);
-            this.WaterShedMap_Leaflet(this.stationSelectionChange);
-          //bloc pour éviter d'avoir la fonction plotMap qui fonction en bloucle
-          this.MapExecutee = true;
-        }
-      }
-
-    /**
-     * récupère les données des gdf des stations
-     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-     * contenus dans geometry: coordinates et type 
-     * location du fichier origine :backend/data/stations.csv
-     */
-    initGDFStations() {
-      this.jsonService.getGDFStations().then(data => {
-        this.DataGDFStation = data;  
-      });
-    }
-
-    /**
-     * récupère les données des gdf des stations
-     * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
-     * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
-     * contenus dans geometry: coordinates et type  
-     * location du fichier origine :backend/data/stations.csv
-     */
-    initGDFWatersheds() {
-      this.jsonService.getGDFWatersheds().then(data => {
-        this.DataGDFWatersheds = data;  
-        //console.log("watersheds", this.DataGDFWatersheds);
-      });
-    }
-
-    /**
-     * récupère les données des gdf des piezometre
-     * contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
-     * format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
-     * contenus dans geometry: coordinates et type
-     * location du fichier origine : backend/data/piezometry/stations.csv'
-     */
-    initGDFPiezometry(){
-      this.jsonService.getGDFPiezometry().then(data => {
-        this.DataGDFPiezometry = data;
-        //console.log(this.DataGDFPiezometry);
-      });
-    }
   /**
-   * 
-   * @param stationID 
-   * @returns 
+   * Méthode appelée à l'initialisation du composant
+   * Ajoute un écouteur pour les changements de taille de fenêtre
+   * récupère les données dans le backend pour la creation de la carte
    */
-WaterShedMap_Leaflet(stationID:string){   
-    let point1: any[] = [];
-    let point2: any[] = [];
-    let pointspoly: any[] = [];
-    //si la carte existe, supprime (permet la maj pour la station selectionnée)
+  ngOnInit() {
+    window.addEventListener('resize', this.resizeListener);
+    this.initGDFWatersheds(); // Initialise les données des bassins versants
+    this.initGDFPiezometry(); // Initialise les données des piézomètres
+    this.initGDFStations(); // Initialise les données des stations
+  }
+
+  /**
+   * Méthode appelée lors de la destruction du composant
+   * Supprime l'écouteur d'événements pour éviter les fuites de mémoire
+   */
+  ngOnDestroy(){
+    window.removeEventListener('resize',this.resizeListener);
+  }
+
+  /**
+  * Méthode déclenchée lorsque les propriétés @Input changent.
+  * Peut être utilisée pour réagir aux changements de la sélection de station
+  * @param changes Les changements des propriétés @Input
+  */
+  ngOnChanges(changes: SimpleChanges) {
+    // Vérifie si la sélection de station a changé
+    if (changes['stationSelectionChange']) {
+      this.MapExecutee = false; // Réinitialise l'indicateur de carte 
+    }
+  }
+
+  /**
+   * Méthode appelée à chaque cycle de détection de changements Angular
+   * Vérifie si les données nécessaires sont disponibles avant d'afficher la carte
+   */
+  ngDoCheck() {      
+    // Vérifie que toutes les données sont disponibles et que la carte n'a pas encore été initialisée 
+    if (this.DataGDFStation.length > 0 && this.DataGDFPiezometry.length > 0 && this.DataGDFWatersheds.length >0 && !this.MapExecutee) {
+      //this.WaterShedMap_Plotly(this.stationSelectionChange); // Affiche la carte avec Plotly
+      this.WaterShedMap_Leaflet(this.stationSelectionChange); // Affiche la carte avec Leaflet 
+      this.MapExecutee = true; // Marque la carte comme initialisée pour éviter les boucles infinies
+    }
+  }
+
+  /**
+  * récupère les données des gdf des stations
+  * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+  * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+  * contenus dans geometry: coordinates et type 
+  * location du fichier origine :backend/data/stations.csv
+  */
+  initGDFStations() {
+    this.jsonService.getGDFStations().then(data => {
+      this.DataGDFStation = data;  
+    });
+  }
+
+  /**
+  * récupère les données des gdf des stations
+  * contenus: index(string), name(string), geometry_a(number), hydro_area(number),K1 (any), geometry(any)
+  * contenus dans  K1 : si il n'y a pas de donnée K1 =  0 
+  * contenus dans geometry: coordinates et type  
+  * location du fichier origine :backend/data/stations.csv
+  */
+  initGDFWatersheds() {
+    this.jsonService.getGDFWatersheds().then(data => {
+      this.DataGDFWatersheds = data;  
+    });
+  }
+
+  /**
+  * récupère les données des gdf des piezometre
+  * contenus:identifiant_BSS(string),ancian ,x_wgs84(number), y_wgs84(number), Ancien_code_national_BSS(string), geometry(any)
+  * format coordonées dans  X_wgs84 et Y_wgs84 : wgs84
+  * contenus dans geometry: coordinates et type
+  * location du fichier origine : backend/data/piezometry/stations.csv'
+  */
+  initGDFPiezometry(){
+    this.jsonService.getGDFPiezometry().then(data => {
+      this.DataGDFPiezometry = data;
+    });
+  }
+
+/**
+ * Fonction pour créer et mettre à jour la carte du bassin versant avec Leaflet
+ * @param stationID - L'identifiant de la station pour laquelle la carte doit être générée
+ */
+  WaterShedMap_Leaflet(stationID:string){   
+    let point_hydro: any[] = []; // Tableau pour stocker les coordonnées de la station hydrologique
+    let point_piezo: any[] = []; // Tableau pour stocker les coordonnées de la station piézométrique
+    let pointspoly: any[] = []; // Tableau pour stocker les coordonnées du polygone du bassin versant
+
+    // Si la carte existe déjà, la supprimer pour permettre la mise à jour
     if (this.WatershedMapLeaflet ) {
       this.WatershedMapLeaflet.remove();
     }
-    // rechercher le center de base( c'est changer celon les points) et le Zoom de la carte 
+    
+    // Recherche des données de la station basée sur l'identifiant fourni
     const PointData = this.DataGDFWatersheds.find(data => data.index === stationID);
-    if (!PointData) return; 
+    if (!PointData) return; // Si aucune donnée trouvée, sortir de la fonction
 
+    // Calculer le centre de la carte en fonction des coordonnées min et max
     const center_lat = (PointData.min_lat + PointData.max_lat) / 2
     const center_lon = (PointData.min_lon + PointData.max_lon) / 2
 
+    // Calculer le facteur de zoom en fonction des latitudes et longitudes
     const zoom_lat: number = Math.abs(Math.abs(PointData.max_lat) - Math.abs(PointData.min_lat));
     const zoom_long: number = Math.abs(Math.abs(PointData.max_lon) - Math.abs(PointData.min_lon));
     let zoom_factor: number = Math.max(zoom_lat, zoom_long);
     
+    // S'assurer que le facteur de zoom n'est pas inférieur à une valeur minimale
     if (zoom_factor < 0.002) {
         zoom_factor = 0.002;
     }
+    // Calculer le zoom 
     const auto_zoom: number = -1.35 * Math.log(zoom_factor) + 8;
 
     // Mise en place de la carte Leaflet
     this.WatershedMapLeaflet = L.map('WatershedMapLeaflet', {
-      center: [center_lat, center_lon],
-      zoomControl: true,
-      zoom: auto_zoom,
-    layers: [this.WaterShedsMapLayers['BaseMap']]
-  });
+      center: [center_lat, center_lon], // Centre de la carte
+      zoomControl: true, // Activer le contrôle de zoom
+      zoom: auto_zoom, // Définir le niveau de zoom
+      layers: [this.WaterShedsMapLayers['BaseMap']] // Ajouter la couche de base
+    });
 
-    // Ajouter des couches de base et des contrôles de zoom à la carte de la station
+    // Ajouter des contrôles de couches et d'échelle à la carte
     L.control.layers(this.WaterShedsMapLayers).addTo(this.WatershedMapLeaflet);
     L.control.scale({ maxWidth: 100, imperial: false }).addTo(this.WatershedMapLeaflet);
-    this.WatershedMapLeaflet.attributionControl.remove();
+    this.WatershedMapLeaflet.attributionControl.remove(); // Supprimer le contrôle d'attribution par défaut
 
     // Créer le polygone autour de la station sélectionnée
     const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
     if (stationData) {
       const selectedPolygonCoords = stationData.geometry.coordinates[0].map((coord: any[]) => [coord[1], coord[0]]);
-      pointspoly = selectedPolygonCoords
+      pointspoly = selectedPolygonCoords // Stocker les coordonnées du polygone
+      // Ajouter le polygone à la carte
       L.polyline(selectedPolygonCoords, {
-        color: '#3E88A6',
-        weight: 2,
-        fill: false,
-        fillColor: 'red',
-        fillOpacity: 0.5
+        color: '#3E88A6', // Couleur de la ligne
+        weight: 2, // Épaisseur de la ligne
+        fill: false, // Pas de remplissage
+        fillColor: 'red', // Couleur de remplissage
+        fillOpacity: 0.5 // Opacité du remplissage
       }).addTo(this.WatershedMapLeaflet);
-      // Zoom sur le polygone de la station sélectionnée
-      //this.WatershedMapLeaflet.fitBounds(selectedPolygonCoords);
     }
-    // Créer un marqueur pour la station sélectionnée
-    //cherche la station avec ID
+
+    // Créer un marqueur pour la station hydrologique sélectionnée
     const selectedStation = this.DataGDFStation.find(data => data.index === stationID);
     if (selectedStation) {
-      //remplie les coordonées de la station pour le bound
-      point1 = [selectedStation.y_outlet, selectedStation.x_outlet];
+      // Remplir les coordonnées de la station pour le bound
+      point_hydro = [selectedStation.y_outlet, selectedStation.x_outlet];
       const stationMarker = L.circleMarker([selectedStation.y_outlet, selectedStation.x_outlet], { radius: 7, color: 'black',weight : 1, fill:true, fillColor: 'black',fillOpacity:1 })
         .bindPopup(`<b>Station hydrologique :</b><br>ID : ${selectedStation.index}<br>Nom: ${selectedStation.station_name}<br>`);
-      stationMarker.addTo(this.WatershedMapLeaflet);
-      //chercher la station piezo avec ID BSS 
+      stationMarker.addTo(this.WatershedMapLeaflet); // Ajouter le marqueur à la carte
+
+      // Rechercher la station piézométrique associée avec l'ID BSS 
       const piezoSelectedStation = this.DataGDFPiezometry.find(data => data.identifiant_BSS === selectedStation.BSS_ID);
       if (piezoSelectedStation) {
-        //remplie les coordonées de la station pour le bound
-        point2 = [piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84];
-        console.log(piezoSelectedStation);
+        // Remplir les coordonnées de la station piézométrique pour le bound
+        point_piezo = [piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84];
         const piezoMarker = L.circleMarker([piezoSelectedStation.y_wgs84, piezoSelectedStation.x_wgs84], { radius: 7, color: 'black',weight : 1,fill:true, fillColor: '#D800A0',fillOpacity:0.4})
           .bindPopup(`<b>Station piézométrique </b><br>ID : ${piezoSelectedStation.identifiant_BSS}<br>Nom : ${piezoSelectedStation.Nom}`);
-        piezoMarker.addTo(this.WatershedMapLeaflet);
+        piezoMarker.addTo(this.WatershedMapLeaflet);  // Ajouter le marqueur à la carte
       }
     }
-      // gerer le center celon les points piezo et station 
-      let bounds = L.latLngBounds([point1, ...pointspoly]);
-      if (point2) {
-        bounds.extend(point2);
-      }
-      this.WatershedMapLeaflet.fitBounds(bounds);
-    
+
+    // Gérer le centre de la carte en fonction des points des stations et du polygone
+    let bounds = L.latLngBounds([point_hydro, ...pointspoly]); // Créer des limites à partir des points
+    if (point_piezo) {
+      bounds.extend(point_piezo); // Étendre les limites si une station piézométrique est présente
+    }
+    this.WatershedMapLeaflet.fitBounds(bounds); // Ajuster la vue de la carte pour afficher tous les points
   }
 
   /**
-   * 
-   * @param stationID 
-   * @returns 
-   */
+  * Fonction pour créer et mettre à jour la carte du bassin versant avec plotly
+  * @param stationID - L'identifiant de la station pour laquelle la carte doit être générée
+  */
   WaterShedMap_Plotly(stationID:string){
     const figData: any[] = [];
     // rechercher le center et le Zoom de la carte 
@@ -257,12 +269,12 @@ WaterShedMap_Leaflet(stationID:string){
       showlegend: true
     };
 
-      // vérifie si la station sélectionner est bien dans les stations
-      const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
-      if (stationData){
-        // Ajoute couche contour de la station selectionnée
-        const selectedPolygonCoords = stationData.geometry.coordinates[0];
-        figData.push({
+    // vérifie si la station sélectionner est bien dans les stations
+    const stationData = this.DataGDFWatersheds.find(data => data.index === stationID);
+    if (stationData){
+      // Ajoute couche contour de la station selectionnée
+      const selectedPolygonCoords = stationData.geometry.coordinates[0];
+      figData.push({
         type: 'scattermapbox',
         lon: selectedPolygonCoords.map((coord: number[]) => coord[0]),
         lat: selectedPolygonCoords.map((coord: number[]) => coord[1]),
@@ -270,13 +282,13 @@ WaterShedMap_Leaflet(stationID:string){
         line: { width: 2, color: 'blue' },
         hoverinfo: 'none',
         name: 'Selected Watershed'
-        });
-      }
+      });
+    }
     //récupère les informations de la stations
     const selectedStation = this.DataGDFStation.find(data => data.index === stationID);
     if (selectedStation) {
-    // Ajout de la couche des points de la station sélectionnée
-    figData.push({
+      // Ajout de la couche des points de la station sélectionnée
+      figData.push({
         type: 'scattermapbox',
         text: [selectedStation.name], // Nom de la station sélectionnée
         lon: [selectedStation.x_outlet], // Longitude de la station sélectionnée
@@ -286,20 +298,20 @@ WaterShedMap_Leaflet(stationID:string){
         name: 'Station',
       });
 
-       const PiezoSelectedSation = this.DataGDFPiezometry.find(data => data.identifiant_BSS === selectedStation.BSS_ID)
-        if (PiezoSelectedSation){
-          figData.push({
-            type : 'scattermapbox',
-            text : [PiezoSelectedSation.identifiant_BSS],
-            lon: [PiezoSelectedSation.x_wgs84],
-            lat: [PiezoSelectedSation.y_wgs84],
-            mode: 'markers',
-            marker: { size: 10, color: '#D800A0' },
-            name: 'Piezomètre',
-          });
-        }
+      const PiezoSelectedSation = this.DataGDFPiezometry.find(data => data.identifiant_BSS === selectedStation.BSS_ID)
+      if (PiezoSelectedSation){
+        figData.push({
+          type : 'scattermapbox',
+          text : [PiezoSelectedSation.identifiant_BSS],
+          lon: [PiezoSelectedSation.x_wgs84],
+          lat: [PiezoSelectedSation.y_wgs84],
+          mode: 'markers',
+          marker: { size: 10, color: '#D800A0' },
+          name: 'Piezomètre',
+        });
+      }
     }
-     // Création de la carte watershed ! identifiant de cette element est map :)
-     Plotlydist.newPlot('WatershedMapPlotly', figData, figLayout);
+    // Création de la carte watershed ! identifiant de cette element est map :)
+    Plotlydist.newPlot('WatershedMapPlotly', figData, figLayout);
   }
 }

@@ -10,11 +10,6 @@ import { FormsModule } from '@angular/forms';
   styleUrls: ['./login.component.scss']
 })
 export class LoginComponent implements OnInit{
-  // user = {
-  //   username: '',
-  //   password: '',
-  //   role: ''
-  // };
 
   username: string = '';
   password: string = '';
