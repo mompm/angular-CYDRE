@@ -158,9 +158,15 @@ class Cydre():
                                                         self.date,
                                                         self.user_Qi)
         
+        # Separate wet and dry scenarios
+        self.dry_events, self.wet_events = self.Forecast.separate_wet_and_dry_events(self.Forecast.Q_streamflow_forecast_normalized, self.Forecast.precipitation,
+                                                precipitation_threshold=2, minimal_period=3, total_volume_threshold=40)
+        
         # Projections using scenarios from spatio-temporal similarities
         try:
-            self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_streamflow_forecast_normalized, weight=True)
+            #self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_streamflow_forecast_normalized, weight=False)
+            self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.dry_events, weight=False)
+            #self.df_streamflow_forecast = self.Forecast.timeseries_forecast(self.wet_events, weight=False)
             self.df_storage_forecast = self.Forecast.timeseries_forecast(self.Forecast.Q_storage_forecast_normalized, weight=False)
         except:
             raise ValueError("There are no past events with a correlation coefficient above the defined threshold.")

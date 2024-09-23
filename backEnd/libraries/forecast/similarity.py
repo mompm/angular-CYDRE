@@ -123,6 +123,8 @@ class Similarity:
             self.watershed_similarity = self.__watershed_similarity(self.hydraulic_properties)
         if method == 'nselog_maps':
             self.clusters = self.__nselog_clustering(hydraulic_path)
+        if method == 'file':
+            self.clusters = self.__load_file_clustering(hydraulic_path)
         
         
     def __get_hydraulic_properties(self, hydraulic_path, parameters):
@@ -216,6 +218,14 @@ class Similarity:
         df_clusters = df_clusters.to_frame(name='typology')
         df_clusters.index.name = 'ID'
 
+        return df_clusters
+    
+    
+    def __load_file_clustering(self, hydraulic_path):
+        
+        df_clusters = pd.read_csv(os.path.join(hydraulic_path, 'clusters.csv'), sep=";")
+        df_clusters = df_clusters.set_index("ID")
+        
         return df_clusters
     
     
