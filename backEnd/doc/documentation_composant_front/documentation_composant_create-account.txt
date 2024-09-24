@@ -1,0 +1,30 @@
+Le composant 'CreateAccount' gère la création de nouveaux utilisateurs. Il fournit un formulaire pour saisir les informations nécessaires et gère les messages d'erreur ou de succès.
+
+Importations :
+-Angular Core (Component) : Gestion des composants.
+-Angular Router : Gestion de la navigation entre les différentes routes de l'application.
+-Services (AuthService, UsersService) : Gestion de l'authentification et des utilisateurs.
+
+Services utilisés :
+-AuthService : Service d'authentification pour vérifier l'état de connexion de l'utilisateur.
+-UsersService : Service pour la gestion des utilisateurs, incluant la création de nouveaux utilisateurs.
+
+Variables :
+1.Objet utilisateur :
+    -user: Objet contenant les informations du nouvel utilisateur (nom d'utilisateur, mot de passe et rôle).
+2.Gestion des messages :
+    -errorMessage: Message d'erreur affiché en cas de problème lors de la création de l'utilisateur.
+    -successMessage: Message de succès affiché en cas de création réussie.
+
+Méthodes :
+1.Constructeur :
+    -constructor(public authService: AuthService, private router: Router, private usersService: UsersService): Initialise le composant en injectant les services nécessaires.
+2.Gestion de la soumission du formulaire  de creation d'un utilisateur:
+    -onSubmit(form: any): Méthode appelée lors de la soumission du formulaire.Vérifie la validité du formulaire.
+    Si valide, tente de créer un nouvel utilisateur via le UsersService et gère les messages de succès ou d'erreur en fonction de la réponse du serveur.
+    En cas d'erreur, affiche des messages appropriés selon le code de statut HTTP (par exemple, conflit de nom d'utilisateur ou champs manquants).
+3.Gestion ajout de nouveaux utilisateurs :
+    -addUser(username: string, password: string): Méthode pour ajouter un nouvel utilisateur.
+    Crée un nouvel objet utilisateur avec un rôle par défaut ('scientifique') et utilise le UsersService pour envoyer les données au serveur.
+    En cas d'erreur, un message d'erreur est affiché pour informer l'utilisateur que la création n'a pas été faite.
+

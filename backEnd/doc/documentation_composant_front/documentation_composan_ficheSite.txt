@@ -1,0 +1,63 @@
+Le FicheSiteComponent est un composant clé de l'application, conçu pour afficher et interagir avec des données relatives aux stations hydrologiques et aux bassins versants. Il permet aux utilisateurs de sélectionner une station à partir d'une liste déroulante avec auto-complétion, d'afficher des informations détaillées sur la station choisie, et de visualiser ces données sur une carte interactive. Ce composant facilite la prise de décisions basées sur des données géographiques et hydrologiques en fournissant une interface utilisateur intuitive et réactive.
+Importations
+Angular Core ( Component, OnInit, SimpleChanges) : pour créer le composant et gérer son cycle de vie.
+Angular Material (MatDialogModule) pour gérer les dialogues modaux.
+Leaflet : pour l'intégration de cartes interactives.
+DataService, JsonService, SharedWatershedService : pour interagir avec les données et services de l'application.
+ChangeDetectorRef : pour détecter et gérer les changements d'état.
+Reactive Forms (FormControl) : pour gérer l'état des formulaires réactifs.
+RxJS (Observable, map, startWith) : pour la gestion asynchrone des données et la transformation des flux.
+Données (dataGDFStation, dataGDFWatersheds) : pour le typage des données importées.
+Plotly : pour l'intégration de graphiques.
+
+Services utilisés :
+-DataService: Service pour récupérer les données des stations 
+-JsonService : Service pour manipuler les données JSON
+-SharedWatershedService : Service partagé pour gérer les informations communes
+-hangeDetectorRef : Service pour détecter les changements
+-MatDialogModule : Service de gestion des boîtes de dialogue
+
+Variables
+1. gestion des données:
+    -DataGDFStation : (type: dataGDFStation[]) Contient les données des stations hydrologiques récupérées via les services, utilisées pour afficher les informations pertinentes dans le composant.
+    -DataGDFWatershed : (type: dataGDFWatersheds[]) Contient les données des bassins versants pour la gestion des informations associées aux stations.
+2. Selection de la station :
+    -myControl : (type: FormControl) Utilisé pour le contrôle de saisie de l'auto-complétion, gérant les entrées de l'utilisateur.
+    -filteredOptions : (type: Observable<any[]>) Options filtrées pour l'auto-complétion, mises à jour en temps réel en fonction de l'entrée de l'utilisateur.
+    -selectedWatershedID : (type: string) ID du bassin versant sélectionné par l'utilisateur, utilisé pour récupérer des données spécifiques.
+    -selectedStationName : (type: string) Nom de la station sélectionnée, pour affichage et traitement.
+    -selectedWatershedBSS : (type: string) ID BSS du bassin versant sélectionné, utilisé pour les opérations spécifiques.
+    -previousSelectedStation : (type: string) Stocke la station précédemment sélectionnée, permettant une restauration si nécessaire.
+    -list_of_disabled_options : (type: string[]) Liste des stations qui ne peuvent pas être sélectionnées, utilisée pour désactiver certaines options dans l'interface.
+3.Gestion affichage des élements celon la station
+    -disabled_station : (type: boolean) Indicateur d'options désactivées, modifiant l'apparence et la disponibilité dans l'interface.
+    -BSS_present : (type: boolean) Indicateur pour savoir si un BSS est associé à la station sélectionnée, utilisé pour ajuster l'affichage des informations.
+4.Gestion menu déroulant pour les graphiques des séries temporelles
+    -currentYear : (type: number) Stocke l'année actuelle pour la gestion des sélections.
+    -years : (type: number[]) Un tableau contenant toutes les années depuis 1970 jusqu'à l'année actuelle, utilisé pour les sélections d'années dans l'interface.
+    -selectedYears : (type: number[]) Tableau des années sélectionnées par défaut, initialisé à l'année actuelle pour une utilisation immédiate.
+
+Méthodes :
+1.cycle de vie Angular :
+    -ngOnInit :Méthode appelée lors de l'initialisation du composant. Elle configure les écouteurs d'événements pour détecter les clics en dehors des zones interactives 
+    et appelle initGDFStations() et initGDFWatersheds() pour récupérer les données nécessaires à l'affichage.
+2. Sélection de la station :
+    -initGDFStations : Récupère les données des stations à l'aide de JsonService. Met à jour DataGDFStation et initialise filteredOptions pour l'auto-complétion. Les options sont filtrées en fonction de l'entrée utilisateur.
+    -initGDFWatersheds : Récupère les données des bassins versants à l'aide de SharedWatershedService. Les données sont stockées dans DataGDFWatershed pour une utilisation future dans le composant.
+    - clearSelection() et handleClickOutside() : Gestion des interactions de l'utilisateur avec les champs de saisie.
+    - onOptionSelected() : Gère la sélection d'une station dans la liste déroulante et récupère les résultats de simulation correspondants via une requête HTTP.
+    - _filter(value: string) : Filtre les stations GDF disponibles en fonction de l'entrée utilisateur.
+    - isOptionDisabled() : Vérifie si une option de station est désactivée.
+    - displayFn() : Formate l'affichage des options dans la liste déroulante.
+    - handleMarkerClick :Gère les interactions utilisateur avec les marqueurs sur la carte. Met à jour les valeurs du formulaire en fonction de la station sélectionnée.
+
+4.Gestion des Dialogues
+    -openDialog : Ouvre une boîte de dialogue pour afficher des informations détaillées sur la station choisie, en utilisant les données passées. Cette méthode utilise MatDialog pour afficher le composant de dialogue.
+    -openDialogLoc : Ouvre une boîte de dialogue spécifiquement pour afficher la localisation de la station sur une carte.
+    -openDialogClassif : Ouvre une boîte de dialogue pour la classification, affichant des informations supplémentaires liées aux données de la station.
+
+Boîte de dialogue : 
+    -openDialog
+    -openDialogLoc
+    -openDialogClassif
+
