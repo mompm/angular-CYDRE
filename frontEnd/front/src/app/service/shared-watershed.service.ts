@@ -4,51 +4,81 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class SharedWatershedService {
+  // Liste des options désactivées pour les bassins versants
   list_of_disabled_options: string[] = [
     'J0121510', 'J0621610', 'J2233010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
-    'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310', 
+    'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210', 'J7373110', 'J8433010', 'J8502310', 
   ];
 
-  selectedValue: string | null = 'J0014010';
-  selectedValueBSS: string | null = 'BSS000TRGE';
-  selectedValueName: string | null = 'Nançon';
+  selectedValue: string | null = 'J0014010'; // Valeur sélectionnée par défaut pour le bassin versant.
+  selectedValueBSS: string | null = 'BSS000TRGE'; // Valeur sélectionnée par défaut pour BSS.
+  selectedValueName: string | null = 'Nançon'; // Nom de la station sélectionnée par défaut.
 
-  constructor() {}
+  constructor() {} // Constructeur du service, ici vide car aucune initialisation particulière n'est nécessaire.
 
-  isWatersheddisabled(index :string| null | undefined): boolean{
-    if (index){
-      if (this.list_of_disabled_options.includes(index)){
-        return true;
-      }
-      else{
-        return false
+  /**
+   * Vérifie si une option de bassin versant est désactivée.
+   * @param index - L'index de l'option à vérifier.
+   * @returns true si l'option est désactivée, false sinon.
+   */
+  isWatersheddisabled(index: string | null | undefined): boolean {
+    if (index) {
+      // Vérifie si l'index fourni est dans la liste des options désactivées
+      if (this.list_of_disabled_options.includes(index)) {
+        return true; // Retourne true si l'option est désactivée.
+      } else {
+        return false; // Retourne false si l'option n'est pas désactivée.
       }
     }
-    return true;
+    return true; // Si l'index est nul ou indéfini, retourne true (considéré comme désactivé).
   }
 
+  /**
+   * Récupère la valeur sélectionnée pour le bassin versant.
+   * @returns La valeur sélectionnée ou null.
+   */
   getSelectedValue(): string | null {
-    return this.selectedValue;
+    return this.selectedValue; // Renvoie la valeur actuellement sélectionnée.
   }
 
-  getSelectedStationName(): string | null{
-    //return "Nançon" // à changer par la logique de récupération du nom de la station
-    return this.selectedValueName;
+  /**
+   * Récupère le nom de la station sélectionnée.
+   * @returns Le nom de la station sélectionnée ou null.
+   */
+  getSelectedStationName(): string | null {
+    // À changer par la logique de récupération du nom de la station
+    return this.selectedValueName; // Renvoie le nom de la station sélectionnée.
   }
 
+  /**
+   * Définit le nom de la station sélectionnée.
+   * @param value - Le nom de la station à définir.
+   */
   setSelectedStationName(value: string | null): void {
-    this.selectedValueName = value;
+    this.selectedValueName = value; // Définit le nom de la station.
   }
 
+  /**
+   * Définit la valeur sélectionnée pour le bassin versant.
+   * @param value - La nouvelle valeur à définir.
+   */
   setSelectedValue(value: string | null): void {
-    this.selectedValue = value;
+    this.selectedValue = value; // Définit la valeur sélectionnée pour le bassin versant.
   }
   
+  /**
+   * Récupère la valeur sélectionnée pour BSS.
+   * @returns La valeur sélectionnée pour BSS ou null.
+   */
   getSelectedValueBSS(): string | null {
-    return this.selectedValueBSS;
+    return this.selectedValueBSS; // Renvoie la valeur actuellement sélectionnée pour BSS.
   }
 
+  /**
+   * Définit la valeur sélectionnée pour BSS.
+   * @param value - La nouvelle valeur à définir pour BSS.
+   */
   setSelectedValueBSS(value: string | null): void {
-    this.selectedValueBSS = value;
+    this.selectedValueBSS = value; // Définit la valeur sélectionnée pour BSS.
   }
 }

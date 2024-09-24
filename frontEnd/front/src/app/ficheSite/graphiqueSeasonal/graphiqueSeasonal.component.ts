@@ -22,7 +22,6 @@ import dataDischarge from 'src/app/model/dataDischarge';
     styleUrls: ['./graphiqueSeasonal.component.scss']
 })
 
-
 export class graphiqueSeasonal implements OnDestroy {
   private resizeListener: ()=> void; //Gestionnaire d'événements pour la redimension de la fenêtre.
   @Input() GraphType! : string; // Type du graphique ('depth', 'temperature', 'precipitation', 'hydrograph').
@@ -49,16 +48,16 @@ export class graphiqueSeasonal implements OnDestroy {
     // Définition de l'écouteur pour ajuster la taille des graphiques en fonction de la taille de l'écran.
     this.resizeListener = () => {
       const isSmallScreen = window.matchMedia("(max-width: 1000px)").matches;
-      const hydrographWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
+      const GraphWidth = isSmallScreen ? 0.80 * window.innerWidth : 0.40 * window.innerWidth;
       // Redimensionner le graphique selon le type sélectionné
       if (this.GraphType === 'depth') {
-        Plotlydist.relayout('depthSeasonal', { width: hydrographWidth });
+        Plotlydist.relayout('depthSeasonal', { width: GraphWidth });
       }else if (this.GraphType === 'temperature') {
-        Plotlydist.relayout('temperatureSeasonal', { width: hydrographWidth });
+        Plotlydist.relayout('temperatureSeasonal', { width: GraphWidth });
       }else if (this.GraphType === 'precipitation') {
-        Plotlydist.relayout('precipitationSeasonal', { width: hydrographWidth });
+        Plotlydist.relayout('precipitationSeasonal', { width: GraphWidth });
       }else if (this.GraphType === 'hydrograph') {
-        Plotlydist.relayout('hydrographSeasonal', { width: hydrographWidth });
+        Plotlydist.relayout('hydrographSeasonal', { width: GraphWidth });
       }
     };
   }
