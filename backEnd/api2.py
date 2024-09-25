@@ -693,6 +693,7 @@ def getForecastResults(simulation_id):
                           "value":graph_results['m10'],
                           "color" : "#Ff0000",
                           "results":{
+                            'proj_ev': graph_results['proj_values_ev'],
                             'proj_values': graph_results['proj_values'],
                             'ndays_before_alert':graph_results['ndays_before_alert'],
                             'ndays_below_alert': graph_results['ndays_below_alert'],

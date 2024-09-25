@@ -81,11 +81,6 @@ h5 {
   margin-left:5px;
 }
 
-//icon du bouton info
-.info-icon{
-  //color: #07861c;
-}
-
 // boite de dialog du bouton info
 .info-tooltip {
   // box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -206,7 +201,13 @@ mat-select.station-dropdown {
   align-items: center;
   flex-wrap: wrap;
 }
-  
+
+.custom-button {
+  border-radius: 8px; /* Coins arrondis */
+  font-size: 16px; /* Taille de la police */
+  padding: 10px 20px; /* Espacement interne */
+}
+
 //slider de la duree de la simulation
 ::ng-deep{
   .slider{

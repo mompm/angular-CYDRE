@@ -419,6 +419,19 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     });
   }
 
+  openDialogSelection(event: MouseEvent) {
+    this.dialog.open(PopupDialogSelection, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      }
+    )
+    }
+
+
   //METHODES POUR SIMPLIFIER LE CODE//   
 
   /**
@@ -469,6 +482,12 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
   templateUrl: './popupDialogSimulateur.html',
 })
 export class PopupDialogSimulateur {}
+
+  @Component({
+    selector: 'popupDialogSelection',
+    templateUrl: './popupDialogSelection.html',
+  })
+  export class PopupDialogSelection {}
 
 /**
 * Composant pour la boîte de dialogue condition pour le simulateur

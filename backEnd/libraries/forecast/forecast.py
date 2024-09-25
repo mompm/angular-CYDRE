@@ -77,6 +77,7 @@ class Forecast():
         self.scenario_year = []
         self.correlation_coeff = []
         self.Q_station_forecast = []
+        self.precipitation = []
     
     
     def from_scenarios_extract_timeseries(self, data_path, scenarios, simulation_date, user_Qi):
@@ -118,7 +119,8 @@ class Forecast():
                     comp_ti = pd.to_datetime(str(year)+'-'+simulation_date.strftime('%m-%d'))
                     
                     # Recalculate time origin
-                    forecast_date = self.__recalculate_time_origin(comp_ti, df_watershed)
+                    #forecast_date = self.__recalculate_time_origin(comp_ti, df_watershed)
+                    forecast_date = comp_ti
                     
                     # Time series smoothing for noise reduction
                     #df_watershed = self.__timeseries_smoothing(df_watershed)
@@ -143,6 +145,7 @@ class Forecast():
                         self.Q_recharge_forecast_normalized.append(df_normalized['Q_recharge'])
                         self.Q_runoff_forecast_normalized.append(df_normalized['Q_runoff'])
                         self.Q_storage_forecast_normalized.append(df_normalized['Q_storage'])
+                        self.precipitation.append(df_subset['Q'])
                         # Update the list of effectively selected scenarios
                         self.scenario_watershed.append(watershed_id)
                         self.scenario_year.append(year)
@@ -154,6 +157,51 @@ class Forecast():
         self.scenarios_with_chronicles = pd.DataFrame({'watershed':self.scenario_watershed,
                                                        'year':self.scenario_year,
                                                        'coeff':self.correlation_coeff})
+    
+    
+    def separate_wet_and_dry_events(self, Q_to_forecast, precipitation, precipitation_threshold=2,
+                                    minimal_period=3, total_volume_threshold=40):
+        
+        # Liste pour stocker les indices et les années identifiées
+        idx_wet_years = []
+        all_idx = set(range(len(precipitation)))
+
+        # Parcourir chaque série temporelle de précipitations (par année) avec l'index
+        for idx, serie in enumerate(precipitation):
+            
+            # Initialiser les compteurs et variables
+            consecutive_days = 0
+            total_precipitation = 0
+            event_detected = False
+
+            # Parcourir chaque jour dans la série
+            for day, value in serie.items():
+                if value >= precipitation_threshold:
+                    consecutive_days += 1
+                    total_precipitation += value
+                else:
+                    # Vérifier si un événement significatif a été trouvé
+                    if consecutive_days >= minimal_period and total_precipitation >= total_volume_threshold:
+                        event_detected = True
+                        break
+                    # Réinitialiser les compteurs
+                    consecutive_days = 0
+                    total_precipitation = 0
+
+            # Vérifier une dernière fois à la fin de la série
+            if consecutive_days >= minimal_period and total_precipitation >= total_volume_threshold:
+                event_detected = True
+
+            # Ajouter l'index et l'année à la liste si un événement significatif a été détecté
+            if event_detected:
+                idx_wet_years.append(idx)
+                
+        idx_dry_years = list(all_idx - set(idx_wet_years))
+        
+        dry_events = [Q_to_forecast[idx_dry] for idx_dry in idx_dry_years]
+        wet_events = [Q_to_forecast[idx_wet] for idx_wet in idx_wet_years]
+        
+        return dry_events, wet_events
     
     
     #NICOLAS: nom à moidifier timeseries_statistics
@@ -210,7 +258,7 @@ class Forecast():
             self.q50 = np.nanpercentile(Q_to_forecast, 50, axis=0)
             self.q90 = np.nanpercentile(Q_to_forecast, 90, axis=0)
         
-        self.qmean = np.nanmean(Q_to_forecast, axis=0)
+        self.qmean= np.nanmean(Q_to_forecast) 
         
         # Format results: dataframe in columns (line:time, column: q10, q50, q90, qmean)
         df_forecast = pd.DataFrame({'Q10':self.q10,

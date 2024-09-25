@@ -1,29 +1,49 @@
-<h2 mat-dialog-title style="margin-bottom: 5px; padding: 5px; text-align: center; font-weight: bold; font-size: 24px; background: linear-gradient(to right, #434343, #000); color: #fff;">
-    Visualisation des prévisions
-  </h2>
-  <div mat-dialog-content style="padding: 20px; line-height: 1.5; background-color: #f9f9f9; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
-    <p class="mat-body-1" style="margin-bottom: 10px; font-size: 16px; text-align: justify;">
-      <strong>Le graphique présente les tendances des débits saisonniers générées par l'outil CYDRE.</strong>
-    </p> 
+<div mat-dialog-title style="padding: 15px; font-size: 20px; background: white; font-family: Segoe UI Semibold;
+                            font-weight: 1200; border-bottom: 1px solid rgb(223, 221, 221);">
+    Visualisation - Tendances saisonnières de débits
+</div>
+
+<div mat-dialog-content style="padding: 15px; font-size: 16px; background-color:white; text-align: justify; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  
+  <div style="font-family: Segoe Ui Semibold; font-weight: 1200;">Objet</div>
+  <p>Ce graphique permet de visualiser les tendances saisonnières des débits simulées par l'outil CYDRE.
+  </p>
+  
+  <div style="font-family: Segoe Ui Semibold; font-weight: 1200;">Interprétation</div>
+  <ul>
+    <li><i class="material-icons" style="vertical-align: middle; color: #000000;">trending_up</i>
+    <strong>Les données observées</strong>, mesurées à la station hydrologique, sont représentées en noir.
+    </li>
     
-    <p class="mat-body-1" style="margin-bottom: 10px; font-size: 14px; text-align: justify;">
-        <i class="material-icons" style="vertical-align: middle; color: #000000;">trending_up</i>
-        La <strong>courbe noire</strong> représente les données mesurées à la station.
-    </p>
+    <li><i class="material-icons" style="vertical-align: middle; color: #2196F3;">trending_up</i>
+    <strong>Les données simulées</strong> par le modèle sont représentées en bleu. La courbe pointillée indique la tendance médiane des prévisions,
+    tandis que la bande bleue illustre l'intervalle compris entre les quantiles 10 et 90. Cet intervalle reflète l'amplitude des
+    tendances possibles en fonction des conditions climatiques futures, qu'elles soient humides ou sèches.
+    </li>
+    
+    <li><i class="material-icons" style="vertical-align: middle; color: #74006c;">trending_up</i>
+    Pour calculer les quantiles 10, 50 et 90, le modèle s'appuie sur des événements passés provenant de différents bassins similaires.
+    <strong>Les événements individuels</strong>, affichées en magenta, aident à mieux comprendre les données simulées. Pour faciliter la lecture du graphique,
+    il est possible de masquer ces courbes en cliquant sur 'événements individuels' dans la légende.
+    </li>
+    
+    <li><i class="material-icons" style="vertical-align: middle; color: red;">horizontal_rule</i>
+    <strong>Le débit réservé</strong> représente le débit minimal nécessaire au maintien des écosystèmes et aux usages de l'eau.
+    L'outil le calcule automatiquement en prenant 1/10 du débit moyen annuel (1/10 du module) du cours d'eau.
+    Il est représenté sur ce graphique pour déterminer si les débits simulés franchissent ce seuil.
+    De plus, il est possible d'ajouter de nouveaux seuils dans la section suivante.
+    </li>
 
-    <p class="mat-body-1" style="margin-bottom: 10px; font-size: 14px; text-align: justify;">
-      <i class="material-icons" style="vertical-align: middle; color: #2196F3;">trending_up</i>
-      La <strong>courbe bleue pointillée</strong> indique la tendance médiane des prévisions, tandis que la <strong>bande bleue</strong> illustre l'intervalle de confiance (quantiles 10 et 90).
-    </p>
-  
-    <p class="mat-body-1" style="margin-bottom: 10px; font-size: 14px; text-align: justify;">
-      <i class="material-icons" style="vertical-align: middle; color: #74006c;">trending_up</i>
-      Les <strong>courbes mauves</strong> en arrière-plan correspondent aux séries utilisées pour établir les prévisions.
-    </p>
+    <li>
+    <strong>La date de simulation</strong> est représentée par une ligne verticale pointillée. Elle peut parfois être ajustée à
+     quelques jours ou semaines plus tôt, en fonction des cumuls de précipitations.
+    </li>
 
-    <p class="mat-body-1" style="margin-bottom: 10px; font-size: 14px; text-align: justify;">
-        <i class="material-icons" style="vertical-align: middle; color: red;">horizontal_rule</i>
-        La <strong>ligne rouge horizontale</strong> représente le 1/10 du module, calculé sur l'ensemble des données.
-    </p>
-  </div>
-  
+    <li>
+    Cliquez sur le bouton "switch" pour alterner <strong>entre l'échelle linéaire et logarithmique</strong> de l'axe des ordonnées.
+    L'échelle linéaire est idéale pour identifier les hauts débits, tandis que l'échelle logarithmique convient mieux aux bas débits.
+    </li>
+
+  </ul>
+
+</div>

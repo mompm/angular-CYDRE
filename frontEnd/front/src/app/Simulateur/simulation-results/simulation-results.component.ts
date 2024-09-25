@@ -335,11 +335,12 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
       if(Module10){
         let Q50Value = indicator.results.proj_values.Q50; // Récupère la valeur projetée médiane (Q50)
         Q50Value = parseFloat(Q50Value.toFixed(2)); // Formate cette valeur avec 2 décimales
+	      let Q50evolution = indicator.results.proj_ev; 
         const firstDate = this.results.results.data.first_date; // Récupère les dates de début et de fin de la simulation
         const lastDate = this.results.results.data.last_date || '';  // Si `last_date` est null, utilise une chaîne vide
         // Crée un texte pour l'infobulle expliquant la variation projetée
         const tooltipText = `Débit projeté médian en m³/s au ${lastDate}.\n 
-        Cela correspond à une variation de ${Q50Value}% par rapport au débit observé le ${firstDate}`; 
+        Cela correspond à une variation de ${Q50evolution}% par rapport au débit observé le ${firstDate}`; 
         this.tooltipTextsEstimationValue.push(tooltipText); // Ajoute le texte à la liste des infobulles
       }
       // Ajoute indicateur au tableau `indicators`
@@ -356,15 +357,15 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
     this.updateIndicatorShapes(); // Met à jour les formes visuelles (formes graphiques) des indicateurs
   }
 
-/**
- * Méthode appelée lorsqu'un utilisateur clique sur le bouton "+" pour ajouter un nouvel indicateur.
- * 
- * Étapes principales :
- * 1. Incrémente l'identifiant de l'indicateur (`IDIndicators`).
- * 2. Crée un nouvel indicateur vide avec des valeurs par défaut et une couleur rouge.
- * 3. Marque cet indicateur comme étant modifié (`modified: true`), 
- *    ce qui indique qu'il doit être synchronisé avec le backend.
- */
+  /**
+  * Méthode appelée lorsqu'un utilisateur clique sur le bouton "+" pour ajouter un nouvel indicateur.
+  * 
+  * Étapes principales :
+  * 1. Incrémente l'identifiant de l'indicateur (`IDIndicators`).
+  * 2. Crée un nouvel indicateur vide avec des valeurs par défaut et une couleur rouge.
+  * 3. Marque cet indicateur comme étant modifié (`modified: true`), 
+  *    ce qui indique qu'il doit être synchronisé avec le backend.
+  */
   addIndicator() {
     // Incrémente l'identifiant des indicateurs pour garantir des IDs uniques
     this.IDIndicators = this.IDIndicators + 1 ;
@@ -1461,12 +1462,6 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
     }
   }
 
-  /**
-  * Ouvre un dialogue pour afficher les résultats de la simulation.
-  */
-  openDialog() {
-    this.dialog.open(Dialogsimulationresults);
-  }
 
   /**
   * Ouvre un dialogue pour la visualisation, en utilisant l'événement du clic.
@@ -1474,7 +1469,7 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
   */
   openDialogViz(event: MouseEvent) {
     this.dialog.open(PopupDialogViz, {
-      width: '800px',
+      width: '1000px',
       maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
       panelClass: 'custom-dialog-container',
       hasBackdrop: true,
@@ -1483,6 +1478,32 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
       // Pas de paramètres de position pour permettre un centrage automatique
     });
   }
+
+
+  openDialogThreshold(event: MouseEvent) {
+    this.dialog.open(PopupDialogThreshold, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
+  openDialogEvents(event: MouseEvent) {
+    this.dialog.open(PopupDialogEvents, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      // Pas de paramètres de position pour permettre un centrage automatique
+    });
+  }
+
 
   // ===== METHODES SIMPLIFIER LE CODE =====       
 
@@ -1546,25 +1567,25 @@ stationName: string | null | undefined; // Nom de la station sélectionnée
 })
 export class PopupDialogViz {}
 
+@Component({
+  selector: 'popupDialogThreshold',
+  templateUrl: './popupDialogThreshold.html',
+})
+export class PopupDialogThreshold {}
 
 /**
 * Composant pour afficher les résultats de la simulation.
 */
 @Component({
-  selector: 'dialog-simulation-results',
-  templateUrl: './dialog-simulation-results.html',
-  styleUrls: ['./dialog-simulation-results.scss'],
-  standalone: true,
-  imports: [CommonModule, MatButtonModule],
+  selector: 'popupDialogEvents',
+  templateUrl: './popupDialogEvents.html',
 })
-export class Dialogsimulationresults {
-  constructor(public dialogRef: MatDialogRef<Dialogsimulationresults>) {}
+export class PopupDialogEvents {
+  constructor(public dialogRef: MatDialogRef<(PopupDialogEvents>) {}
 
-  /**
-  * Ferme le dialogue.
-  */
   onClose(): void {
     this.dialogRef.close();
   }
+
 }
 

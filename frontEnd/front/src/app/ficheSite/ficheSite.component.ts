@@ -133,27 +133,46 @@ export class FicheSiteComponent {
   }
 
   /**
-  * Ouvre une boîte de dialogue PopupDialogLoc
-  * @param event : MouseEvent
-  */
-  openDialogLoc(event: MouseEvent) {
-    const targetElement = event.target as HTMLElement;
-    const rect = targetElement.getBoundingClientRect(); // Récupère la position du bouton
-    this.dialog.open(PopupDialogLoc, {
-      width: '400px',   // Largeur de la fenêtre
-      maxHeight: '80vh', // Limite la hauteur pour éviter qu'elle déborde
-      panelClass: 'custom-dialog-container', // Classe personnalisée pour ajuster les styles
+* Ouvre une boîte de dialogue PopupDialogLoc
+* @param event : MouseEvent
+*/
+  openDialogSelection(event: MouseEvent) {
+    this.dialog.open(PopupDialogSelection, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
       hasBackdrop: true,
-      backdropClass: 'custom-backdrop', // Ajout de la classe backdrop personnalisée
-      autoFocus: true,
-      position: {
-        top: `${rect.bottom - 50}px`, // 10px en dessous du bouton
-        left: `${rect.right + 20}px`,   // 5px à droite du bouton
-        right: 'auto',                 // Laisser l'alignement horizontal au contenu
-        bottom: 'auto'  
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
       }
-    });
-  }
+    )
+    }
+
+  openDialogLoc(event: MouseEvent) {
+
+    this.dialog.open(PopupDialogLoc, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      }
+    )
+    };
+
+  openDialogSuivi(event: MouseEvent) {
+
+    this.dialog.open(PopupDialogSuivi, {
+      width: '1000px',
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
+      panelClass: 'custom-dialog-container',
+      hasBackdrop: true,
+      backdropClass: 'custom-backdrop',
+      autoFocus: false,
+      }
+    )
+  };
 
   /**
   * Ouvre une boîte de dialogue popupDialogClassif,
@@ -162,20 +181,18 @@ export class FicheSiteComponent {
   openDialogClassif(event: MouseEvent) {
     const targetElement = event.target as HTMLElement;
     const rect = targetElement.getBoundingClientRect(); // Récupère la position du bouton
+
+    console.log('Position du bouton :', rect);
+
     this.dialog.open(popupDialogClassif, {
-      width: '400px',   // Largeur de la fenêtre
-      maxHeight: '80vh', // Limite la hauteur pour éviter qu'elle déborde
+      width: '1000px', // Largeur de la fenêtre
+      maxHeight: '80vh', // Limite la hauteur pour éviter le débordement
       panelClass: 'custom-dialog-container', // Classe personnalisée pour ajuster les styles
       hasBackdrop: true,
       backdropClass: 'custom-backdrop', // Ajout de la classe backdrop personnalisée
-      autoFocus: true,
-      position: {
-        top: `${rect.bottom - 50}px`, // 10px en dessous du bouton
-        left: `${rect.right + 20}px`,   // 5px à droite du bouton
-        right: 'auto',                 // Laisser l'alignement horizontal au contenu
-        bottom: 'auto'  
+      autoFocus: false,
       }
-    });
+    );
   }
     
   //METHODE SELECTION DE LA STATION
@@ -328,20 +345,36 @@ export class FicheSiteComponent {
 /**
 * Composant pour la boîte de dialogue de la fiche de site
 */
-@Component({
-  selector: 'popupDialogFicheSite',
-  templateUrl: './popupDialogFicheSite.html',
-})
-export class PopupDialogFicheSite {}
+  @Component({
+    selector: 'popupDialogFicheSite',
+    templateUrl: './popupDialogFicheSite.html',
+  })
+  export class PopupDialogFicheSite {}
+
+
+/**
+*
+*/
+  @Component({
+    selector: 'popupDialogSelection',
+    templateUrl : './popupDialogSelection.html',
+  })
+  export class PopupDialogSelection {}
 
 /**
  * Composant pour la boîte de dialogue de localisation
  */
-@Component({
-  selector: 'popupDialogLoc',
-  templateUrl : './popupDialogLoc.html',
-})
-export class PopupDialogLoc {}
+  @Component({
+    selector: 'popupDialogLoc',
+    templateUrl : './popupDialogLoc.html',
+  })
+  export class PopupDialogLoc {}
+
+  @Component({
+    selector: 'popupDialogSuivi',
+    templateUrl : './popupDialogSuivi.html',
+  })
+  export class PopupDialogSuivi {}
 
 /**
  * Composant pour la boîte de dialogue de classification

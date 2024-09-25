@@ -107,23 +107,23 @@ export class JsonService {
   
 		const CreateSimulationResponse = await this.CreateSimulation(params); // Créer la simulation.
 		simulation_id = CreateSimulationResponse.SimulationID; // Récupérer l'ID de la simulation.
-		progressCallback('Récupération des conditions de la prévision', 10); // Indiquer la progression.
+		progressCallback('Identification des bassins similaires...', 10); // Indiquer la progression.
 		console.log('Simulation ID:', simulation_id); // Afficher l'ID de la simulation dans la console.
   
 		await this.runSpatialSimilarity(simulation_id); // Exécuter la similarité spatiale.
-		progressCallback('Typologie de bassins versants : OK', 20); // Indiquer la progression.
+		progressCallback('Identification des années similaires...', 20); // Indiquer la progression.
 		console.log('Similarités spatiales exécutées');
   
 		await this.runTimeseriesSimilarity(simulation_id); // Exécuter la similarité temporelle.
-		progressCallback('Identification des années similaires : OK', 50); // Indiquer la progression.
+		progressCallback('Combinaison des variables hydrologiques et climatiques...', 50); // Indiquer la progression.
 		console.log('Similarités temporelles exécutées');
   
 		await this.runScenarios(simulation_id); // Exécuter les scénarios.
-		progressCallback('Sélection des événements similaires : OK', 60); // Indiquer la progression.
+		progressCallback('Extraction des chroniques de débits pour le calcul des tendances...', 60); // Indiquer la progression.
 		console.log('Scenarios exécutés');
   
 		await this.getForecastResults(simulation_id); // Récupérer les résultats de prévision.
-		progressCallback('Préparation des résultats', 75); // Indiquer la progression.
+		progressCallback('Préparation des résultats...', 75); // Indiquer la progression.
 		console.log('Graphe généré');
   
 		const results = await this.getResults(simulation_id); // Récupérer les résultats finaux.
