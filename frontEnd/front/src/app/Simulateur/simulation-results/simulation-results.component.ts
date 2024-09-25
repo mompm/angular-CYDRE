@@ -1581,7 +1581,7 @@ export class PopupDialogThreshold {}
   templateUrl: './popupDialogEvents.html',
 })
 export class PopupDialogEvents {
-  constructor(public dialogRef: MatDialogRef<(PopupDialogEvents>) {}
+  constructor(public dialogRef: MatDialogRef<PopupDialogEvents>) {}
 
   onClose(): void {
     this.dialogRef.close();
