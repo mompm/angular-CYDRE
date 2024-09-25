@@ -1,0 +1,53 @@
+Le composant 'precipitationSeasonal' affiche un graphique des precipitation saisonnier basé sur les données de precipitation. 
+Ce composant gère l'affichage dynamique des données selon la station sélectionnée et les années choisies.
+
+Importations :
+	-Angular Core (Component, Input, SimpleChanges, OnDestroy, HostListener): Gestion des composants et des entrées.
+	-DataService: Service pour la gestion des données.
+	-JsonService: Service pour gérer les opérations JSON, notamment les requêtes de profondeur.
+	-Plotly.js: Bibliothèque pour créer des graphiques interactifs.
+	-Simple Statistics (median): Utilisé pour le calcul de la médiane des données.
+	-Math.js: Utilisé pour le calcul des quantiles.
+	-RxJS: Utilisé pour la gestion des flux asynchrones via des Observables.
+	-dataPrecipitation: Modèle représentant les données de precipitation.
+	-ColorService: Service pour la gestion des couleurs des graphiques.
+
+Services utilisés:
+	-dataService  : Service de gestion des données.
+    -jsonService  : Service de gestion des fichiers JSON.
+
+Variables :
+1.Gestion des données :
+	-DataPrecipitation: Tableau pour stocker les données de precipitation.
+	-lastUpdate: Date de la dernière mise à jour des données.
+	-TabPrecipitationByDaily: Tableau contenant toutes les données de precipitation triées.
+	-YearTabPrecipitationByDaily: Tableau contenant les données de precipitation triées pour les années sélectionnées.
+	-resultArray: Tableau contenant les quantiles calculés (Q10, Q50, Q90).
+
+2.Sélection de la station :
+	-stationSelectionChange: ID de la station sélectionnée, utilisé pour changer le graphique en fonction de la sélection.
+
+3.Gestion du graphique :
+	-fig: Objet pour stocker la figure Plotly.
+	-yearSelectionChange: Liste des années sélectionnées pour l'affichage du graphique.
+	-months: Noms des mois pour l'affichage.
+	-tickvals, ticktext: Valeurs et textes pour les ticks de l'axe des X.
+
+Méthodes :
+1.Cycle de vie Angular :
+	-ngOnInit(): Méthode appelée lors de l'initialisation du composant. Elle configure un écouteur pour la redimension de la fenêtre et charge les données de profondeur.
+	-ngOnDestroy(): Méthode pour nettoyer les écouteurs lorsque le composant est détruit.
+	-ngOnChanges(changes: SimpleChanges): Méthode appelée lorsque les propriétés @Input changent, recharge les données de profondeur si la station ou l'année sélectionnée change.
+
+2.Gestion des données:
+	-initStationPrecipitation(stationID: string): Charge les données de precipitation pour la station spécifiée via JsonService.
+
+3.traitement des données:
+	-processedPrecipitation(): Traite les données de precipitation pour en extraire les informations quotidiennes et annuelles, ainsi que la date de la dernière mise à jour.
+	-calculateQuantiles(PrecipitationByDaily: any[])): Calcule les quantiles (Q10, Q50, Q90) pour les données de precipitation quotidiennes.
+
+4.Création de graphiques :
+	-Precipitation_Seasonal(): Met à jour et affiche le graphique precipitation saisonnier avec les données actuelles, incluant les tracés pour les quantiles et les données par année.
+
+5.Téléchargement de données :
+	-downloadCSV(): Prépare les données pour le téléchargement au format CSV.

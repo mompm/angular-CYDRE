@@ -1,4 +1,5 @@
-Le composant 'Login' gère l'interface utilisateur pour la connexion d'un utilisateur, y compris la saisie des identifiants, la soumission du formulaire et la gestion des messages de succès ou d'erreur.
+Le composant 'Login' gère l'interface utilisateur pour la connexion d'un utilisateur, y compris la saisie des identifiants, 
+la soumission du formulaire et la gestion des messages de succès ou d'erreur.
 
 Importations :
 -Angular Core (Component, OnInit) : Gestion des composants et du cycle de vie.

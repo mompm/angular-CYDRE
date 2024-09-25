@@ -1,0 +1,28 @@
+Le composant 'SimulationHistory' gère l'affichage de l'historique des simulations de l'utilisateur, permettant de visualiser, 
+de sélectionner et de supprimer des simulations précédentes.
+
+Importations :
+    -Angular Core (Component, OnInit): Gestion des composants Angular et cycle de vie.
+    -Angular Router (Router): Navigation entre les routes de l'application.
+    -HttpClient: Gestion des requêtes HTTP pour la communication avec le serveur.
+    -JsonService: Service personnalisé pour gérer les requêtes liées aux simulations de l'utilisateur.
+
+Service utilisés :
+
+Variables :
+1.Gestion des simulations:
+    simulations: Tableau qui stocke les simulations récupérées pour l'utilisateur.
+    user_horizon: Nombre entier représentant l'horizon utilisateur, initialisé à 0.
+
+Méthodes :
+1.Cycle de vie Angular:
+    -ngOnInit(): Méthode d'initialisation du composant. Elle appelle le service JsonService pour récupérer les simulations de l'utilisateur et traite les données récupérées :
+    Si user_horizon n'est pas défini dans les paramètres de la simulation, il est initialisé à partir de UserConfig.
+    Si la date n'est pas définie, elle est récupérée depuis General. Les données des simulations sont affichées dans la console.
+
+2.Navigation et gestion des simulations:
+    -goToSimulation(simulationId: string): Stocke l'ID de la dernière simulation dans sessionStorage pour navigation ultérieure.
+    Navigue vers la route /simulator pour lancer la simulation sélectionnée.
+    -deleteSimulation(simulationId: string): Envoie une requête HTTP POST pour supprimer la simulation correspondante sur le serveur.
+    Supprime l'ID de la simulation de sessionStorage si c'est la dernière simulation.
+    Met à jour le tableau simulations pour retirer la simulation supprimée, après une suppression réussie.

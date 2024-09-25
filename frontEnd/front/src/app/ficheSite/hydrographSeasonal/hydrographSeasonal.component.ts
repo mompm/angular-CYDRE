@@ -31,6 +31,7 @@ export class hydrographSeasonal implements OnDestroy{
   YearTabDischargeByDaily: any[] = []; //tableau contenant les données discharge triés des années selectionné
   lastUpdate: any | null;// dernière update des données des données discharge
   resultArray: { key: string; values: number[]; q10?: number; q50?: number; q90?: number; }[] = []; // tableau contenant les quantiles 
+  
   /**
    * Constructeur de la classe hydrographSeasonal.
    * @param dataService Service pour gérer les données.

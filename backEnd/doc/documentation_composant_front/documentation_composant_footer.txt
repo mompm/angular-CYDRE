@@ -1,0 +1,3 @@
+Le composant 'footer' est chargé de gérer le pied de page du site. Ce pied de page a pour fonction principale de valoriser les partenaireset financeurs 
+qui soutiennent le projet, en affichant leurs logos de manière visible. En plus de respecter les obligations contractuelles liées aux financements, 
+il contribue à renforcer la crédibilité du projet en mettant en avant les entités qui lui apportent leur soutien. 

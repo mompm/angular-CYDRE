@@ -17,13 +17,11 @@ Variables :
     -successMessage: Message de succès affiché en cas de création réussie.
 
 Méthodes :
-1.Constructeur :
-    -constructor(public authService: AuthService, private router: Router, private usersService: UsersService): Initialise le composant en injectant les services nécessaires.
-2.Gestion de la soumission du formulaire  de creation d'un utilisateur:
+1.Gestion de la soumission du formulaire  de creation d'un utilisateur:
     -onSubmit(form: any): Méthode appelée lors de la soumission du formulaire.Vérifie la validité du formulaire.
     Si valide, tente de créer un nouvel utilisateur via le UsersService et gère les messages de succès ou d'erreur en fonction de la réponse du serveur.
     En cas d'erreur, affiche des messages appropriés selon le code de statut HTTP (par exemple, conflit de nom d'utilisateur ou champs manquants).
-3.Gestion ajout de nouveaux utilisateurs :
+2.Gestion ajout de nouveaux utilisateurs :
     -addUser(username: string, password: string): Méthode pour ajouter un nouvel utilisateur.
     Crée un nouvel objet utilisateur avec un rôle par défaut ('scientifique') et utilise le UsersService pour envoyer les données au serveur.
     En cas d'erreur, un message d'erreur est affiché pour informer l'utilisateur que la création n'a pas été faite.

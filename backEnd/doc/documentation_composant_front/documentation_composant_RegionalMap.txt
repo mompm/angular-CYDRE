@@ -1,0 +1,39 @@
+Le composant 'RegionalMap' gère l'affichage d'une carte régionale utilisant les bibliothèques Plotly et Leaflet. 
+Il permet à l'utilisateur d'interagir avec des stations hydrologiques et d'afficher des données associées sur la carte.
+
+Importations :
+Angular Core (Component, Input, Output, EventEmitter, SimpleChanges, OnDestroy) : Gestion des composants et des événements.
+DataService : Service pour la récupération des données.
+JsonService : Service pour la gestion des requêtes JSON.
+Plotly.js : Bibliothèque pour l'affichage de graphiques et de cartes interactives.
+Leaflet : Bibliothèque pour la création de cartes interactives.
+Données modélisées : dataGDFPiezometry, dataGDFWatersheds, dataGDFStation pour la gestion des données de stations et de piézomètres.
+Variables :
+Gestion de l'affichage de la carte :
+
+resizeListener: Fonction de gestion pour l'événement de redimensionnement de la fenêtre.
+MapExecutee: Booléen indiquant si la carte a été initialisée ou non.
+Données :
+
+DataGDFWatersheds: Tableau contenant les données des bassins versants.
+DataGDFPiezometry: Tableau contenant les données des piézomètres.
+DataGDFStation: Tableau contenant les données des stations.
+Options de fonds de carte :
+
+RegionalmapsLayers: Contient différents types de fonds de carte disponibles dans Leaflet (ex: BaseMap, SatelliteMap).
+Méthodes :
+Cycle de vie Angular :
+
+ngOnInit(): Méthode d'initialisation, configure un écouteur pour le redimensionnement de la fenêtre et appelle les méthodes pour récupérer les données des bassins versants, des stations et des piézomètres.
+ngOnDestroy(): Méthode de destruction, supprime l'écouteur de redimensionnement pour éviter les fuites de mémoire.
+ngOnChanges(changes: SimpleChanges): Gère les changements de la propriété stationSelectionChange pour réinitialiser l'indicateur de carte.
+ngDoCheck(): Vérifie à chaque cycle de détection de changements si toutes les données sont disponibles pour initialiser la carte.
+Initialisation des données :
+
+initGDFStations(): Récupère les données des stations via le service JsonService.
+initGDFWatersheds(): Récupère les données des bassins versants via le service JsonService.
+initGDFPiezometry(): Récupère les données des piézomètres via le service JsonService.
+Affichage de la carte :
+
+RegionalMap_Plotly(stationID: string): Affiche la carte régionale avec Plotly, en mettant en surbrillance la station sélectionnée. Elle construit les polygones pour chaque bassin versant et les stations, puis gère les clics sur les marqueurs pour émettre des événements au parent.
+(La méthode pour afficher avec Leaflet est commentée, mais elle pourrait être implémentée de la même manière que ci-dessous en utilisant la bibliothèque Leaflet.)

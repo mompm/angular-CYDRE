@@ -1,4 +1,5 @@
-Le composant 'simulateurCydre' gère l'interface utilisateur tel que la sélection de la station, les paramètres du simulateur et l'initialisation d'une simulation (barre de chargement)
+Le composant 'simulateurCydre' gère l'interface utilisateur tel que la sélection de la station, les paramètres du simulateur et 
+l'initialisation d'une simulation (barre de chargement)
 
 Importations :
 -Angular Core (Component, OnInit, OnDestroy , ViewChild, ElementRef, ChangeDetectorRef) : gestion des composants

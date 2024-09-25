@@ -1,0 +1,33 @@
+Le composant 'hydrographGlobal' est responsable de l'affichage des graphiques de débits mesurés pour une station hydrologique sélectionnée depuis le debut.
+Il utilise la bibliothèque Plotly.js pour la visualisation des données et gère les mises à jour dynamiques basées sur les changements de sélection d'une station.
+Et n'est pas utiliser pour le moment 
+
+Importations
+    -Angular Core (Component, Input, SimpleChanges, OnDestroy): Gestion des composants, des entrées et du cycle de vie.
+    -DataService: Service pour gérer les données.
+    -JsonService: Service pour récupérer des données en format JSON.
+    -Plotly.js: Bibliothèque pour générer des graphiques interactifs.
+    -dataDischarge: Modèle pour les données de débits.
+
+Services utilisés :
+    -dataService : Service pour gérer les données.
+    -jsonService  : Service pour obtenir les données en format JSON.
+
+Variables
+1.Paramètres de configuration:
+    -stationSelectionChange: Représente le changement de sélection de la station, en tant que paramètre d'entrée.
+    -on: Booléen pour activer/désactiver des fonctionnalités, comme l'échelle logarithmique.
+    -Datadischarge: Tableau stockant les données de débit hydrologique pour la station sélectionnée.
+2.Gestion des événements:
+    -resizeListener: Fonction de rappel pour gérer les changements de taille de la fenêtre.
+
+Méthodes
+1.Cycle de vie Angular:
+    -ngOnChanges(changes: SimpleChanges): Méthode déclenchée lorsqu'un changement est détecté dans les paramètres d'entrée. Si la sélection de la station change, les débits pour la station sélectionnée sont initialisés via initStationDischarge.
+    -ngOnDestroy(): Nettoyage des écouteurs d'événements lors de la destruction du composant.
+2.Gestion des données:
+    -initStationDischarge(stationID: string): Récupère les données de débit pour une station donnée via jsonService et appelle la méthode hydrograph pour afficher les données.
+    -onToggleChange(): Méthode appelée lors d'un changement d'état du mat-slide-toggle dans le HTML, permettant de rafraîchir le graphique.
+3.Visualisation des données:
+    -hydrograph(): Génère et affiche l'hydrographe en utilisant Plotly.js. Prépare les données pour Plotly en transformant le tableau Datadischarge en un format compatible.
+    Configure le graphique (type, couleurs, étiquettes des axes). Affiche le graphique avec Plotly et ajoute une annotation pour indiquer la station et la sélection actuelle.
