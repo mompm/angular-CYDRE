@@ -1,0 +1,77 @@
+Le service AuthService est responsable de la gestion de l'authentification d'un utilisateur dans une application Angular. Il gère les opérations de connexion, de déconnexion, ainsi que la gestion des rôles et de l'état de session utilisateur.
+
+Importations:
+	-HttpClient : Permet de faire des appels HTTP vers l'API d'authentification.
+	-Injectable : Permet de déclarer que ce service peut être injecté dans d'autres classes via Angular's Dependency Injection.
+	-Router : Permet de rediriger l'utilisateur vers différentes routes de l'application.
+	-BehaviorSubject : Utilisé pour gérer et observer l'état de connexion de l'utilisateur.
+	-Observable : Représente une séquence de valeurs asynchrones. Les opérations de connexion et de déconnexion renvoient des observables.
+	-tap : Opérateur RxJS qui permet d'effectuer des actions secondaires à chaque émission d'un Observable sans modifier sa valeur.
+
+Services utilisés:
+	-HttpClient : Service pour effectuer les requêtes HTTP vers l'API d'authentification.
+	-Router : Service pour rediriger l'utilisateur vers différentes routes de l'application (par exemple, vers la page de connexion après une déconnexion).
+
+Variables :
+	-authUrl (string) : L'URL de base de l'API d'authentification. Par défaut, elle est définie sur http://localhost:5000.
+	-loggedIn (BehaviorSubject<boolean>) : Sujet comportemental utilisé pour suivre l'état de connexion de l'utilisateur. Initialisé à false, il est mis à jour lorsqu'un utilisateur se 	connecte ou se déconnecte.
+
+Methodes :
+
+-login(username: string, password: string): Observable<any> : Cette méthode est utilisée pour initier une connexion.	Envoie une requête POST à l'API d'authentification avec les identifiants fournis.
+Si la connexion est réussie, l'utilisateur est considéré comme connecté, et les informations de session (nom d'utilisateur, rôle, ID) sont stockées dans sessionStorage.
+L'état de connexion est mis à jour à true.
+	-Paramètres:
+		-username(string) : Le nom d'utilisateur de la personne qui souhaite se connecter.
+		-password(string) : Le mot de passe de la personne.
+	-Retourne:
+	Un Observable contenant la réponse du serveur après la tentative de connexion.
+
+
+-logout(): Observable<any> : Cette méthode permet de déconnecter un utilisateur.
+Envoie une requête POST à l'API pour déconnecter l'utilisateur.
+Après une déconnexion réussie, les informations de session sont supprimées du sessionStorage, et l'utilisateur est redirigé vers la page de connexion (/login).
+L'état de connexion est mis à jour à false.
+	-Retourne:
+	Un Observable contenant la réponse du serveur après la déconnexion.
+
+
+-clearClientSession(): void : Méthode privée qui efface les informations de session stockées localement lorsque l'utilisateur se déconnecte.
+Supprime les informations stockées dans sessionStorage telles que le nom d'utilisateur, le rôle, l'ID utilisateur et l'ID de simulation précédent.
+Met à jour l'état de connexion à false et redirige l'utilisateur vers la page de connexion.
+
+-get isLoggedIn(): Observable<boolean>
+Renvoie un Observable qui émet l'état de connexion de l'utilisateur.
+	-Retourne:
+	Un Observable de type boolean qui indique si l'utilisateur est connecté (true) ou non (false).
+
+get username(): string | null
+Retourne le nom d'utilisateur actuellement stocké dans sessionStorage.
+	-Retourne:
+	Le nom d'utilisateur sous forme de string, ou null s'il n'est pas connecté.
+
+get role(): string | null
+Retourne le rôle de l'utilisateur actuellement stocké dans sessionStorage.
+	-Retourne:
+	Le rôle de l'utilisateur sous forme de string, ou null s'il n'est pas connecté.
+
+get isDev(): boolean
+Vérifie si l'utilisateur possède le rôle de "développeur" (dev).
+	-Retourne:
+	true si l'utilisateur est un développeur, sinon false.
+
+get isScientific(): boolean
+Vérifie si l'utilisateur possède le rôle de "scientifique" (scientifique).
+	-Retourne:
+	true si l'utilisateur est un scientifique, sinon false.
+
+get isScientificOrDev(): boolean
+Vérifie si l'utilisateur est soit un scientifique, soit un développeur.
+	-Retourne:
+	true si l'utilisateur est un scientifique ou un développeur, sinon false.
+
+checkLoginStatus(): void
+Méthode privée utilisée pour vérifier l'état de connexion lors de l'initialisation du service.
+Vérifie la présence d'un UserID dans le sessionStorage.
+Si un UserID est présent, cela signifie que l'utilisateur est connecté, et l'état de connexion est mis à jour à true.
+Sinon, l'état de connexion reste à false.

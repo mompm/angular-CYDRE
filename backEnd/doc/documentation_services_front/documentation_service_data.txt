@@ -1,0 +1,34 @@
+Le Data est un service Angular utilisé pour gérer la conversion entre des données au format XML et JSON. Il permet de récupérer des fichiers XML via des appels de service, de les parser en objets JSON, et inversement de convertir des objets JSON en chaînes XML. Il s'appuie sur les services Xml et Json pour la gestion des données.
+
+importation
+	-Injectable (Angular) : Ce décorateur fait de Data un service injectable dans d'autres composants ou services au sein de l'application.
+	-Parameter, ParametersGroup : Modèles de données pour la gestion des paramètres extraits du fichier XML.
+	-Parser, Builder (xml2js) : Bibliothèque utilisée pour convertir du XML en JSON et vice-versa.
+	-Xml : Service pour faire des requêtes et récupérer des fichiers XML.
+	-Json : Service pour potentiellement gérer les conversions JSON.
+
+Services utilisés :
+	-xml : service pour récupérer des données XML.
+	-json: services pour des opérations sur les données JSON (non utilisée explicitement dans le service).
+
+Variables :
+	-xmlData (string) : Stocke la chaîne XML chargée depuis une source externe (fichier ou API).
+	-xmlPath (string) : Définit le chemin du fichier XML à récupérer. Il s'agit d'un chemin relatif ou d'une URL qui sera utilisée pour demander les données XML via XmlService.
+
+Méthodes
+-requestXml() : Cette méthode permet de faire une requête asynchrone pour récupérer des données XML depuis le chemin spécifié par xmlPath. Elle appelle la méthode getXml() du 	XmlService, stocke les données reçues dans xmlData, et les affiche dans la console. En cas d'erreur lors de la requête, celle-ci est capturée et affichée.
+
+-parseXml(xmlString: string) : Cette méthode parse une chaîne XML en un objet JSON.La méthode utilise le parser de xml2js avec l'option mergeAttrs qui fusionne les attributs XML 	dans les objets JSON. Si une erreur survient lors du parsing, la promesse est rejetée.
+	-Paramètre : xmlString - La chaîne XML à parser.
+	-Retour : Renvoie une promesse qui, une fois résolue, contient l'objet JSON résultant du parsing.
+ 
+-getJSONData() : Cette méthode renvoie un objet ParametersGroup en convertissant les données XML stockées en JSON. Elle s'appuie sur parseXml() pour transformer les données XML de xmlData en JSON et renvoie un groupe de paramètres (type ParametersGroup).
+
+	-Retour : Une promesse qui contient un objet de type ParametersGroup extrait des données JSON.
+
+-jsonToXml(json: any) : Cette méthode permet de convertir un objet JSON en chaîne XML. Utilise le Builder de xml2js pour créer un XML à partir du JSON. Quelques options sont définies comme :
+attrkey: "$" pour identifier les attributs dans le JSON.
+rootName: "ParametersGroup" pour définir le nom de la balise racine dans le XML.
+headless: true pour ne pas inclure la balise racine dans le XML généré.
+	-Paramètre : json - L'objet JSON à convertir en XML.
+	-Retour : Renvoie une chaîne XML résultante de la conversion.
