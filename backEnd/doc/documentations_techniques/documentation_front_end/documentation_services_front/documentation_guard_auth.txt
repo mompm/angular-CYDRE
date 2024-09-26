@@ -1,0 +1,59 @@
+Auth est un guard dans Angular, utilisé pour protéger certaines routes de l'application en fonction de l'authentification et des rôles de l'utilisateur. Un guard implémente l'interface CanActivate, qui permet de déterminer si une route peut être activée ou non. Si l'utilisateur ne répond pas aux critères définis (par exemple, s'il n'est pas connecté ou n'a pas le rôle requis), il sera redirigé vers une autre page (comme la page de connexion).
+Le guard Auth se base sur un service d'authentification (Auth) pour évaluer l'état de l'utilisateur (connecté ou non) et ses rôles (développeur, scientifique, etc.).
+
+Le guard utilise AuthService pour vérifier deux aspects :
+- Authentification : Est-ce que l'utilisateur est connecté ?
+- Rôles : L'utilisateur a-t-il le rôle requis pour accéder à la route (développeur, scientifique, etc.) ?
+Le guard émettra true seulement si l'utilisateur est connecté et que son rôle correspond à celui requis pour la route.
+
+Importation:
+	- @Injectable : Utilisé pour indiquer qu'Angular peut injecter cette classe dans d'autres parties de l'application.
+	- CanActivate : Interface permettant à Auth de contrôler l'accès aux routes. La méthode canActivate doit être implémentée pour évaluer si l'utilisateur peut accéder à une route 	donnée.
+	- ActivatedRouteSnapshot : Contient des informations sur la route que l'utilisateur tente d'accéder, telles que les paramètres ou les métadonnées associées à cette route.
+	- Router : Permet de rediriger l'utilisateur vers une autre route (généralement la page de connexion) en cas d'accès refusé.
+	- Auth : Service qui fournit l'état d'authentification de l'utilisateur et ses rôles. Il est injecté dans le guard pour vérifier si l'utilisateur est connecté et s'il a les 	permissions nécessaires.
+	- Observable : Utilisé pour gérer des flux de données asynchrones. Ici, l'état de connexion de l'utilisateur est géré sous forme d'observable, ce qui permet de vérifier 	dynamiquement son statut.
+	- Opérateurs map et tap : Utilisés pour transformer les données des observables et effectuer des actions secondaires comme la redirection en cas d'accès refusé.
+
+
+Méthode canActivate
+1.Paramètre 
+    -ActivatedRouteSnapshot : Le paramètre route fournit un instantané des informations sur la route que l'utilisateur tente d'accéder. Parmi ces informations, l'attribut data peut contenir un élément clé : checkType. Ce dernier est utilisé pour déterminer la logique de vérification de l'accès en fonction du rôle attendu pour la route (par exemple, développeur, scientifique).
+
+2.Retour 
+    -Observable<boolean> : La méthode canActivate retourne un Observable<boolean>, qui émet une valeur :
+	    - true : Si l'utilisateur est autorisé à accéder à la route.
+	    - false : Si l'utilisateur n'est pas autorisé, déclenchant une redirection vers la page de connexion.
+
+3.Logique de vérification
+3.1. Récupération du checkType :
+   - Le checkType est extrait des données de la route. Ce paramètre détermine les conditions spécifiques d'accès à la route.
+
+3.2. Vérification des conditions d'accès :
+   - dev : L'utilisateur doit être connecté et avoir le rôle "développeur".
+   - log : L'utilisateur doit simplement être connecté.
+   - sci : L'utilisateur doit être connecté et avoir soit le rôle "scientifique" soit "développeur".
+   - Cas par défaut : Si aucun checkType valide n'est fourni, l'accès est refusé.
+
+3.3. Transformation des données avec map :
+   - La méthode utilise l'opérateur map pour évaluer l'état de connexion de l'utilisateur (isLoggedIn) et appliquer la logique de rôle en fonction du checkType.
+
+3.4. Redirection avec tap :
+   - L'opérateur tap est utilisé pour gérer l'effet secondaire de la redirection. Si l'accès est refusé (false), l'utilisateur est redirigé vers la page /login.
+
+Scénarios d'utilisation
+1. Route réservée aux développeurs
+   - checkType est défini à "dev".
+   - L'utilisateur doit être à la fois connecté et avoir le rôle de développeur.
+
+2. Route accessible à tout utilisateur connecté
+   - checkType est défini à "log".
+   - L'utilisateur doit simplement être connecté.
+
+3. Route accessible aux scientifiques et développeurs
+   - checkType est défini à "sci".
+   - L'utilisateur doit être connecté et avoir le rôle de scientifique ou développeur.
+
+4. Refus d'accès et redirection
+   - Si l'utilisateur ne satisfait pas aux conditions, il sera redirigé vers la page de connexion.
+

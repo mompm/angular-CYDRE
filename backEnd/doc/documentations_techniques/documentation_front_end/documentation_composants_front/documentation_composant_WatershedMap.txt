@@ -1,0 +1,45 @@
+Le composant WatershedMap gère l'affichage de la carte des bassins versants en utilisant la bibliothèque Leaflet, intégrant des données de stations hydrologiques, de piézométrie et de bassins versants. Il permet de visualiser ces données sur une carte interactive.
+
+Importations
+- Angular Core (Component, Input, SimpleChanges, OnDestroy) : Gestion des composants et des cycles de vie Angular.
+- Data : Service pour la récupération des données nécessaires à l'affichage.
+- Json : Service pour la gestion des données JSON.
+- Leaflet : Bibliothèque pour la gestion des cartes interactives.
+- Modèles de données (dataGDFPiezometry, dataGDFWatersheds, dataGDFStation) : Modèles représentant les données des stations, piézométrie et bassins versants.
+
+Variables
+
+1. Gestion de la carte :
+   - resizeListener : Gestionnaire d'événements pour le redimensionnement de la carte.
+   - WatershedMapLeaflet : Instance de la carte Leaflet.
+   - MapExecutee : Indicateur si la carte a été initialisée.
+
+2. Données :
+   - DataGDFWatersheds : Données des bassins versants.
+   - DataGDFPiezometry : Données des piézomètres.
+   - DataGDFStation : Données des stations.
+
+3. Couche de carte :
+   - WaterShedsMapLayers : Objet contenant différents types de fonds de carte disponibles dans Leaflet (ex. :
+
+ carte de base, carte satellite, etc.).
+
+Méthodes
+
+1. Cycle de vie Angular :
+   - ngOnInit() : Méthode appelée lors de l'initialisation du composant, ajoutant un écouteur pour les changements de taille de fenêtre et récupérant les données nécessaires.
+   - ngOnDestroy() : Méthode appelée lors de la destruction du composant, supprimant l'écouteur d'événements pour éviter les fuites de mémoire.
+   - ngOnChanges(changes: SimpleChanges) : Méthode pour gérer les changements de propriétés @Input, notamment la sélection de station.
+   - ngDoCheck() : Méthode qui vérifie si toutes les données nécessaires sont disponibles avant d'afficher la carte.
+
+2. Initialisation des données :
+   - initGDFStations() : Récupère les données des stations depuis le service JSON.
+   - initGDFWatersheds() : Récupère les données des bassins versants.
+   - initGDFPiezometry() : Récupère les données des piézomètres.
+
+3. Gestion de la carte :
+   - WaterShedMap_Leaflet(stationID: string) : Fonction pour créer et mettre à jour la carte du bassin versant avec Leaflet. Elle gère la création de la carte, le placement des marqueurs pour les stations et le polygone pour le bassin versant.
+   - WaterShedMap_Plotly(stationID: string) : Fonction pour créer et mettre à jour la carte du bassin versant avec Plotly (non utilisée dans cette version).
+
+4. Boîte de dialogue :
+   - Popup pour stations : Affiche des informations contextuelles sur les stations lorsque l'utilisateur clique sur les marqueurs de la carte.

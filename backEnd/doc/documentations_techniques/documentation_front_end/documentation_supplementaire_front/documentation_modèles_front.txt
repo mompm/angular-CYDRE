@@ -1,0 +1,180 @@
+Cette documentation décrit les classes et interfaces utilisées dans l'application Angular pour gérer les données relatives aux stations hydrologiques, aux précipitations, à la température, et à d'autres paramètres.
+
+ 1. dataDepth
+Représente les données de profondeur.
+
+ Propriétés
+- name: string - Nom de la mesure.
+- id: string - Identifiant unique de la mesure.
+- t: string - Temps (timestamp) de la mesure.
+- H: string - Profondeur de l'eau.
+- d: string - Autre paramètre associé.
+
+ Constructeur
+constructor(name: string, id: string, t: string, H: string, d: string)
+
+- Paramètres :
+  - name : Nom de la mesure.
+  - id : Identifiant unique de la mesure.
+  - t : Temps (timestamp) de la mesure.
+  - H : Profondeur de l'eau.
+  - d : Autre paramètre associé.
+
+ 2. dataDischarge
+Représente les données de débit.
+
+ Propriétés
+- name: string - Nom de la mesure.
+- id: string - Identifiant unique de la mesure.
+- t: string - Temps (timestamp) de la mesure.
+- Q: string - Débit mesuré.
+
+ Constructeur
+constructor(name: string, id: string, t: string, Q: string)
+
+- Paramètres :
+  - name : Nom de la mesure.
+  - id : Identifiant unique de la mesure.
+  - t : Temps (timestamp) de la mesure.
+  - Q : Débit mesuré.
+
+ 3. dataGDFPiezometry
+Représente les données de piézométrie.
+
+ Propriétés
+- identifiant_BSS: any - Identifiant de la station de mesure.
+- x_wgs84: any - Coordonnée X en WGS84.
+- y_wgs84: any - Coordonnée Y en WGS84.
+- oldBSS: any - Ancien identifiant de station.
+- Nom: any - Nom de la station.
+- geometry: any - Géométrie associée à la station.
+
+ Constructeur
+constructor(identifiant_BSS: any, x_wgs84: any, y_wgs84: any, oldBSS: any, Nom: any, geometry: any)
+
+- Paramètres :
+  - identifiant_BSS : Identifiant de la station.
+  - x_wgs84 : Coordonnée X en WGS84.
+  - y_wgs84 : Coordonnée Y en WGS84.
+  - oldBSS : Ancien identifiant de station.
+  - Nom : Nom de la station.
+  - geometry : Géométrie associée à la station.
+
+ 4. dataGDFStation
+Représente les données d'une station GDF.
+
+ Propriétés
+- index: any - Index de la station.
+- name: any - Nom de la station.
+- station_name: any - Nom alternatif de la station.
+- hydro_link: any - Lien vers des données hydrologiques.
+- BSS_name: any - Nom de la station de base.
+- BSS_ID: any - Identifiant de la station de base.
+- x_outlet: any - Coordonnée X de la sortie.
+- y_outlet: any - Coordonnée Y de la sortie.
+- area: any - Zone couverte par la station.
+- geometry: any - Géométrie de la station.
+- typology: any - Typologie de la station.
+
+ Constructeur
+constructor(index: any, name: any, station_name: any, hydro_link: any, BSS_name: any, BSS_ID: any, x_outlet: any, y_outlet: any, area: any, geometry: any, typology: any)
+
+- Paramètres :
+  - index : Index de la station.
+  - name : Nom de la station.
+  - station_name : Nom alternatif de la station.
+  - hydro_link : Lien vers des données hydrologiques.
+  - BSS_name : Nom de la station de base.
+  - BSS_ID : Identifiant de la station de base.
+  - x_outlet : Coordonnée X de la sortie.
+  - y_outlet : Coordonnée Y de la sortie.
+  - area : Zone couverte par la station.
+  - geometry : Géométrie de la station.
+  - typology : Typologie de la station.
+
+ 5. dataGDFWatersheds
+Représente les données de bassins versants.
+
+ Propriétés
+- index: string - Index du bassin.
+- name: string - Nom du bassin.
+- geometry_area: number - Aire géométrique du bassin.
+- hydro_area: number - Aire hydraulique du bassin.
+- K1: any - Paramètre K1 associé.
+- geometry: any - Géométrie du bassin.
+- min_lon: number - Longitude minimale.
+- min_lat: number - Latitude minimale.
+- max_lon: number - Longitude maximale.
+- max_lat: number - Latitude maximale.
+
+ Constructeur
+constructor(index: string, name: string, geometry_area: number, hydro_area: number, K1: any, geometry: any, min_lon: number, min_lat: number, max_lon: number, max_lat: number)
+
+- Paramètres :
+  - index : Index du bassin.
+  - name : Nom du bassin.
+  - geometry_area : Aire géométrique du bassin.
+  - hydro_area : Aire hydraulique du bassin.
+  - K1 : Paramètre K1 associé.
+  - geometry : Géométrie du bassin.
+  - min_lon : Longitude minimale.
+  - min_lat : Latitude minimale.
+  - max_lon : Longitude maximale.
+  - max_lat : Latitude maximale.
+
+ 6. dataPrecipitation
+Représente les données de précipitation.
+
+ Propriétés
+- name: string - Nom de la mesure.
+- id: string - Identifiant unique de la mesure.
+- t: string - Temps (timestamp) de la mesure.
+- Q: string - Quantité de précipitation.
+
+ Constructeur
+constructor(name: string, id: string, t: string, Q: string)
+
+- Paramètres :
+  - name : Nom de la mesure.
+  - id : Identifiant unique de la mesure.
+  - t : Temps (timestamp) de la mesure.
+  - Q : Quantité de précipitation.
+
+ 7. dataTemperature
+Représente les données de température.
+
+ Propriétés
+- name: string - Nom de la mesure.
+- id: string - Identifiant unique de la mesure.
+- t: string - Temps (timestamp) de la mesure.
+- Q: string - Valeur de la température.
+
+ Constructeur
+constructor(name: string, id: string, t: string, Q: string)
+
+- Paramètres :
+  - name : Nom de la mesure.
+  - id : Identifiant unique de la mesure.
+  - t : Temps (timestamp) de la mesure.
+  - Q : Valeur de la température.
+
+ 8.ParametersGroup
+
+ 1. ParametersGroup
+Représente un groupe de paramètres.
+
+ Propriétés
+- name: Array<string> - Noms des paramètres dans le groupe.
+- Parameter?: Array<Parameter> - Liste des paramètres associés (optionnel).
+- ParametersGroup?: Array<ParametersGroup> - Liste de groupes de paramètres imbriqués (optionnel).
+
+ 2. Parameter
+Représente un paramètre individuel.
+
+ Propriétés
+- name: Array<string> - Noms du paramètre.
+- description: Array<string> - Descriptions du paramètre.
+- possible_values: Array<string> - Valeurs possibles du paramètre.
+- type: Array<string> - Types de données associés.
+- value: Array<string> - Valeurs du paramètre.
+- default_value: Array<string> - Valeur par défaut du paramètre.

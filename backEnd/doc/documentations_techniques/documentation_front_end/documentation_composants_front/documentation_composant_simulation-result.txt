@@ -1,0 +1,124 @@
+Le composant 'SimulationResults' gère l'affichage et la visualisation des résultats de simulation, y compris la gestion des indicateurs, 
+l'affichage des tableaux et la génération de graphiques.
+
+Importations :
+	-Angular Core (Component, Input, OnInit, OnDestroy, ViewChild, ChangeDetectorRef) : gestion des composants Angular.
+	-Angular Material (MatDialog, MatButtonModule, MatTooltipModule) : composants pour les dialogues, boutons et info-bulles.
+	-CommonModule : importation du module commun d'Angular.
+	-MatPaginator, MatSort, MatTableDataSource : gestion de la pagination, du tri et des sources de données pour les tableaux.
+	-JsonService : Gère les requêtes HTTP pour récupérer et envoyer les résultats des simulations.
+	-SharedWatershedService : Service partagé pour gérer les informations relatives aux stations sélectionnées.
+	-DataService : Responsable du traitement des données pour les visualisations.
+	-AuthService : Vérifie si l'utilisateur est connecté et gère les permissions d'accès.
+	-Plotly : Utilisé pour créer des graphiques interactifs basés sur les résultats des simulations.
+	-PapaParse : Analyse les fichiers CSV pour extraire les données.
+
+Variables :
+1. Propriétés d'entrée:
+	-@Input() simulation_id (string | undefined | null): ID de la simulation à afficher.
+	-@Input() showResults(boolean):Indique si les résultats doivent être affichés.
+	-@Input() watershedID (string | null | undefined) :ID du bassin versant associé.
+	-@Input() showAdditionialMatrix (boolean) : Indique si des matrices supplémentaires doivent être affichées.
+
+2. Références de tableau de corélation:
+	-@ViewChild(MatPaginator) :Utilisé pour la pagination des tableaux.
+	-@ViewChild(MatSort):Utilisé pour le tri des tableaux.
+	-displayedColumns(string[]) : Colonnes affichées dans le tableau des coefficients.
+	-dataSource (MatTableDataSource<any> | undefined) : Source des données pour le tableau des coefficients.
+3.Écouteur de redimensionnement:
+	-private resizeListener: () => void : Fonction pour gérer les événements de redimensionnement de la fenêtre.
+
+4.Résultats de simulation:
+	-@Input() results: any = { ... }: Objet contenant les résultats de la simulation, y compris les indicateurs et les matrices de corrélation.
+
+5.Variables liées aux résultats:
+	5.1.Indicateurs :
+		-tooltipTextsEstimationValue (string[]): Texte des infobulles pour les valeurs d'estimation des indicateurs.
+		-indicators (Array<Indicator>): Tableau contenant les indicateurs associés aux résultats de la simulation.
+		-IDIndicators (number ): Compteur pour attribuer des IDs uniques aux indicateurs.
+		-colorScheme: Color = { ... } : Définition du schéma de couleurs pour les graphiques.
+
+	5.2.Matrice de corrélation:
+		-selectedMatrix (string): Matrice sélectionnée pour l'affichage.
+		-matricecolumn (boolean): Indique si la matrice doit être affichée en colonnes.
+		-scenariosMatrixFontSize(number): Taille de police pour les matrices de scénarios.
+		-similarScenarios (number):Nombre de scénarios similaires trouvés.
+		-scenarios (any): Liste des scénarios disponibles.
+		-displayedColumnsScenarios (string[]): Colonnes affichées pour les scénarios dans la matrice.
+		-allColumns (string[]) : Liste de toutes les colonnes disponibles pour les scénarios.
+		-scenariosHeatMap (any) :Données pour la matrice des scénarios.
+		-colorScale = [...] :Définition des couleurs pour les valeurs de la heatmap.
+
+	5.3.Graphique du modèle de prévision:
+		-XaxisObservations (Date[]) :Données d'observation pour l'axe X (dates).
+		-XaxisPredictions (Date[]) :Données de prédiction pour l'axe X (dates).
+		-on (boolean) :État du graphique (activer/désactiver l'affichage log/linéaire).
+		-type(any) : Type d'échelle pour l'axe Y (logarithmique ou linéaire).
+		-maxPredictedValue (number[]): Valeurs maximales prédites (pour l'axe Y).
+		-yMin : Valeur minimale de l'axe Y.
+		-yMax : Valeur maximale de l'axe Y.
+		-range(number[]) : Intervalle de l'axe Y (min et max).
+		-simulationStartDate (Date | undefined) :Date de début de la simulation pour l'axe X.
+		-simulationEndDate (Date | undefined) :Date de fin de la simulation pour l'axe X.
+		-endDate (Date | undefined):Date de fin des données pour l'axe X.
+		-startDate (Date) :Date de début des données pour l'axe X.
+		-traces (Plotly.Data[]):Traces du graphique (données de série à tracer).
+		-layout (Partial<Plotly.Layout> | undefined) : Mise en page du graphique (layout personnalisé).
+		-stations (any[]) :Liste des stations hydrologiques.
+		-stationName (string | null | undefined) : Nom de la station sélectionnée.
+
+Méthodes :
+1.Cycle de vie Angular :
+	-ngOnInit(): Méthode d'initialisation, chargement des données et création des graphiques.
+	-ngOnDestroy(): Nettoyage, retrait des écouteurs d'événements.
+	-ngAfterViewInit():Appelée après que la vue du composant a été initialisée. Souvent utilisée pour interagir avec des éléments de la vue.
+	-ngOnChanges(changes: SimpleChanges):  Méthode appelée lors de changements des propriétés d'entrée du composant. Utilisée pour gérer les mises à jour basées sur des changements de 	données.
+
+2.Gestion des données :
+	-initGDFStations(): Récupération et initialisation des données des stations hydrologiques.
+
+3.Mise à jour des résultats et composant :
+	-updateResults(): Synchronise les indicateurs modifiés avec le backend.
+	-updateComponentsWithResults(results: any): Met à jour les composants avec les nouvelles données.
+
+4.Gestion des indicateurs :
+	-fillIndicators(): Remplit le tableau des indicateurs avec les données de la simulation.
+	-addIndicator(): Ajoute un nouvel indicateur à la liste.
+	-removeIndicator(index: number, type: string): Supprime un indicateur existant et met à jour le backend.
+	-onIndicatorTextChange(text: string, index: number): Met à jour le type d'un indicateur.
+	-onIndicatorValueChange(value: number, index: number): Met à jour la valeur d'un indicateur.
+	-updateColorStyle(color: string, index: number): Change la couleur d'un indicateur.
+	-updateIndicatorShapes(): Met à jour les représentations graphiques des indicateurs.
+
+5.Gestion graphique :
+	-onToggleChange(): Gère le changement d'état d'un interrupteur pour mettre à jour les graphiques.
+	-generateDateSeries(startDate: string, endDate: string): Date[]: Génère une série de dates entre deux dates spécifiées.
+	-updateGraphData(): Organise et met à jour les données du graphique.
+	-updateYMinMax(): Calcule les valeurs minimales et maximales pour l'axe Y.
+	-updateYAxis(): Met à jour l'axe Y du graphique en fonction des valeurs calculées.
+	-updateLayout(): Met en place le layout du graphique, incluant légendes et axes.
+	-showPlot(): Affiche le graphique avec Plotly.
+	-downloadFile(): Télécharge un fichier CSV contenant des données graphiques filtrées.
+
+6.Gestion les Matrices de Corrélation:
+	-matriceRecharge(): Cette méthode génère et affiche une matrice de corrélation des recharges pour plusieurs stations, utilisant une heatmap.
+	-matriceSpecificDischarge(): Similaire à matriceRecharge, mais pour les discharges spécifiques.
+	-createScenariosHeatmap(): Crée une heatmap à partir des données de scénarios, en excluant les éléments nuls ou égaux à zéro.
+	-createMatrixStationLabel(stations: any[]): Crée des étiquettes pour les stations à partir des identifiants fournis.
+	-calculateMatrixWidth(id: string, labels: any[], fontsize: number): Calcule la largeur d'une matrice en fonction de l'ID, des étiquettes et de la taille de la police.
+	-renderMatrix(): Gère l'affichage des matrices en fonction des choix sélectionnés.
+
+7.Simplifier le Code :
+	-keys(obj: any): Retourne les clés d'un objet JSON.
+	-max(v1: number, v2: number): number : Renvoie la valeur maximale parmi deux nombres.
+	-min(v1: number, v2: number): number : Renvoie la valeur minimale parmi deux nombres.
+	-getVolumeAsInt(volume: number): number : Convertit un volume en entier, arrondi à l'entier inférieur.
+	-applyFilter(event: Event) : Applique un filtre sur la source de données en fonction d'un événement.
+
+8.Gestion boite de dialog :
+	-openDialog(): Ouvre un dialogue pour afficher les résultats de la simulation.
+	-openDialogViz(event: MouseEvent): Ouvre un dialogue de visualisation en fonction d'un événement de clic.
+
+Boite de dialog :
+	-PopupDialogViz : Permet d'afficher des visualisations basées sur les interactions utilisateur.
+	-Dialogsimulationresults :Permet d'afficher les résultats de la simulation, avec une méthode pour fermer le dialogue.

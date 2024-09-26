@@ -1,0 +1,49 @@
+Le composant simulateurCydre gère l'interface utilisateur pour la sélection de la station, les paramètres du simulateur et l'initialisation d'une simulation (barre de chargement).
+
+Importations
+- Angular Core (Component, OnInit, OnDestroy, ViewChild, ElementRef, ChangeDetectorRef) : Gestion des composants.
+- Angular Material (Button, Tooltip, etc.) : Gestion des composants matériels.
+- ngx-slider : Gestion des sliders.
+- HttpClient : Gestion des requêtes HTTP.
+- RxJS : Gestion des flux asynchrones via des Observables.
+- Json : Gère les requêtes HTTP pour récupérer et envoyer les résultats des simulations.
+- SharedWatershed : Service partagé pour gérer les informations relatives aux stations sélectionnées.
+- Data : Service responsable du traitement des données.
+- Auth : Vérifie si l'utilisateur est connecté et gère les permissions d'accès.
+
+Variables
+1. Gestion des données :
+   - fileInput, selectedFile : Gestion des fichiers sélectionnés via l'interface utilisateur.
+
+2. Sélection de la station :
+   - myControl : Utilisé pour gérer un champ de formulaire interactif.
+   - filteredOptions : Observable contenant les options filtrées pour la station GDF, basées sur la saisie de l'utilisateur.
+   - list_of_disabled_options : Contient les stations désactivées (identifiées par leur index).
+   - stations, selectedStation, selectedStationName, selectedStationBSS : Gèrent la station sélectionnée par l'utilisateur.
+
+3. Gestion de la simulation :
+   - showParametersPanel : Contrôle l'état (affiché/masqué) du panneau de paramètres.
+   - progressMessages, progressValue, currentProgressMessage : Suivent la progression des tâches pour l'utilisateur.
+   - sliderValue, simulationDate, parameters, simulationResults, taskId, showResults, simulation_id : Variables liées aux résultats de la simulation et à l'interface de simulation.
+
+Méthodes
+1. Cycle de vie Angular :
+   - ngOnInit() : Initialisation du composant, chargement des données de la station, vérification de l'authentification de l'utilisateur et récupération des résultats de simulations précédentes via le service JsonService.
+   - ngOnDestroy() : Gestion propre de la mémoire avec l'utilisation d'un abonnement au service d'authentification et la suppression des simulations inactives.
+
+2. Sélection de la station :
+   - initGDFStations() : Initialisation des stations GDF, filtrage dynamique des options en fonction de la saisie de l'utilisateur.
+   - clearSelection() et handleClickOutside() : Gestion des interactions de l'utilisateur avec les champs de saisie.
+   - onOptionSelected() : Gère la sélection d'une station dans la liste déroulante et récupère les résultats de simulation correspondants via une requête HTTP.
+   - _filter(value: string) : Filtre les stations GDF disponibles en fonction de l'entrée utilisateur.
+   - isOptionDisabled() : Vérifie si une option de station est désactivée.
+   - displayFn() : Formate l'affichage des options dans la liste déroulante.
+
+3. Simulations :
+   - onStartSimulation() : Démarre une nouvelle simulation en fonction des paramètres sélectionnés et envoie les données au serveur via le service Json. Gère également les cas d'erreurs et affiche les résultats.
+   - updateProgress() : Met à jour l'interface avec l'état de progression actuel.
+   - deepParseJson() : Méthode récursive pour analyser en profondeur un objet JSON complexe.
+
+Boîtes de dialogue
+- PopupDialogSimulateur et PopupDialogConditions : Affichent des fenêtres modales contenant des informations supplémentaires ou des conditions.
+- ErrorDialog : Informe l'utilisateur lorsqu'une station n'est pas implémentée.

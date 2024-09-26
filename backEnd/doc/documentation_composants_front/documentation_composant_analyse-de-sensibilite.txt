@@ -1,1 +1,0 @@
-Le composant 'analyse-de-sensibilité' affiche l'analyse de sensibilité.

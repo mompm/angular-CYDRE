@@ -1,0 +1,36 @@
+Le composant ParametersPanel gère l'interface utilisateur pour la configuration des paramètres d'une simulation en mode scientifique. Il permet à l'utilisateur de modifier les valeurs des paramètres, d'écouter les changements et de soumettre les données.
+
+Importations
+- Angular Core (Component, EventEmitter, OnInit, Input, Output) : Gestion des composants et des événements.
+- Angular Forms (AbstractControl, FormBuilder, FormControl, FormGroup) : Gestion des formulaires réactifs.
+- Parameters : Service pour la gestion des paramètres.
+
+
+
+Variables
+1. Configuration des paramètres :
+   - config: Objet JSON contenant la configuration des paramètres.
+   - formGroup: Référence au groupe de formulaires parent.
+   - form: Instance de FormGroup pour gérer les valeurs des paramètres.
+
+2. Événements :
+   - parametersChanged: Émet un événement lorsque les paramètres sont modifiés.
+
+Méthodes
+1. Cycle de vie Angular :
+   - ngOnInit(): Initialise le composant, vérifie la configuration fournie. Si aucune configuration n'est donnée, il appelle le service ParametersService pour récupérer les paramètres par défaut, construit le formulaire à partir de la configuration et écoute les changements de valeurs.
+
+2. Gestion des formulaires :
+   - buildForm(config: any): FormGroup: Crée un groupe de formulaires en fonction de la configuration JSON. Appelle récursivement cette méthode pour les groupes imbriqués.
+   - onSubmit(): Soumet le formulaire et affiche les valeurs dans la console.
+   - objectKeys(obj: any): string[]: Récupère les clés de l'objet JSON passé en argument.
+   - getFormGroup(key: string): FormGroup | null: Récupère le groupe de formulaires pour une clé donnée.
+   - getFormValues(): Émet les valeurs actuelles du formulaire via parametersChanged.
+
+3. Gestion des types de paramètres :
+   - isGroup(obj: any): boolean: Vérifie si un objet est un groupe (c'est-à-dire un objet qui n'est pas un tableau et qui ne contient pas de propriété 'type').
+   - getInputType(type: string): string: Détermine le type d'input à utiliser en fonction du type de paramètre (int, double, string).
+   - getMinValue(possibleValues: string[]): number | null: Détermine la valeur minimale pour un paramètre basé sur possible_values.
+
+4. Gestion des paramètres :
+   - saveParameters(): (Non utilisée actuellement) Méthode pour sauvegarder les paramètres via ParametersService.

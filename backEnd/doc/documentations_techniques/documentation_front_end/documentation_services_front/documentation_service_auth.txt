@@ -1,0 +1,58 @@
+Le service Auth est responsable de la gestion de l'authentification d'un utilisateur dans une application Angular. Il gère les opérations de connexion, de déconnexion, ainsi que la gestion des rôles et de l'état de session utilisateur.
+
+Importations
+- HttpClient : Permet de faire des appels HTTP vers l'API d'authentification.
+- Injectable : Permet de déclarer que ce service peut être injecté dans d'autres classes via Angular's Dependency Injection.
+- Router : Permet de rediriger l'utilisateur vers différentes routes de l'application.
+- BehaviorSubject : Utilisé pour gérer et observer l'état de connexion de l'utilisateur.
+- Observable : Représente une séquence de valeurs asynchrones, renvoyée par les opérations de connexion et de déconnexion.
+- tap : Opérateur RxJS pour effectuer des actions secondaires à chaque émission d'un Observable sans modifier sa valeur.
+
+Variables
+- authUrl (string) : L'URL de base de l'API d'authentification, par défaut http://localhost:5000.
+- loggedIn (BehaviorSubject<boolean>) : Sujet comportemental pour suivre l'état de connexion de l'utilisateur, initialisé à false.
+
+Méthodes
+- login(username: string, password: string): Observable<any>
+  - Envoie une requête POST à l'API d'authentification avec les identifiants fournis.
+  - Met à jour l'état de connexion à true si la connexion réussit.
+  - Paramètres : 
+    - username (string) : Le nom d'utilisateur.
+    - password (string) : Le mot de passe.
+  - Retourne : Un Observable contenant la réponse du serveur après la tentative de connexion.
+
+- logout(): Observable<any>
+  - Envoie une requête POST à l'API pour déconnecter l'utilisateur.
+  - Met à jour l'état de connexion à false après la déconnexion.
+  - Retourne : Un Observable contenant la réponse du serveur après la déconnexion.
+
+- clearClientSession(): void
+  - Efface les informations de session stockées localement lors de la déconnexion.
+  - Met à jour l'état de connexion à false et redirige vers la page de connexion.
+
+- get isLoggedIn(): Observable<boolean>
+  - Renvoie un Observable qui émet l'état de connexion de l'utilisateur.
+  - Retourne : Un Observable de type boolean.
+
+- get username(): string | null
+  - Retourne le nom d'utilisateur actuellement stocké dans sessionStorage.
+  - Retourne : Le nom d'utilisateur sous forme de string ou null.
+
+- get role(): string | null
+  - Retourne le rôle de l'utilisateur actuellement stocké dans sessionStorage.
+  - Retourne : Le rôle sous forme de string ou null.
+
+- get isDev(): boolean
+  - Vérifie si l'utilisateur possède le rôle de "développeur".
+  - Retourne : true si l'utilisateur est un développeur, sinon false.
+
+- get isScientific(): boolean
+  - Vérifie si l'utilisateur possède le rôle de "scientifique".
+  - Retourne : true si l'utilisateur est un scientifique, sinon false.
+
+- get isScientificOrDev(): boolean
+  - Vérifie si l'utilisateur est soit un scientifique, soit un développeur.
+  - Retourne : true si l'utilisateur est un scientifique ou un développeur, sinon false.
+
+- checkLoginStatus(): void
+  - Vérifie l'état de connexion lors de l'initialisation du service en regardant si un UserID est présent dans sessionStorage.

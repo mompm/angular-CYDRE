@@ -1,0 +1,27 @@
+Le composant Login gère l'interface utilisateur pour la connexion d'un utilisateur, y compris la saisie des identifiants, la soumission du formulaire et la gestion des messages de succès ou d'erreur.
+
+Importations :
+- Angular Core (Component, OnInit) : Gestion des composants et du cycle de vie.
+- Angular Router : Gestion de la navigation entre les différentes routes de l'application.
+- FormsModule : Gestion des formulaires réactifs d'Angular.
+- AuthService : Service responsable de l'authentification de l'utilisateur, gérant la connexion et la vérification des identifiants.
+- UsersService : Service pour la gestion des utilisateurs, incluant la création de nouveaux utilisateurs.
+
+Variables :
+1. Gestion des identifiants :
+   - username: Nom d'utilisateur saisi par l'utilisateur.
+   - password: Mot de passe saisi par l'utilisateur.
+
+2. Gestion des messages :
+   - errorMessage: Message d'erreur affiché en cas de tentative de connexion infructueuse.
+   - successMessage: Message de succès affiché en cas de connexion réussie.
+
+Méthodes :
+1. Cycle de vie Angular :
+   - ngOnInit(): Méthode appelée lors de l'initialisation du composant. Prépare le composant, mais aucune opération spécifique n'est définie dans cette méthode pour le moment.
+
+2. Gestion de la connexion utilisateur :
+   - onSubmit(): Méthode appelée lors de la soumission du formulaire de connexion. Utilise AuthService pour tenter de connecter l'utilisateur avec les identifiants fournis. En cas de succès, un message de succès est affiché, et l'utilisateur est redirigé vers la page d'accueil. En cas d'erreur, un message d'erreur est affiché pour informer l'utilisateur que les identifiants sont invalides.
+
+3. Gestion de l'ajout de nouveaux utilisateurs :
+   - addUser(username: string, password: string): Méthode pour ajouter un nouvel utilisateur. Crée un nouvel objet utilisateur avec un rôle par défaut ('scientifique') et utilise UsersService pour envoyer les données au serveur. En cas d'erreur, un message d'erreur est affiché pour informer l'utilisateur que la création n'a pas été effectuée.

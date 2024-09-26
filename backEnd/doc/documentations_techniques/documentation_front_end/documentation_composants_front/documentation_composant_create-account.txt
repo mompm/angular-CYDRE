@@ -1,0 +1,19 @@
+Le composant CreateAccount gère la création de nouveaux utilisateurs. Il fournit un formulaire pour saisir les informations nécessaires et gère les messages d'erreur ou de succès.
+
+Importations :
+- Angular Core (Component) : Pour la gestion des composants.
+- Angular Router : Pour la gestion de la navigation entre les routes de l'application.
+- Services (AuthService, UsersService) : Pour l'authentification et la gestion des utilisateurs.
+
+Variables :
+1. Objet utilisateur :
+   - user : Objet contenant les informations du nouvel utilisateur (nom d'utilisateur, mot de passe, rôle).
+2. Gestion des messages :
+   - errorMessage : Message d'erreur affiché en cas de problème lors de la création d'un utilisateur.
+   - successMessage : Message de succès affiché en cas de création réussie.
+
+Méthodes :
+1. Soumission du formulaire :
+   - onSubmit(form: any) : Vérifie la validité du formulaire. Si valide, tente de créer un utilisateur via le UsersService et affiche un message de succès ou d'erreur.
+2. Ajout d'un nouvel utilisateur :
+   - addUser(username: string, password: string) : Crée un objet utilisateur avec un rôle par défaut (scientifique), puis envoie les données au serveur via UsersService. En cas d'erreur, un message d'erreur est affiché.

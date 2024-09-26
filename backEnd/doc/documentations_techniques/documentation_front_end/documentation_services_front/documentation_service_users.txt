@@ -1,0 +1,19 @@
+Le service Users gère les interactions avec une API backend pour les opérations liées aux utilisateurs.
+
+Importations
+- Injectable : Permet d'injecter le service dans d'autres composants ou services.
+- HttpClient : Utilisé pour effectuer des requêtes HTTP.
+- rxjs (Observable) : Utilisé pour représenter les réponses asynchrones des requêtes HTTP.
+
+Variables
+- apiUrl (string) : Définition de l'URL de l'API utilisée par le service.
+
+Méthodes
+- getUsers(): Observable<any>
+  - Récupère la liste des utilisateurs depuis l'API.
+  - Retourne : Un Observable contenant la réponse sous forme de liste d'utilisateurs.
+
+- createUser(userData: { username: string; password: string; role: string }): Observable<any>
+  - Crée un nouvel utilisateur en envoyant les données au serveur.
+  - Paramètre : userData - Un objet contenant les informations de l'utilisateur.
+  - Retourne : Un Observable contenant la réponse après la création de l'utilisateur.
