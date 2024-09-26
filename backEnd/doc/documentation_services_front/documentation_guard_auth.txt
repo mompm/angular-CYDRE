@@ -1,5 +1,3 @@
-
-Description générale
 Auth est un guard dans Angular, utilisé pour protéger certaines routes de l'application en fonction de l'authentification et des rôles de l'utilisateur. Un guard implémente l'interface CanActivate, qui permet de déterminer si une route peut être activée ou non. Si l'utilisateur ne répond pas aux critères définis (par exemple, s'il n'est pas connecté ou n'a pas le rôle requis), il sera redirigé vers une autre page (comme la page de connexion).
 Le guard Auth se base sur un service d'authentification (Auth) pour évaluer l'état de l'utilisateur (connecté ou non) et ses rôles (développeur, scientifique, etc.).
 
@@ -17,9 +15,6 @@ Importation:
 	- Observable : Utilisé pour gérer des flux de données asynchrones. Ici, l'état de connexion de l'utilisateur est géré sous forme d'observable, ce qui permet de vérifier 	dynamiquement son statut.
 	- Opérateurs map et tap : Utilisés pour transformer les données des observables et effectuer des actions secondaires comme la redirection en cas d'accès refusé.
 
-Services utilisés :
-    - Auth : Ce service permet de vérifier l'état d'authentification de l'utilisateur et d'accéder aux informations sur ses rôles.
-    - Router : Ce service est utilisé pour rediriger l'utilisateur vers une autre route (comme /login) en cas d'accès refusé.
 
 Méthode canActivate
 1.Paramètre 

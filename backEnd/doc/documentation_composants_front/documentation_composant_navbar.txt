@@ -1,43 +1,41 @@
-Le composant 'Navbar' gère la barre de navigation de l'application, incluant les fonctionnalités de connexion, déconnexion 
-et changement de langue(désactiver pour le moment ).
+Le composant Navbar gère la barre de navigation de l'application, incluant les fonctionnalités de connexion, déconnexion et changement de langue (désactivé pour le moment).
 
 Importations :
-	-Angular Core (Component, EventEmitter, OnInit, ViewEncapsulation, Output, Input): gestion des composants et des événements.
-	-Angular Material (MatTabsModule, MatButtonModule, MatDialog, MatDialogRef): gestion des éléments d'interface utilisateur.
-	-CommonModule: fournit des directives communes pour Angular.
-	-TranslateService: gestion des traductions de l'application.
-	-Documentation: composant pour afficher la documentation.
-Service utilisés :
-	-translate : Service de traduction pour gérer les langues.
-   	-authService : Service d'authentification pour gérer l'état de connexion.
-   	-dialog : Service pour ouvrir des dialogues Material.
+- Angular Core (Component, EventEmitter, OnInit, ViewEncapsulation, Output, Input) : Gestion des composants et des événements.
+- Angular Material (MatTabsModule, MatButtonModule, MatDialog, MatDialogRef) : Gestion des éléments d'interface utilisateur.
+- CommonModule : Fournit des directives communes pour Angular.
+- Translate : Service de traduction pour gérer les langues.
+- Documentation : Composant pour afficher la documentation.
+- auth : Service d'authentification pour gérer l'état de connexion.
 
 Variables :
-1.Gestion de la navigation:
-	-@Output() titleChange: Émetteur d'événements pour changer le titre de la barre de navigation.
-	-title: string: Titre affiché dans la barre de navigation, initialisé à "modelingTitle".
-2.État de connexion:
-	-isLoggedIn: boolean: Indicateur de connexion de l'utilisateur, initialisé via un abonnement à AuthService.
-3.Gestion de la langue:
-	-selectLang: string: Langue sélectionnée pour la traduction.
-	-transLang: string[]: Liste des langues disponibles pour la traduction.
+1. Gestion de la navigation :
+   - @Output() titleChange: Émetteur d'événements pour changer le titre de la barre de navigation.
+   - title: string: Titre affiché dans la barre de navigation, initialisé à "modelingTitle".
+
+2. État de connexion :
+   - isLoggedIn: boolean: Indicateur de connexion de l'utilisateur, initialisé via un abonnement à AuthService.
+
+3. Gestion de la langue :
+   - selectLang: string: Langue sélectionnée pour la traduction.
+   - transLang: string[]: Liste des langues disponibles pour la traduction.
 
 Méthodes :
-1.Cycle de vie Angular:
-	-ngOnInit(): Initialisation du composant. Récupère les langues disponibles et s'abonne à l'état de connexion de l'utilisateur via AuthService.
+1. Cycle de vie Angular :
+   - ngOnInit(): Initialisation du composant. Récupère les langues disponibles et s'abonne à l'état de connexion de l'utilisateur via AuthService.
 
-2.Gestion de la langue:
-	-setTransLanguage(): Change la langue de traduction en fonction de la sélection de l'utilisateur.
-	-getTransLanguage(): Récupère les langues disponibles pour la traduction.
+2. Gestion de la langue :
+   - setTransLanguage(): Change la langue de traduction en fonction de la sélection de l'utilisateur.
+   - getTransLanguage(): Récupère les langues disponibles pour la traduction.
 
-3.Gestion de la connexion:
-	-change(): Méthode de changement d'état de connexion (développable si nécessaire).
-	-logout(): Déconnexion de l'utilisateur et gestion de la réponse. Utilise AuthService pour déconnecter l'utilisateur et gère les erreurs éventuelles.
-	-login(): Méthode appelée lors du clic sur le bouton de connexion (pour le débogage).
-	-home(): Méthode appelée lors du clic sur le bouton d'accueil (pour le débogage).
-	-settings(): Méthode appelée lors du clic sur le bouton des paramètres (pour le débogage).
-	-simulator(): Méthode appelée lors du clic sur le bouton du simulateur (pour le débogage).
-	-history(): Méthode appelée lors du clic sur le bouton de l'historique (pour le débogage).	
-	-ficheSite(): Méthode appelée lors du clic sur le bouton fiche de site (pour le débogage).
-	-createAccount(): Méthode appelée lors du clic sur le bouton de création de compte (pour le débogage).
-	-openDialog(): Ouvre un dialogue de documentation pour afficher les informations nécessaires.
+3. Gestion de la connexion :
+   - change(): Méthode de changement d'état de connexion (développable si nécessaire).
+   - logout(): Déconnexion de l'utilisateur et gestion de la réponse. Utilise AuthService pour déconnecter l'utilisateur et gère les erreurs éventuelles.
+   - login(): Méthode appelée lors du clic sur le bouton de connexion (pour le débogage).
+   - home(): Méthode appelée lors du clic sur le bouton d'accueil (pour le débogage).
+   - settings(): Méthode appelée lors du clic sur le bouton des paramètres (pour le débogage).
+   - simulator(): Méthode appelée lors du clic sur le bouton du simulateur (pour le débogage).
+   - history(): Méthode appelée lors du clic sur le bouton de l'historique (pour le débogage).
+   - ficheSite(): Méthode appelée lors du clic sur le bouton fiche de site (pour le débogage).
+   - createAccount(): Méthode appelée lors du clic sur le bouton de création de compte (pour le débogage).
+   - openDialog(): Ouvre un dialogue de documentation pour afficher les informations nécessaires.

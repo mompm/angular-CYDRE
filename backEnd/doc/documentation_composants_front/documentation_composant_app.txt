@@ -1,30 +1,27 @@
-Le composant 'App' constitue le point d'entrée principal de l'application Angular. Il gère l'initialisation du composant, l'animation de l'interface utilisateur, et l'affichage d'une boîte de dialogue pour fournir des informations supplémentaires.
+Le composant App constitue le point d'entrée principal de l'application Angular. Il gère l'initialisation, les animations de l'interface utilisateur, et l'affichage d'une boîte de dialogue pour fournir des informations supplémentaires.
 
 Importations :
-	-Angular Core (Component, OnInit): Gestion des composants Angular.
-	-Angular Material (MatDialog, MatDialogRef, MatButtonModule, MatTabsModule): Gestion des éléments d'interface utilisateur modernes et des dialogues.
-	-CommonModule: Fournit des directives communes (comme ngIf, ngFor) pour l'utilisation dans le module de l'application.
-	-Animations: Importation de la configuration des animations pour l'effet slideInAnimation.
-
-Services utilisés:
+- Angular Core (Component, OnInit) : Pour la gestion des composants Angular.
+- Angular Material (MatDialog, MatDialogRef, MatButtonModule, MatTabsModule) : Pour la gestion des éléments d'interface utilisateur modernes et des dialogues.
+- CommonModule : Fournit des directives courantes (ngIf, ngFor) pour l'utilisation dans l'application.
+- Animations : Configuration des animations pour l'effet slideInAnimation.
 
 Variables :
-1.Configuration générale:
-	-title: Titre de l'application, initialisé à 'front'.
-2.Gestion de l'état de test:
-	-isEndedTest: Booléen pour indiquer si un test est terminé. Par défaut, il est réglé sur false.
-	-listPositions: Tableau de chaînes de caractères pour stocker les positions de la souris lors des événements de test.
-3.Gestion de la souris:
-	-mousePosition: Message affichant la position de la souris lorsque l'utilisateur survole un élément de test.
+1. Configuration générale :
+   - title : Titre de l'application, initialisé à 'front'.
+2. Gestion de l'état de test :
+   - isEndedTest : Indique si un test est terminé (par défaut false).
+   - listPositions : Tableau de chaînes de caractères stockant les positions de la souris lors des événements de test.
+3. Gestion de la souris :
+   - mousePosition : Message affichant la position de la souris lorsque l'utilisateur survole un élément de test.
 
 Méthodes :
-1.Cycle de vie Angular:
-	-ngOnInit(): Méthode d'initialisation du composant qui s'exécute lorsque le composant est créé. Ici, elle appelle la méthode openDialog() pour afficher une boîte de dialogue lors du 	chargement de l'application.
-2.Gestion des événements:
-	-log(event: any): Méthode pour enregistrer les coordonnées x et y de la souris dans listPositions lors de l'événement de survol. La position y est multipliée par -1 pour inverser la 	direction selon les conventions CSS.
-
-3.Gestion des boite dialogues:
-	-openDialog(): Ouvre la boîte de dialogue Documentation à l'aide du service MatDialog d'Angular Material. Cela permet d'afficher des informations ou des instructions supplémentaires 	pour l'utilisateur.
+1. Cycle de vie Angular :
+   - ngOnInit() : Méthode d'initialisation du composant. Elle appelle openDialog() pour afficher une boîte de dialogue lors du chargement de l'application.
+2. Gestion des événements :
+   - log(event: any) : Enregistre les coordonnées X et Y de la souris dans listPositions lors du survol. La coordonnée Y est multipliée par -1 pour inverser la direction selon les conventions CSS.
+3. Gestion des boîtes de dialogue :
+   - openDialog() : Ouvre la boîte de dialogue *Documentation* via le service MatDialog pour afficher des informations supplémentaires.
 
 Boîte de dialogue :
-	-Documentation: Un composant dialog qui s'ouvre lorsque l'application est initialisée, fournissant des informations pertinentes sur l'utilisation de l'application.
+- Documentation : Composant qui s'ouvre à l'initialisation de l'application, fournissant des informations pertinentes sur son utilisation.

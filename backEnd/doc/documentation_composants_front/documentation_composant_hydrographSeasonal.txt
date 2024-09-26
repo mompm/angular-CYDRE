@@ -1,52 +1,48 @@
 Le composant hydrographSeasonal affiche un hydrographe saisonnier basé sur les données de décharge d'eau. Ce composant gère l'affichage dynamique des données selon la station sélectionnée et les années choisies.
 
 Importations :
-	-Angular Core (Component, Input, SimpleChanges, OnDestroy, HostListener): Gestion des composants et des entrées.
-	-DataService: Service pour la gestion des données.
-	-JsonService: Service pour gérer les opérations JSON, notamment les requêtes de décharge.
-	-Plotly.js: Bibliothèque pour créer des graphiques interactifs.
-	-Simple Statistics (median): Utilisé pour le calcul de la médiane des données.
-	-Math.js: Utilisé pour le calcul des quantiles.
-	-RxJS: Utilisé pour la gestion des flux asynchrones via des Observables.
-	-dataDischarge: Modèle représentant les données de décharge.
-	-ColorService: Service pour la gestion des couleurs des graphiques.
-
-Services utilisés:
-	-dataService  : Service de gestion des données.
-    	-jsonService  : Service de gestion des fichiers JSON.
+- Angular Core (Component, Input, SimpleChanges, OnDestroy, HostListener) : Gestion des composants et des entrées.
+- DataService : Service pour la gestion des données.
+- JsonService : Service pour gérer les opérations JSON, notamment les requêtes de décharge.
+- Plotly.js : Bibliothèque pour créer des graphiques interactifs.
+- Simple Statistics (median) : Utilisé pour le calcul de la médiane des données.
+- Math.js : Utilisé pour le calcul des quantiles.
+- RxJS : Utilisé pour la gestion des flux asynchrones via des Observables.
+- dataDischarge : Modèle représentant les données de décharge.
+- ColorService : Service pour la gestion des couleurs des graphiques.
 
 Variables :
-1.Gestion des données :
-	-Datadischarge: Tableau pour stocker les données de décharge.
-	-lastUpdate: Date de la dernière mise à jour des données.
-	-TabDischargeByDaily: Tableau contenant toutes les données de décharge triées.
-	-YearTabDischargeByDaily: Tableau contenant les données de décharge triées pour les années sélectionnées.
-	-resultArray: Tableau contenant les quantiles calculés (Q10, Q50, Q90).
+1. Gestion des données :
+   - Datadischarge: Tableau pour stocker les données de décharge.
+   - lastUpdate: Date de la dernière mise à jour des données.
+   - TabDischargeByDaily: Tableau contenant toutes les données de décharge triées.
+   - YearTabDischargeByDaily: Tableau contenant les données de décharge triées pour les années sélectionnées.
+   - resultArray: Tableau contenant les quantiles calculés (Q10, Q50, Q90).
 
-2.Sélection de la station :
-	-stationSelectionChange: ID de la station sélectionnée, utilisé pour changer l'hydrographe en fonction de la sélection.
+2. Sélection de la station :
+   - stationSelectionChange: ID de la station sélectionnée, utilisé pour changer l'hydrographe en fonction de la sélection.
 
-3.Gestion du graphique :
-	-fig: Objet pour stocker la figure Plotly.
-	-yearSelectionChange: Liste des années sélectionnées pour l'affichage de l'hydrographe.
-	-months: Noms des mois pour l'affichage.
-	-tickvals, ticktext: Valeurs et textes pour les ticks de l'axe des X.
+3. Gestion du graphique :
+   - fig: Objet pour stocker la figure Plotly.
+   - yearSelectionChange: Liste des années sélectionnées pour l'affichage de l'hydrographe.
+   - months: Noms des mois pour l'affichage.
+   - tickvals, ticktext: Valeurs et textes pour les ticks de l'axe des X.
 
 Méthodes :
-1.Cycle de vie Angular :
-	-ngOnInit(): Méthode appelée lors de l'initialisation du composant. Elle configure un écouteur pour la redimension de la fenêtre et charge les données de décharge.
-	-ngOnDestroy(): Méthode pour nettoyer les écouteurs lorsque le composant est détruit.
-	-ngOnChanges(changes: SimpleChanges): Méthode appelée lorsque les propriétés @Input changent, recharge les données de décharge si la station ou l'année sélectionnée change.
+1. Cycle de vie Angular :
+   - ngOnInit(): Méthode appelée lors de l'initialisation du composant. Elle configure un écouteur pour le redimensionnement de la fenêtre et charge les données de décharge.
+   - ngOnDestroy(): Méthode pour nettoyer les écouteurs lorsque le composant est détruit.
+   - ngOnChanges(changes: SimpleChanges): Méthode appelée lorsque les propriétés @Input changent, recharge les données de décharge si la station ou l'année sélectionnée change.
 
-2.Gestion des données:
-	-initStationDischarge(stationID: string): Charge les données de décharge pour la station spécifiée via JsonService.
+2. Gestion des données :
+   - initStationDischarge(stationID: string): Charge les données de décharge pour la station spécifiée via jsonService.
 
-3.traitement des données:
-	-processedDischarge(): Traite les données de décharge pour en extraire les informations quotidiennes et annuelles, ainsi que la date de la dernière mise à jour.
-	-calculateQuantiles(DischargeByDaily: any[]): Calcule les quantiles (Q10, Q50, Q90) pour les données de décharge quotidiennes.
+3. Traitement des données :
+   - processedDischarge(): Traite les données de décharge pour en extraire les informations quotidiennes et annuelles, ainsi que la date de la dernière mise à jour.
+   - calculateQuantiles(DischargeByDaily: any[]): Calcule les quantiles (Q10, Q50, Q90) pour les données de décharge quotidiennes.
 
-4.Création de graphiques :
-	-hydrograph_Seasonal(): Met à jour et affiche l'hydrographe saisonnier avec les données actuelles, incluant les tracés pour les quantiles et les données de décharge par année.
+4. Création de graphiques :
+   - hydrograph_Seasonal(): Met à jour et affiche l'hydrographe saisonnier avec les données actuelles, incluant les tracés pour les quantiles et les données de décharge par année.
 
-5.Téléchargement de données :
-	-downloadCSV(): Prépare les données pour le téléchargement au format CSV.
+5. Téléchargement de données :
+   - downloadCSV(): Prépare les données pour le téléchargement au format CSV.

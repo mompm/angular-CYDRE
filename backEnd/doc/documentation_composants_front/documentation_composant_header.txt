@@ -1,30 +1,28 @@
-Le composant 'Header' gère l'en-tête de l'application et les sous-titre affichés dans l'en-tête.
+Le composant Header gère l'en-tête de l'application et les sous-titres affichés dans l'en-tête.
 
-Importations :
-	-Angular Core (Component, OnInit, Input) : Gestion des composants.
-	-Angular Router (NavigationEnd, Router) : Gestion de la navigation et des routes dans l'application.
+ Importations :
+- Angular Core (Component, OnInit, Input) : Gestion des composants.
+- Angular Router (NavigationEnd, Router) : Gestion de la navigation et des routes dans l'application.
 
-Services utilisés :
-    -router : le service Router pour écouter les événements de navigation.
+ Variables :
+1. État de connexion :
+   - @Input() isLoggedIn!: Indique si l'utilisateur est connecté.
 
-Variables :
-1.État de connexion :
-	-@Input() isLoggedIn!: Indique si l'utilisateur est connecté.
-2.Sous-titre :
-	-subtitle: string: Contient le sous-titre affiché dans l'en-tête. Initialisé par défaut à 'DefaultTitle'.
+2. Sous-titre :
+   - subtitle: string: Contient le sous-titre affiché dans l'en-tête. Initialisé par défaut à 'DefaultTitle'.
 
-Méthodes :
-1.Cycle de vie Angular :
-	-ngOnInit(): Méthode appelée lors de l'initialisation du composant. Elle s'abonne aux événements de routage pour mettre à jour le sous-titre en fonction de la route active.
-	Gestion de la navigation :
+ Méthodes :
+1. Cycle de vie Angular :
+   - ngOnInit(): Méthode appelée lors de l'initialisation du composant. Elle s'abonne aux événements de routage pour mettre à jour le sous-titre en fonction de la route active.
 
-	Dans ngOnInit(), s'abonne aux événements de navigation (this.router.events.subscribe) pour détecter les changements de route. Si l'événement est une instance de NavigationEnd, il 	vérifie la route actuelle (this.router.url) et met à jour le sous-titre en conséquence, selon les différents cas :
-		/home : this.subtitle = 'homeTitle';
-		/ficheSite : this.subtitle = 'ficheSitesubTitle';
-		/settings : this.subtitle = 'settingsTitle';
-		/login : this.subtitle = 'loginTitle';
-		/modeling : this.subtitle = 'modelingTitle';
-		/simulator : this.subtitle = 'simulatorsubTitle';
-		/analysis : this.subtitle = 'analysisTitle';
-		/simulationHistory : this.subtitle = 'Mes simulations';
-		default : this.subtitle = 'DefaultTitle'; (Titre par défaut si aucune route ne correspond).
+2. Gestion de la navigation :
+   - Dans ngOnInit(), s'abonne aux événements de navigation (this.router.events.subscribe) pour détecter les changements de route. Si l'événement est une instance de NavigationEnd, il vérifie la route actuelle (this.router.url) et met à jour le sous-titre en conséquence :
+     - /home : this.subtitle = 'homeTitle';
+     - /ficheSite : this.subtitle = 'ficheSitesubTitle';
+     - /settings : this.subtitle = 'settingsTitle';
+     - /login : this.subtitle = 'loginTitle';
+     - /modeling : this.subtitle = 'modelingTitle';
+     - /simulator : this.subtitle = 'simulatorsubTitle';
+     - /analysis : this.subtitle = 'analysisTitle';
+     - /simulationHistory : this.subtitle = 'Mes simulations';
+     - default : this.subtitle = 'DefaultTitle' (Titre par défaut si aucune route ne correspond).
