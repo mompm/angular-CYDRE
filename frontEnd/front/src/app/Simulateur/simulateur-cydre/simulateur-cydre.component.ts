@@ -50,10 +50,6 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
     previousSelectedStation: { index: string, station_name: string } | null = null;  // Sauvegarde la station précédente
   
     // Liste des options désactivées
-    list_of_disabled_options: string[] = [
-      'J0121510', 'J0621610', 'J2233010', 'J3403010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
-      'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310', 
-    ];
     selectedStationDisabled: boolean | undefined; // verifie si la station est implementer
   
     //Variables paramètres simulation
@@ -240,14 +236,14 @@ export class SimulateurCydreComponent implements OnInit, OnDestroy {
 
   /**
   * Vérifie si une option du dropdown est désactivée.
-  * Une option est désactivée si son index figure dans `list_of_disabled_options`.
+  * Une option est désactivée si son index figure dans `list_of_disabled_options`(sharedWatershed).
   *
   * @param option - L'option à vérifier, contenant l'index et le nom de la station.
   * @returns `true` si l'option est désactivée, sinon `false`.
   */
   isOptionDisabled(option: { index: string, station_name: string }): boolean {
     //Retourne true si l'index de l'option figure dans la liste des options désactivées
-    return this.list_of_disabled_options.includes(option.index);
+    return this.sharedService.isWatersheddisabled(option.index);
   }
 
   /**

@@ -7,7 +7,7 @@ import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataDepth from 'src/app/model/dataDepth';
-import { ColorService } from 'src/app/color-service.service';
+import { ColorService } from 'src/app/service/color-service.service';
 
 /**
  * component pour graphique profondeur nappe

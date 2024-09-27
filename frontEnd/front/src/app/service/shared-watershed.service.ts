@@ -21,17 +21,16 @@ export class SharedWatershedService {
    * @param index - L'index de l'option à vérifier.
    * @returns true si l'option est désactivée, false sinon.
    */
-  isWatersheddisabled(index: string | null | undefined): boolean {
-    if (index) {
-      // Vérifie si l'index fourni est dans la liste des options désactivées
-      if (this.list_of_disabled_options.includes(index)) {
-        return true; // Retourne true si l'option est désactivée.
-      } else {
-        return false; // Retourne false si l'option n'est pas désactivée.
-      }
+  isWatersheddisabled(index: string | null | undefined ): boolean {
+    // Vérifie si l'index est dans la liste des désactivés
+    if (index){
+      return this.list_of_disabled_options.includes(index);
     }
-    return true; // Si l'index est nul ou indéfini, retourne true (considéré comme désactivé).
+    return false;
+  
   }
+
+
 
   /**
    * Récupère la valeur sélectionnée pour le bassin versant.

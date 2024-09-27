@@ -38,10 +38,6 @@ export class FicheSiteComponent {
   previousSelectedStation: { index: string, station_name: string } | null = null;  // Sauvegarde la station précédente
 
   // Liste des options désactivées
-  list_of_disabled_options: string[] = [
-    'J0121510', 'J0621610', 'J2233010', 'J3403010', 'J3413030', 'J3514010', 'J3811810', 'J4614010', 'J4902010', 'J5224010',
-    'J5412110', 'J5524010', 'J5618320', 'J7355010', 'J7356010', 'J7364210','J7373110', 'J8433010', 'J8502310',    
-  ];
   disabled_station: boolean = true; // boolean si option est desactivé nappe 
   BSS_present: boolean = true; // boolean si BSS liée à la station
 
@@ -275,7 +271,7 @@ export class FicheSiteComponent {
       this.sharedService.setSelectedStationName(name);
     }
     // verifier si la station est implementer dans le module
-    if (this.list_of_disabled_options.includes(selectedOption.index)){
+    if (this.sharedService.isWatersheddisabled(selectedOption.index)){
       this.disabled_station = false;
     }else{
       this.disabled_station = true;
@@ -289,7 +285,7 @@ export class FicheSiteComponent {
   */
   isOptionDisabled(option: { index: string, station_name: string }): boolean {
     // Vérifie si l'index est dans la liste des désactivés
-    return this.list_of_disabled_options.includes(option.index);
+    return this.sharedService.isWatersheddisabled(option.index);
   }
 
   /**
@@ -319,7 +315,7 @@ export class FicheSiteComponent {
       // Sauvegarder l'ID sélectionné
       this.sharedService.setSelectedValue(selectedOption.index);
       // verifier si la station est implementer dans le module
-      if(this.list_of_disabled_options.includes(selectedOption.index)){
+      if(this.sharedService.isWatersheddisabled(selectedOption.index)){
         this.disabled_station = false;
       }else{
         this.disabled_station = true;

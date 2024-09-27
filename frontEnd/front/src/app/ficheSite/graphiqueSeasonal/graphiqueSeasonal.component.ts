@@ -4,7 +4,7 @@ import { median , quantile} from 'simple-statistics';
 import * as math from 'mathjs';
 import { from, of, range, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
-import { ColorService } from 'src/app/color-service.service';
+import { ColorService } from 'src/app/service/color-service.service';
 import { DataService } from 'src/app/service/data.service';
 import { JsonService } from 'src/app/service/json.service';
 import dataPrecipitation from 'src/app/model/dataPrecipitation';

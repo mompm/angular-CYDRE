@@ -7,7 +7,7 @@ import * as math from 'mathjs';
 import { from, of, zip } from 'rxjs';
 import { filter, groupBy, mergeMap, toArray } from 'rxjs/operators';
 import dataTemperature from 'src/app/model/dataTemperature';
-import { ColorService } from 'src/app/color-service.service';
+import { ColorService } from 'src/app/service/color-service.service';
 
 
 /**
