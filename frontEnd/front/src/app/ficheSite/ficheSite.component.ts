@@ -1,4 +1,4 @@
-import { Component, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnInit, SimpleChanges , DoCheck } from '@angular/core';
 import { ChangeDetectorRef } from '@angular/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import * as L from 'leaflet';
@@ -12,6 +12,7 @@ import dataGDFStation from '../model/dataGDFStation';
 import {MatDialog} from '@angular/material/dialog';
 import dataGDFWatersheds from '../model/dataGDFWatersheds';
 import * as Plotly from 'plotly.js-dist';
+import { ColorService } from '../service/color-service.service';
 
 
 
@@ -28,6 +29,7 @@ export class FicheSiteComponent {
   currentYear: number = new Date().getFullYear(); // Année actuelle
   years: number[] = Array.from({length: this.currentYear - 1970 + 1}, (_, i) => 1970 + i); // Génère une liste des années depuis 1970
   selectedYears: number[] = [this.currentYear]; // Année sélectionnée initiale (l'année courante)
+  previousSelectedYears: number[] = [...this.selectedYears];
   DataGDFStation: dataGDFStation[]  =[]; // Liste des données des stations hydologiques
   DataGDFWatershed : dataGDFWatersheds[] = []; // Liste des données des bassins versants
   myControl = new FormControl(); // Contrôle du formulaire pour l'autocomplétion
@@ -50,7 +52,7 @@ export class FicheSiteComponent {
   * @param sharedService Service partagé pour gérer les informations communes
   * @param dialog Service de gestion des boîtes de dialogue
   */
-  constructor(private cdr: ChangeDetectorRef, private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog) {}
+  constructor(private cdr: ChangeDetectorRef, private dataService: DataService,private jsonService: JsonService, private sharedService : SharedWatershedService, public dialog : MatDialog, private colorService : ColorService) {}
   
   //METHODES CYCLE DE VIE ANGULAR
 
@@ -333,6 +335,17 @@ export class FicheSiteComponent {
         this.BSS_present = false;
       }
     }  
+  }
+
+  //MENU DEROULANT ANNEE GRAPHIQUE SERIES TEMPORELLES
+
+  /**
+   * supprime les années selectionner dans le menu deroulant au clic d'un bouton
+   * reset les couleurs des lignes des années des graphiques
+   */
+  async suppYearsInput(){
+    this.selectedYears = []
+    //this.colorService.resetnumColorsGenerated()
   }
 }
 

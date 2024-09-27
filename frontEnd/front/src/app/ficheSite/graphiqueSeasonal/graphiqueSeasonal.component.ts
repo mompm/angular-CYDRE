@@ -572,7 +572,7 @@ export class graphiqueSeasonal implements OnDestroy {
           y: yValues, // Valeurs sur l'axe Y correspondant aux données de l'année
           mode: 'lines', // Tracé en lignes
           name: String(year), // Nom du tracé (affichée dans la légende)
-          line: { color: this.colorService.getColorForYear(year), width: 1.5 }, // Style de la ligne (couleur par année)
+          line: { color: this.colorService.getColorForYear(year,targetYears.length), width: 1.5 }, // Style de la ligne (couleur par année)
           hovertemplate: `${year}: ` + hovertemplatename, // Modèle d'infobulle pour afficher les données
         };
         this.fig.data.push(trace);// Ajouter le tracé pour cette année aux données du graphique

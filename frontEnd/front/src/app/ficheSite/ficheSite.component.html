@@ -66,8 +66,6 @@
     <div class="seasonal_plot_div">
       <!-- <app-hydrographGlobal [stationSelectionChange]="selectedWatershedID"></app-hydrographGlobal> -->
       <div style="text-align: center; padding: 10px;">
-        <!-- <h3>Dynamique saisonnière de la ressource en eau</h3> -->
-        <!-- <p>Choix d'une année à visualiser :</p> -->
         <mat-form-field appearance="outline" class="second-dropdown">
           <mat-label>Choix d'une année à visualiser :</mat-label>
           <mat-select placeholder="Sélectionnez les années" multiple [(ngModel)]="selectedYears" class="second-dropdown">
@@ -76,6 +74,9 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
+        <button mat-icon-button (click)="suppYearsInput()" style="margin-left: 16px">
+          <mat-icon style="color: black; font-size: 25px; ">delete</mat-icon>
+        </button>
       </div>
       <!--
       <div class="container_seasonal">

@@ -328,7 +328,7 @@ import { ColorService } from 'src/app/service/color-service.service';
             mode: 'lines',
             name: String(year),
             line: {
-              color: this.colorService.getColorForYear(year), // Utilisation des couleurs générées par Chroma.js
+              color: this.colorService.getColorForYear(year,targetYears.length), // Utilisation des couleurs générées par Chroma.js
               width: 1.5
             },
             hovertemplate: `${year}: %{y:.1f} m<extra></extra>`,

@@ -277,7 +277,7 @@ export class hydrographSeasonal implements OnDestroy{
           mode: 'lines',
           name: String(year),
           line: {
-            color: this.colorService.getColorForYear(year), 
+            color: this.colorService.getColorForYear(year,targetYears.length), 
             width: 1.5
           },
           hovertemplate: `${year}: %{y:.3f} m3/s<extra></extra>`,

@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
 })
 export class ColorService {
   private colorMap: { [year: number]: string } = {};
-  private numColorsGenerated = 12; // nombre des couleurs generer random
+  private numColorsGenerated = 0;
   private readonly goldenRatioConjugate = 0.61803398875;  // Facteur d'or
   private readonly predefinedColors: string[] = [
     "hsl(0, 100%, 50%)",     // Rouge
@@ -34,13 +34,18 @@ export class ColorService {
   }
 
   /**
-  * si on est dans les 11 premières couleurs, utilise la liste des couleurs prédefines 
-  * sinon on genere des couleurs aleatoire
-  */
-  private generateNewColor(): string {
+   * Génère une nouvelle couleur HSL en utilisant le nombre total de couleurs déjà générées
+   * pour déterminer la teinte. Incrémente le compteur après la génération.
+   * Si toutes les couleurs prédéfinies ont été générées, génère une couleur aléatoire.
+   * @returns Une chaîne de caractères représentant la couleur en format HSL.
+   */
+  private generateNewColor(nbyear:number): string {
     // Si nous avons épuisé les couleurs prédéfinies, générons une couleur aléatoire
+    this.numColorsGenerated = nbyear - 1
     if (this.numColorsGenerated < this.predefinedColors.length) {
-      return this.predefinedColors[this.numColorsGenerated++];
+      let color =  this.predefinedColors[this.numColorsGenerated];
+      console.log(color)
+      return color
     } else {
       // Générer une couleur aléatoire
       return this.generateRandomColor();
@@ -48,17 +53,25 @@ export class ColorService {
   }
 
   /**
-   * Génère une nouvelle couleur HSL en utilisant le nombre total de couleurs déjà générées
-   * pour déterminer la teinte. Incrémente le compteur après la génération.
-   * Si toutes les couleurs prédéfinies ont été générées, génère une couleur aléatoire.
-   * @returns Une chaîne de caractères représentant la couleur en format HSL.
+   * Génère une couleur HSL aléatoire.
+   * @returns Une chaîne de caractères représentant une couleur HSL aléatoire.
    */
   private generateRandomColor(): string {
     const hue = (this.numColorsGenerated * this.goldenRatioConjugate * 360) % 360;
     this.numColorsGenerated++;
-    const saturation = Math.floor(Math.random() * 101); // Saturation aléatoire entre 0 et 100%
-    const lightness = Math.floor(Math.random() * 101); // Luminosité aléatoire entre 0 et 100%
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    return `hsl(${hue}, 100%, 50%)`;
+  }
+
+  public getnumColorsGenerated(){
+    return this.numColorsGenerated;
+  }
+
+  public updatenumColorsGenerated(selectedyears: number){
+    this.numColorsGenerated = selectedyears;
+  }
+
+  public resetnumColorsGenerated(){
+    this.numColorsGenerated = 0
   }
 
   /**
@@ -67,9 +80,9 @@ export class ColorService {
    * @param year L'année pour laquelle obtenir ou générer une couleur.
    * @returns Une chaîne représentant la couleur en format HSL.
    */
-  public getColorForYear(year: number): string {
+  public getColorForYear(year: number,nbyear: number): string {
     if (!this.colorMap[year]) {
-      this.colorMap[year] = this.generateNewColor();
+      this.colorMap[year] = this.generateNewColor(nbyear);
     }
     return this.colorMap[year];
   }

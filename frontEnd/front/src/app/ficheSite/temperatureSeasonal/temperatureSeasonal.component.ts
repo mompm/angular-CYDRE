@@ -309,7 +309,7 @@ import { ColorService } from 'src/app/service/color-service.service';
                   mode: 'lines',
                   name: String(year),
                   line: {
-                    color: this.colorService.getColorForYear(year), // Utilisation de la fonction pour obtenir une couleur
+                    color: this.colorService.getColorForYear(year,targetYears.length), // Utilisation de la fonction pour obtenir une couleur
                     width: 1.5
                   },
                   hovertemplate: `${year}: %{y:.1f} mm/jour<extra></extra>`,
