@@ -10,7 +10,7 @@ This application is intended for the seasonal streamflow forecasting of rivers w
 Clone the repo:
 
 ```
-git clone https://gitlab.com/mompm1/cydre-angular.git
+git clone https://github.com/mompm/angular-CYDRE.git
 ```
 
 Go to the application folder:
