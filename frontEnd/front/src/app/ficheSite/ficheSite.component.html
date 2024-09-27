@@ -77,6 +77,7 @@
           </mat-select>
         </mat-form-field>
       </div>
+      <!--
       <div class="container_seasonal">
         <div class="seasonal_plot">
           <div><app-temperatureSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-temperatureSeasonal></div>
@@ -87,7 +88,7 @@
           <div *ngIf="BSS_present"><app-WaterTableDepthSeasonal [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-WaterTableDepthSeasonal></div>
         </div>
       </div>
-      
+    -->
       <div  class="grid-container" >   
         <app-graphiqueSeasonal GraphType = "temperature" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
         <app-graphiqueSeasonal GraphType = "precipitation" [stationSelectionChange]="selectedWatershedID" [yearSelectionChange]="selectedYears"></app-graphiqueSeasonal>
